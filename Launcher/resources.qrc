@@ -1,0 +1,8 @@
+<RCC>
+    <qresource>
+        <file>assets/carousel/LoadingScreen_Commons.png</file>
+        <file>assets/carousel/metro-4k.png</file>
+        <file>assets/carousel/mill-4k.png</file>
+        <file>assets/carousel/skyway-4k.png</file>
+    </qresource>
+</RCC>
