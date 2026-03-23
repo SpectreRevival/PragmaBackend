@@ -21,6 +21,10 @@ qt_add_translations(
     TS_FILES SpectreRevivalLauncher_en_US.ts
 )
 
+qt_add_resources(RESOURCES resources.qrc)
+
+target_sources(SpectreRevivalLauncher PRIVATE ${RESOURCES})
+
 target_link_libraries(SpectreRevivalLauncher
     PRIVATE
         Qt::Core

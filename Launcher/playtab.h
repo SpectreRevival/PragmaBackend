@@ -1,5 +1,7 @@
 #pragma once
 #include <QWidget>
+#include <QPropertyAnimation>
+#include <vector>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -16,4 +18,8 @@ class PlayTab : public QWidget {
 
   private:
     Ui::PlayTab* ui;
+    int currentCarouselIndex = 0;
+    void StartCarouselAnimation();
+    QPoint carouselInitialPosition;
+    std::vector<QPixmap*> carouselImages;
 };

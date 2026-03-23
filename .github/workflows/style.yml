@@ -1,6 +1,7 @@
 name: style.yml
 on:
   push:
+    branches: [ "gh-readonly-queue*" ]
   pull_request:
 
 jobs:

@@ -5,7 +5,6 @@
 #include <PlayerConnectionThread.h>
 #include <PlayerData.pb.h>
 
-class HTTPPacketProcessor;
 PlayerConnectionThread::PlayerConnectionThread(tcp::socket playerConnectionSocket)
     : playerConnectionSocket(std::move(playerConnectionSocket)){
     // Load any undelivered notifications into the notification queue
