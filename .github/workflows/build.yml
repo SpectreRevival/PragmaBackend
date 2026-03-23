@@ -146,11 +146,20 @@ jobs:
 
         - name: Cache vcpkg archives directory
           uses: actions/cache@v4
+          id: vcpkgcache
           with:
             path: ${{steps.localappdata.outputs.value}}\vcpkg\archives
             key: ${{ runner.os }}-vcpkg-${{steps.vcpkgcommit.outputs.sha}}-${{hashFiles('vcpkg.json')}}
             restore-keys: |
               ${{ runner.os }}-vcpkg-${{steps.vcpkgcommit.outputs.sha}}
+
+
+        - name: Build vcpkg dependencies
+          if: ${{ steps.vcpkgcache.outputs.cache-primary-key != steps.cache.outputs.cache-matched-key }}
+          run: |
+            cd vcpkg
+            subst Z: buildtrees
+            vcpkg install --x-buildtrees-root=Z:\
 
         - name: Configure and build ${{matrix.build_type}}
           run: cmake . --preset x64-${{matrix.build_type}}-win
