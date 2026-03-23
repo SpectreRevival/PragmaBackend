@@ -155,7 +155,7 @@ jobs:
 
 
         - name: Build vcpkg dependencies
-          if: ${{ steps.vcpkgcache.outputs.cache-primary-key != steps.cache.outputs.cache-matched-key }}
+          if: ${{ steps.vcpkgcache.outputs.cache-hit != true }}
           run: |
             cd vcpkg
             subst Z: buildtrees
