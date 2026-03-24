@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-ubuntu:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     strategy:
       fail-fast: false
       matrix:
@@ -46,6 +46,7 @@ jobs:
           key: ${{ runner.os }}-vcpkg-${{steps.vcpkgcommit.outputs.sha}}-${{hashFiles('vcpkg.json')}}
           restore-keys: |
             ${{ runner.os }}-vcpkg-${{steps.vcpkgcommit.outputs.sha}}
+          fail-on-cache-miss: ${{runner.environment != 'self-hosted'}}
 
       - name: Configure ${{matrix.build_type}} ${{matrix.os}}
         run: |
@@ -102,7 +103,7 @@ jobs:
           rm -rf ./vcpkg/packages
 
   build-windows:
-      runs-on: windows-latest
+      runs-on: [self-hosted, windows]
       strategy:
         fail-fast: false
         matrix:
@@ -152,12 +153,14 @@ jobs:
             key: ${{ runner.os }}-vcpkg-${{steps.vcpkgcommit.outputs.sha}}-${{hashFiles('vcpkg.json')}}
             restore-keys: |
               ${{ runner.os }}-vcpkg-${{steps.vcpkgcommit.outputs.sha}}
+            fail-on-cache-miss: ${{runner.environment != 'self-hosted'}}
 
 
         - name: Build vcpkg dependencies
           if: ${{ steps.vcpkgcache.outputs.cache-hit != true }}
           run: |
             cd vcpkg
+            mkdir buildtrees
             subst Z: buildtrees
             vcpkg install --x-buildtrees-root=Z:\
 
