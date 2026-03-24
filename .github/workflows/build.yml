@@ -163,13 +163,14 @@ jobs:
         - name: Build vcpkg dependencies
           if: ${{ steps.vcpkgcache.outputs.cache-hit != true }}
           run: |
-            New-Item -ItemType Directory -Force -Path vcpkg\buildtrees | Out-Null
-            cmd /c subst Z: /d 2>$null
-            cmd /c subst Z: vcpkg
-            if (-not (Test-Path "Z:\vcpkg.exe")){
-              Z:\bootstrap-vcpkg.bat
+            cd vcpkg
+            New-Item -ItemType Directory -Force -Path C:\b | Out-Null
+            New-Item -ItemType Directory -Force -Path  C:\p | Out-Null
+            New-Item -ItemType Directory -Force -Path C:\d | Out-Null
+            if (-not (Test-Path "./vcpkg.exe")){
+              ./bootstrap-vcpkg.bat
             }
-            Z:\vcpkg.exe install
+            ./vcpkg.exe install
 
         - name: Configure and build ${{matrix.build_type}}
           run: cmake . --preset x64-${{matrix.build_type}}-win
