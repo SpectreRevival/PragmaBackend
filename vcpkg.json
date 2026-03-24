@@ -51,5 +51,6 @@
     "qthttpserver",
     "qtmultimedia",
     "qttranslations"
-  ]
+  ],
+  "builtin-baseline": "4b77da7fed37817f124936239197833469f1b9a8"
 }
