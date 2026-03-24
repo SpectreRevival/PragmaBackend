@@ -180,7 +180,7 @@ jobs:
             if (-not (Test-Path "./vcpkg.exe")){
               ./bootstrap-vcpkg.bat
             }
-            ./vcpkg.exe install
+            ./vcpkg.exe install --x-buildtrees-root=C:\b\ --x-packages-root=C:\p\ --x-downloads-root=C:\d\
 
         - name: Configure and build ${{matrix.build_type}}
           run: cmake . --preset x64-${{matrix.build_type}}-win
