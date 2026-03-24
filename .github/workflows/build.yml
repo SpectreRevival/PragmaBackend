@@ -20,7 +20,7 @@ jobs:
       - name: Unshallow vcpkg submodule
         run: |
           cd vcpkg
-          git fetch --depth 0
+          git fetch --unshallow
 
       - name: Install compiler
         run: |
@@ -122,7 +122,7 @@ jobs:
         - name: Unshallow vcpkg submodule
           run: |
             cd vcpkg
-            git fetch --depth 0
+            git fetch --unshallow
 
         - name: Ensure CMake and Ninja are installed
           shell: powershell
