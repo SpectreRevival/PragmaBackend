@@ -163,10 +163,9 @@ jobs:
         - name: Build vcpkg dependencies
           if: ${{ steps.vcpkgcache.outputs.cache-hit != true }}
           run: |
-            cd vcpkg
-            New-Item -ItemType Directory -Force -Path buildtrees | Out-Null
-            subst Z: buildtrees
-            vcpkg install --x-buildtrees-root=Z:\
+            New-Item -ItemType Directory -Force -Path vcpkg\buildtrees | Out-Null
+            subst Z: vcpkg
+            Z:\vcpkg install
 
         - name: Configure and build ${{matrix.build_type}}
           run: cmake . --preset x64-${{matrix.build_type}}-win
