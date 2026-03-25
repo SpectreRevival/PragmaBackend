@@ -188,38 +188,39 @@ jobs:
         - name: Build ${{matrix.build_type}}
           run: cmake --build out/build/x64-${{matrix.build_type}}-win
 
-        - name: Create artifact
-          shell: bash
+        - name: Make package
           run: |
-            mkdir package
-            cp -r out/build/x64-${{matrix.build_type}}-win/* package/
-            rm -f package/*.h
-            rm -f package/*.cc
-            rm -rf package/.cmake
-            rm -f package/*.cmake
-            rm -rf package/CMakeFiles
-            rm -f package/*.log
-            rm -rf package/vcpkg_installed
-            rm -f package/auth.json
-            rm -f package/build.ninja
-            rm -f package/compile_commands.json
-            rm -f package/CMakeCache.txt
-            rm -rf package/CMakeFiles
-            rm -f package/*.ilk
-            rm -f package/*.pdb
-            (
-            cd package
-            find . -type d -name CMakeFiles -print0 |
-            while IFS= read -r -d '' dir; do
-              parent="$(dirname "$dir")"
-              echo "Processing: $parent"
-              rm -rf $parent/CMakeFiles
-              rm -f $parent/*.cmake
-              rm -f $parent/*.ilk
-              rm -f $parent/*.pdb
-              rm -f $parent/*.json
-            done
-            )
+            New-Item -ItemType Directory -Force -Path "package" | Out-Null
+    
+            Copy-Item -Recurse -Force "out/build/x64-$($env:matrix_build_type)-win/*" "package/"
+    
+            Remove-Item -Force -ErrorAction SilentlyContinue `
+            package\*.h,
+            package\*.cc,
+            package\*.cmake,
+            package\*.log,
+            package\*.ilk,
+            package\*.pdb,
+            package\auth.json,
+            package\build.ninja,
+            package\compile_commands.json,
+            package\CMakeCache.txt
+    
+            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue `
+            package\.cmake,
+            package\CMakeFiles,
+            package\vcpkg_installed
+    
+            Get-ChildItem -Recurse -Directory -Filter "CMakeFiles" -Path "package" | ForEach-Object {
+              $parent = $_.Parent.FullName
+              Write-Host "Processing: $parent"
+              Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $_.FullName
+              Remove-Item -Force -ErrorAction SilentlyContinue `
+              (Join-Path $parent "*.cmake"),
+              (Join-Path $parent "*.ilk"),
+              (Join-Path $parent "*.pdb"),
+              (Join-Path $parent "*.json")
+            }
 
         - name: Upload artifact
           uses: actions/upload-artifact@v4
