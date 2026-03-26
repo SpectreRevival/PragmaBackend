@@ -10,18 +10,18 @@ SavePlayerDataProcessor::SavePlayerDataProcessor(SpectreRpcType rpcType)
 }
 
 void SavePlayerDataProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) {
-    const char* strbegin = static_cast<const char*>(packet.GetRawBuffer()->cdata().data());
+    const char* strbegin = packet.GetBody().c_str();
     std::string reqFormatted = R"({"playerId": ")" + sock.GetPlayerId() + R"(","data":)";
     int index = 0;
     char curChar = 0;
-    for (; index < packet.GetRawBuffer()->size(); index++) {
+    for (; index < packet.GetBody().size(); index++) {
         curChar = strbegin[index];
         if (curChar == '\"' && strbegin[index + 1] == '{') {
             index++; // skip the " character at the start of data str
             break;
         }
     }
-    for (; index < packet.GetRawBuffer()->size(); index++) {
+    for (; index < packet.GetBody().size(); index++) {
         curChar = strbegin[index];
         if (curChar == '\\') {
             if (strbegin[index + 1] == '\"') {
@@ -40,7 +40,7 @@ void SavePlayerDataProcessor::Process(SpectreWebsocketRequest& packet, SpectreWe
             reqFormatted += curChar;
         }
     }
-    for (; index < packet.GetRawBuffer()->size() - 1; index++) {
+    for (; index < packet.GetBody().size() - 1; index++) {
         curChar = strbegin[index];
         reqFormatted += curChar;
     }

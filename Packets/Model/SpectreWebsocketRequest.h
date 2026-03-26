@@ -12,14 +12,14 @@ using reqbuf = boost::beast::flat_buffer;
 class SpectreWebsocketRequest {
   private:
     SpectreWebsocket& websocket;
-    reqbuf requestBuf;
+    std::string reqBody;
     SpectreRpcType requestType;
     std::shared_ptr<json> reqJson;
     std::string payloadAsStr;
-    int m_requestId;
+    int requestId;
 
   public:
-    SpectreWebsocketRequest(SpectreWebsocket& sock, reqbuf req);
+    SpectreWebsocketRequest(SpectreWebsocket& sock, std::string& reqBody);
 
     std::shared_ptr<json> GetPayload() const;
 
@@ -37,23 +37,15 @@ class SpectreWebsocketRequest {
         return std::make_unique<T>(message);
     }
 
-    reqbuf* GetRawBuffer() {
-        return &requestBuf;
-    }
+    [[nodiscard]] SpectreWebsocket& GetSocket() const;
 
-    [[nodiscard]] SpectreWebsocket& GetSocket() const {
-        return websocket;
-    }
-
-    [[nodiscard]] SpectreRpcType GetRequestType() const {
-        return requestType;
-    }
+    [[nodiscard]] SpectreRpcType GetRequestType() const;
 
     std::string GetResponseType() const;
 
-    [[nodiscard]] int GetRequestId() const {
-        return m_requestId;
-    }
+    [[nodiscard]] int GetRequestId() const;
+
+    const std::string& GetBody() const;
 
     std::shared_ptr<json> GetBaseJsonResponse();
     void SendEmptyResponse();

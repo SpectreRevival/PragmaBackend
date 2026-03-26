@@ -2,6 +2,7 @@
 // Created by astro on 27/09/2025.
 //
 
+#include "ConnectionAcceptor.h"
 #include "GetFriendsListAndRegisterOnlineHandler.h"
 #include "PlayerConnectionThread.h"
 #include "StaticHTTPPackets.cpp" // NOLINT
@@ -71,6 +72,7 @@ using tcp = asio::ip::tcp;
 namespace fs = std::filesystem;
 
 static std::shared_ptr<spdlog::logger> logger;
+static boost::asio::io_context ioc{};
 
 static void SetupLogger() {
     auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -89,30 +91,6 @@ static void SetupLogger() {
     spdlog::set_default_logger(logger);
 }
 
-std::vector<PlayerConnectionThread*> playerConnections{};
-
-static void ConnectionAcceptor(unsigned short port) {
-    try {
-        asio::io_context ioc; // we use sync ops but asio still wants an io_context around
-
-        // tls setup. load cert / key
-
-        tcp::acceptor acc(ioc, tcp::endpoint(asio::ip::make_address("0.0.0.0"), port));
-
-        // accept loop forever. each client gets one detached thread
-        // if we want to shut down clean, don't detach, keep thread handles
-        for (;;) {
-            tcp::socket sock(ioc);
-            acc.accept(sock); // blocks until a client connects
-            // each session owns its TLS handshake and stream
-            playerConnections.push_back(new PlayerConnectionThread(std::move(sock)));
-        }
-    } catch (std::exception& e) {
-        logger->error("fatal exception(rip acceptor thread): ");
-        logger->error(e.what());
-    }
-}
-
 bool bStop = false;
 
 static void HandleInterrupt(int /*sigint*/) {
@@ -120,7 +98,7 @@ static void HandleInterrupt(int /*sigint*/) {
 }
 
 static void ShutdownServer() {
-    for (PlayerConnectionThread* connection : playerConnections) {
+    for (PlayerConnectionThread* connection : PlayerConnectionThread::GetPlayerConnections()) {
         spdlog::info("Shutting down connection to {}:{}", connection->GetIPAddress(), connection->GetPort());
         delete connection;
     }
@@ -196,20 +174,22 @@ int main(int argc, char** argv) {
         spdlog::error("Failed to initialize handlers, exiting...", e.what());
     }
     try{
-        std::thread gameThread = std::thread([] {
-            ConnectionAcceptor(gamePort); // game
-        });
-        std::thread socialThread = std::thread([] {
-            ConnectionAcceptor(socialPort); // social
-        });
-        std::thread wsThread = std::thread([] {
-            ConnectionAcceptor(wsPort); // websockets
-        });
+        auto gameAcceptor   = std::make_unique<ConnectionAcceptor>(ioc, gamePort);
+        auto socialAcceptor = std::make_unique<ConnectionAcceptor>(ioc, socialPort);
+        auto wsAcceptor     = std::make_unique<ConnectionAcceptor>(ioc, wsPort);
         logger->info("acceptor threads started");
         std::ofstream serverLockFile("./server.lock", std::ios::trunc | std::ios::out);
+        std::jthread ioThread([&](std::stop_token st) {
+            while (!st.stop_requested()) {
+                ioc.run();
+            }
+        });
         while (!bStop) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
+        ioThread.request_stop();
+        ioc.stop();
+        ioThread.join();
         serverLockFile.close();
         fs::remove("./server.lock");
     } catch (const std::exception& e) {

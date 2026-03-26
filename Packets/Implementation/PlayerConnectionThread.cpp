@@ -3,24 +3,23 @@
 #include "SavedNotificationData.pb.h"
 
 #include <PlayerConnectionThread.h>
-#include <PlayerData.pb.h>
 
-PlayerConnectionThread::PlayerConnectionThread(tcp::socket playerConnectionSocket)
-    : playerConnectionSocket(std::move(playerConnectionSocket)){
-    // Load any undelivered notifications into the notification queue
-    std::unique_ptr<SavedNotificationData> savedNotifs = PlayerDatabase::Get().GetField<SavedNotificationData>(FieldKey::NOTIFICATION_DATA, playerId);
-    for (int i = 0; i < savedNotifs->notificationstodeliver_size(); i++) {
-        const SavedNotification& savedNotif = savedNotifs->notificationstodeliver(i);
-        std::unique_ptr<Notification> notification = std::make_unique<Notification>(SpectreRpcType(savedNotif.rpctype()), savedNotif.notificationid(), savedNotif.notificationdata());
-        notificationQueue.push(std::move(notification));
-    }
-    httpConnectionThread = std::jthread([this](std::stop_token stopToken) {
-        HTTPConnectionThread(stopToken);
-    });
+std::vector<PlayerConnectionThread*> PlayerConnectionThread::playerConnections{};
+
+PlayerConnectionThread::PlayerConnectionThread(tcp::socket socket, boost::asio::io_context& ioCtx)
+    : playerConnectionSocket(std::move(socket)), ioCtx(ioCtx) {
+    std::unique_lock lock(playerConnectionsMutex);
+    playerConnections.push_back(this);
+    BeginHTTPRead();
 }
 
-const std::string& PlayerConnectionThread::GetPlayerId() {
-    return playerId;
+const std::string& PlayerConnectionThread::GetPlayerId() const {
+    static const std::string emptyId = "";
+    if (websocketConnection == nullptr) {
+        spdlog::error("Cannot return valid player id in PlayerConnectionThread::GetPlayerId() since websocket conn hasn't been initialized yet, returning empty id");
+        return emptyId;
+    }
+    return websocketConnection->GetPlayerId();
 }
 
 SpectreWebsocket* PlayerConnectionThread::GetWebsocketConnection() {
@@ -30,17 +29,15 @@ SpectreWebsocket* PlayerConnectionThread::GetWebsocketConnection() {
 std::string PlayerConnectionThread::GetIPAddress() const {
     if (!IsWebsocketConnection()) {
         return playerConnectionSocket.remote_endpoint().address().to_string();
-    } else {
-        return ws->next_layer().remote_endpoint().address().to_string();
     }
+    return ws->next_layer().remote_endpoint().address().to_string();
 }
 
 unsigned int PlayerConnectionThread::GetPort() const {
     if (!IsWebsocketConnection()) {
         return playerConnectionSocket.remote_endpoint().port();
-    } else {
-        return ws->next_layer().remote_endpoint().port();
     }
+    return ws->next_layer().remote_endpoint().port();
 }
 
 void PlayerConnectionThread::EnqueueNotification(std::unique_ptr<Notification> notification) {
@@ -48,33 +45,13 @@ void PlayerConnectionThread::EnqueueNotification(std::unique_ptr<Notification> n
     notificationQueue.push(std::move(notification));
 }
 
-void PlayerConnectionThread::HTTPConnectionThread(std::stop_token stopToken) {
-    while (!stopToken.stop_requested()) {
-        http::async_read(playerConnectionSocket, httpDataBuffer, httpRequest,
-            boost::beast::bind_front_handler(&PlayerConnectionThread::OnHTTPRequestReceive, this));
-        while (!stopToken.stop_requested()) {
-            if (httpMessageReceivedMutex.try_lock() && httpMessageReceived) {
-                httpMessageReceived = false;
-                httpMessageReceivedMutex.unlock();
-                break;
-            }
-            std::this_thread::yield();
-        }
-    }
+void PlayerConnectionThread::BeginHTTPRead() {
+    http::async_read(playerConnectionSocket, httpDataBuffer, httpRequest,
+    boost::beast::bind_front_handler(&PlayerConnectionThread::OnHTTPRequestReceive, this));
 }
 
-void PlayerConnectionThread::WebsocketConnectionThread(std::stop_token stopToken) {
-    while (!stopToken.stop_requested()) {
-        ws->async_read(websocketDataBuffer, boost::beast::bind_front_handler(&PlayerConnectionThread::OnWebsocketMessageReceive, this));
-        while (!stopToken.stop_requested()) {
-            if (webSocketMessageReceivedMutex.try_lock() && webSocketMessageReceived) {
-                webSocketMessageReceived = false;
-                webSocketMessageReceivedMutex.unlock();
-                break;
-            }
-            std::this_thread::yield();
-        }
-    }
+void PlayerConnectionThread::BeginWebsocketRead() {
+    ws->async_read(websocketDataBuffer, boost::beast::bind_front_handler(&PlayerConnectionThread::OnWebsocketMessageReceive, this));
 }
 
 static std::string StripQueryParams(const std::string& url) {
@@ -92,8 +69,6 @@ static std::string StripQueryParams(const std::string& url) {
 }
 
 void PlayerConnectionThread::OnHTTPRequestReceive(boost::beast::error_code err, std::size_t readSize) {
-    std::unique_lock lock(httpMessageReceivedMutex);
-    httpMessageReceived = true;
     if (err.failed()) {
         spdlog::error("Failed to receive HTTP request due to error: {}", err.message());
         return;
@@ -103,9 +78,16 @@ void PlayerConnectionThread::OnHTTPRequestReceive(boost::beast::error_code err, 
         ws = new boost::beast::websocket::stream<tcp::socket>(std::move(playerConnectionSocket));
         ws->accept(httpRequest);
         websocketConnection = new SpectreWebsocket(*ws, httpRequest);
-        websocketConnectionThread = std::jthread([this](std::stop_token stopToken) {
-            WebsocketConnectionThread(stopToken);
+        std::unique_ptr<SavedNotificationData> savedNotifs = PlayerDatabase::Get().GetField<SavedNotificationData>(FieldKey::NOTIFICATION_DATA, GetPlayerId());
+        for (int i = 0; i < savedNotifs->notificationstodeliver_size(); i++) {
+            const SavedNotification& savedNotif = savedNotifs->notificationstodeliver(i);
+            std::unique_ptr<Notification> notification = std::make_unique<Notification>(SpectreRpcType(savedNotif.rpctype()), savedNotif.notificationid(), savedNotif.notificationdata());
+            notificationQueue.push(std::move(notification));
+        }
+        notificationSenderThread = std::jthread([this](std::stop_token st) {
+            NotificationSenderThread(st);
         });
+        BeginWebsocketRead();
         return;
     }
     std::string target = StripQueryParams(httpRequest.target());
@@ -123,44 +105,69 @@ void PlayerConnectionThread::OnHTTPRequestReceive(boost::beast::error_code err, 
         return;
     }
     processor->Process(httpRequest, playerConnectionSocket);
+    BeginHTTPRead();
 }
 
 void PlayerConnectionThread::OnWebsocketMessageReceive(boost::beast::error_code err, std::size_t readSize) {
-    std::unique_lock lock(webSocketMessageReceivedMutex);
-    webSocketMessageReceived = true;
     if (err.failed()) {
         spdlog::error("Failed to receive websocket message: {}", err.message());
         return;
     }
-    SpectreWebsocketRequest wsReq(*websocketConnection, websocketDataBuffer);
+    std::unique_lock wsLock(websocketConnectionMutex);
+    std::string msgData = boost::beast::buffers_to_string(websocketDataBuffer.data());
+    SpectreWebsocketRequest wsReq(*websocketConnection, msgData);
+    websocketDataBuffer.consume(websocketDataBuffer.size());
     WebsocketPacketProcessor* processor = WebsocketPacketProcessor::GetProcessorForRpc(wsReq.GetRequestType());
     if (processor == nullptr) {
         spdlog::warn("No processor for message type {}, dropping packet", wsReq.GetRequestType().GetName());
         return;
     }
     processor->Process(wsReq, *websocketConnection);
+    BeginWebsocketRead();
+}
+
+void PlayerConnectionThread::NotificationSenderThread(std::stop_token st) {
+    while (!st.stop_requested()) {
+        if (!notificationQueueMutex.try_lock()) {
+            continue;
+        }
+        if (notificationQueue.empty()) {
+            notificationQueueMutex.unlock();
+            continue;
+        }
+        std::unique_ptr<Notification> notif = std::move(notificationQueue.front());
+        notificationQueue.pop();
+        std::unique_lock conLock(websocketConnectionMutex);
+        websocketConnection->SendNotification(notif->GetNotificationData(), notif->GetNotificationType());
+        notificationQueueMutex.unlock();
+    }
 }
 
 PlayerConnectionThread::~PlayerConnectionThread() {
-    httpConnectionThread.request_stop();
-    websocketConnectionThread.request_stop();
-    httpConnectionThread.join();
-    websocketConnectionThread.join();
-    std::unique_ptr<SavedNotificationData> notificationData = PlayerDatabase::Get().GetField<SavedNotificationData>(FieldKey::NOTIFICATION_DATA, playerId);
-    while (!notificationQueue.empty()){
-        Notification& notif = *notificationQueue.front();
-        SavedNotification notifSaved;
-        notifSaved.set_notificationid(notif.GetNotificationId());
-        notifSaved.set_rpctype(notif.GetNotificationType().GetName());
-        notifSaved.set_notificationdata(notif.GetNotificationData());
-        notificationData->add_notificationstodeliver()->CopyFrom(notifSaved);
-        notificationQueue.pop();
+    notificationSenderThread.request_stop();
+    notificationSenderThread.join();
+    if (!GetPlayerId().empty()) {
+        std::unique_ptr<SavedNotificationData> notificationData = PlayerDatabase::Get().GetField<SavedNotificationData>(FieldKey::NOTIFICATION_DATA, GetPlayerId());
+        std::unique_lock Notiflock(notificationQueueMutex);
+        while (!notificationQueue.empty()){
+            Notification& notif = *notificationQueue.front();
+            SavedNotification notifSaved;
+            notifSaved.set_notificationid(notif.GetNotificationId());
+            notifSaved.set_rpctype(notif.GetNotificationType().GetName());
+            notifSaved.set_notificationdata(notif.GetNotificationData());
+            notificationData->add_notificationstodeliver()->CopyFrom(notifSaved);
+            notificationQueue.pop();
+        }
+        PlayerDatabase::Get().SetField(FieldKey::NOTIFICATION_DATA, notificationData.get(), GetPlayerId());
     }
-    PlayerDatabase::Get().SetField(FieldKey::NOTIFICATION_DATA, notificationData.get(),  playerId);
     delete websocketConnection;
     delete ws;
 }
 
 bool PlayerConnectionThread::IsWebsocketConnection() const {
     return ws != nullptr;
+}
+
+std::vector<PlayerConnectionThread*>& PlayerConnectionThread::GetPlayerConnections() {
+    return playerConnections;
 }

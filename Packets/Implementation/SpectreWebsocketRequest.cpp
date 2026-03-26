@@ -3,16 +3,16 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
-SpectreWebsocketRequest::SpectreWebsocketRequest(SpectreWebsocket& sock, reqbuf req)
-    : websocket(sock), requestBuf(std::move(req)) {
-    json reqjson = json::parse(static_cast<const char*>(requestBuf.data().data()), static_cast<const char*>(requestBuf.data().data()) + requestBuf.size());
+SpectreWebsocketRequest::SpectreWebsocketRequest(SpectreWebsocket& sock, std::string& reqBody)
+    : websocket(sock), reqBody(reqBody) {
+    json reqjson = json::parse(reqBody);
     reqJson = std::make_shared<json>(reqjson);
     try {
         requestType = SpectreRpcType(std::string(reqJson->at("type")));
     } catch (std::exception& e) {
         spdlog::warn("log type not found for " + reqJson->at("type").get<std::string>());
     }
-    m_requestId = reqJson->at("requestId");
+    requestId = reqJson->at("requestId");
     payloadAsStr = reqJson->at("payload").dump();
 }
 
@@ -22,7 +22,7 @@ std::shared_ptr<json> SpectreWebsocketRequest::GetPayload() const {
 
 std::shared_ptr<json> SpectreWebsocketRequest::GetBaseJsonResponse() {
     json response;
-    response["requestId"] = m_requestId;
+    response["requestId"] = requestId;
     response["type"] = GetResponseType();
     response["payload"] = json::object();
     return std::make_shared<json>(std::move(response));
@@ -39,4 +39,20 @@ std::string SpectreWebsocketRequest::GetResponseType() const {
     }
     resType += "Response";
     return resType;
+}
+
+const std::string& SpectreWebsocketRequest::GetBody() const {
+    return reqBody;
+}
+
+SpectreRpcType SpectreWebsocketRequest::GetRequestType() const {
+    return requestType;
+}
+
+SpectreWebsocket& SpectreWebsocketRequest::GetSocket() const {
+    return websocket;
+}
+
+int SpectreWebsocketRequest::GetRequestId() const {
+    return requestId;
 }

@@ -6,34 +6,34 @@
 
 class PlayerConnectionThread {
 private:
-    std::string playerId;
+    boost::asio::io_context& ioCtx;
     std::queue<std::unique_ptr<Notification>> notificationQueue;
     std::mutex notificationQueueMutex;
     boost::beast::flat_buffer httpDataBuffer;
     http::request<http::string_body> httpRequest;
-    std::jthread httpConnectionThread;
     boost::beast::flat_buffer websocketDataBuffer;
-    std::jthread websocketConnectionThread;
-    void HTTPConnectionThread(std::stop_token stopToken);
-    void WebsocketConnectionThread(std::stop_token stopToken);
+    void BeginHTTPRead();
+    void BeginWebsocketRead();
     tcp::socket playerConnectionSocket;
     SpectreWebsocket* websocketConnection{};
+    std::mutex websocketConnectionMutex;
     boost::beast::websocket::stream<tcp::socket>* ws{};
     void OnWebsocketMessageReceive(boost::beast::error_code err, std::size_t readSize);
     void OnHTTPRequestReceive(boost::beast::error_code err, std::size_t readSize);
-    bool httpMessageReceived = false;
-    std::mutex httpMessageReceivedMutex;
-    bool webSocketMessageReceived = false;
-    std::mutex webSocketMessageReceivedMutex;
+    static std::vector<PlayerConnectionThread*> playerConnections;
+    std::mutex playerConnectionsMutex;
+    void NotificationSenderThread(std::stop_token st);
+    std::jthread notificationSenderThread;
 public:
-    explicit PlayerConnectionThread(tcp::socket playerConnectionSocket);
+    explicit PlayerConnectionThread(tcp::socket socket, boost::asio::io_context& ioCtx);
     ~PlayerConnectionThread();
     PlayerConnectionThread(PlayerConnectionThread& other) = delete;
     PlayerConnectionThread() = delete;
     void EnqueueNotification(std::unique_ptr<Notification> notification);
-    const std::string& GetPlayerId();
+    const std::string& GetPlayerId() const;
     SpectreWebsocket* GetWebsocketConnection();
     std::string GetIPAddress() const;
     unsigned int GetPort() const;
     bool IsWebsocketConnection() const;
+    static std::vector<PlayerConnectionThread*>& GetPlayerConnections();
 };
