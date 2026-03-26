@@ -210,9 +210,9 @@ jobs:
         - name: Clean up vcpkg folder
           shell: powershell
           run: |
-            Remove-Item ./vcpkg/buildtrees -Recurse -Force
-            Remove-Item ./vcpkg/downloads -Recurse -Force
-            Remove-Item ./vcpkg/packages -Recurse -Force
+            Remove-Item C:\b -Recurse -Force
+            Remove-Item C:\d -Recurse -Force
+            Remove-Item C:\p -Recurse -Force
 
 #  test-ubuntu:
 #    needs: build-ubuntu
