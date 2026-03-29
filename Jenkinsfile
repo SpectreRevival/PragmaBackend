@@ -59,8 +59,7 @@ pipeline {
 								sh "echo \"{\\\"steamApiKey\\\": \\\"$STEAM_KEY\\\"}\" > auth.json"
 									} else {
 								powershell '''
-										$content = "{`"steamApiKey`": `"$env:STEAM_KEY`"
-									} "
+										$content = "{`"steamApiKey`": `"$env:STEAM_KEY`"}"
 									Set -Content -Path auth.json -Value $content
 									'''
 								}
@@ -76,12 +75,12 @@ script {
 				bat "if exist out rmdir /s /q out"
 				bat """
 								call \"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x64
-								cmake. --preset x64 -${ BUILD_TYPE }-win
+								cmake . --preset x64 -${ BUILD_TYPE }-win
 								"""
 							} else {
                     sh """
 								rm -rf out
-								cmake. --preset x64 -${ BUILD_TYPE }-linux
+								cmake . --preset x64 -${ BUILD_TYPE }-linux
 								"""
 							}
 						}
