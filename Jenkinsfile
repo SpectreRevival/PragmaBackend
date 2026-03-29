@@ -175,7 +175,9 @@ pipeline {
                                 options {
                                     throttle(['RamIntensiveJob'])
                                 }
-                                sh "cmake --preset x64-debug-linux"
+                                steps {
+                                    sh "cmake --preset x64-debug-linux"
+                                }
                             }
                             stage("Build protobuf files") {
                                 sh "cmake --build out/build/x64-debug-linux --target generate_protos"
