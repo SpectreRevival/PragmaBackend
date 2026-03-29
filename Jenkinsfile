@@ -3,6 +3,13 @@ pipeline {
 
     stages {
         stage('Build Matrix') {
+            options {
+                throttleJobProperty(
+                    categories: ['RamIntensiveJob'],
+                    throttleEnabled: true,
+                    throttleOption: 'category'
+                )
+            }
             matrix {
                 axes {
                     axis {
@@ -157,6 +164,13 @@ pipeline {
                 }
 
                 stage("Code linter") {
+                    options {
+                        throttleJobProperty(
+                            categories: ['RamIntensiveJob'],
+                            throttleEnabled: true,
+                            throttleOption: 'category'
+                        )
+                    }
                     agent { label 'linux' }
                     steps {
                         script {
