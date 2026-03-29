@@ -193,8 +193,8 @@ script {
 				}
 				stage("Run linter"){
 					sh """
-						FILES=$(find . -type f -regex '\./\(Packets\|Persistence\|tests\)/.*\.\(h\|cpp\)$')
-						run-clang-tidy $FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp -fix -p out/build/x64-debug-linux -extra-arg=-Werror
+						FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
+						run-clang-tidy \$FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp -fix -p out/build/x64-debug-linux -extra-arg=-Werror
 					"""
 				}
 				stage("Create diff"){
