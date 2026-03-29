@@ -205,11 +205,7 @@ pipeline {
     }
     post {
 	always {
-		step([$class: 'GithubCommitStatusSetter',
-			contextSource: [$class: 'StaticStatusContextSource', context: 'jenkins/build-status'],
-			statusResultSource: [$class: 'ConditionalStatusResultSource',
-			results: [[$class: 'AnyBuildResult', message: 'Build finished', state: 'SUCCESS']]]
-		])
+		step([$class: 'GitHubCommitStatusSetter', contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: ' jenkins/build-status']])
 	}
     }
 }
