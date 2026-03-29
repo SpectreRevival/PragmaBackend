@@ -217,7 +217,9 @@ pipeline {
     }
     post {
 	always {
+        node('linux'){
         step([$class: 'GitHubCommitStatusSetter', contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'jenkins/build-status']])
+        }
 	}
     }
 }
