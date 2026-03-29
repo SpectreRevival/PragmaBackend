@@ -16,6 +16,9 @@ pipeline {
                 }
 
                 agent { label "${OS}" }
+                options {
+                    throttle(['RamIntensiveJob'])
+                }
 
                 stages {
                     stage('Checkout') {
@@ -67,9 +70,6 @@ pipeline {
                     }
 
                     stage('Configure') {
-                        options {
-                            throttle(['RamIntensiveJob'])
-                        }
                         steps {
                             script {
                                 if (env.OS == 'windows') {
@@ -89,9 +89,6 @@ pipeline {
                     }
 
                     stage('Build') {
-                        options {
-                            throttle(['RamIntensiveJob'])
-                        }
                         steps {
                             script {
                                 if (env.OS == 'windows') {
@@ -164,6 +161,9 @@ pipeline {
 
                 stage("Code linter") {
                     agent { label 'linux' }
+                    options {
+                        throttle(['RamIntensiveJob'])
+                    }
                     steps {
                         script {
                             stage("Checkout") {
@@ -172,9 +172,6 @@ pipeline {
                                 sh "git submodule update --init --recursive"
                             }
                             stage("Configure") {
-                                options {
-                                    throttle(['RamIntensiveJob'])
-                                }
                                 steps {
                                     sh "cmake --preset x64-debug-linux"
                                 }
@@ -183,9 +180,6 @@ pipeline {
                                 sh "cmake --build out/build/x64-debug-linux --target generate_protos"
                             }
                             stage("Run linter") {
-                                options {
-                                    throttle(['RamIntensiveJob'])
-                                }
                                 sh """
                                     FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
                                     run-clang-tidy \$FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp -fix -p out/build/x64-debug-linux -extra-arg=-Werror
