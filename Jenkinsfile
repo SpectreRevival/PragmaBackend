@@ -56,9 +56,12 @@ pipeline {
 					]){
 						script {
 							if(isUnix()){
-								sh "echo \"{\\\"steamApiKey\\\": \\\"${STEAM_KEY}\\\"}\" > auth.json"
+								sh "echo \"{\\\"steamApiKey\\\": \\\"$STEAM_KEY\\\"}\" > auth.json"
 							} else {
-								bat "echo \"{\\\"steamApiKey\\\": \\\"${STEAM_KEY}\\\"}\" > auth.json"
+								powershell '''
+  									$content = "{`"steamApiKey`": `"$env:STEAM_KEY`"}"
+  									Set-Content -Path auth.json -Value $content
+								'''
 							}
 						}
 					}
