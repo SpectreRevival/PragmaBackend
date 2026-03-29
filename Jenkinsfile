@@ -2,6 +2,7 @@ pipeline {
     agent none
 
     stages {
+stage('status checks'){
 		parallel {
 		stage('Build Matrix') {
             matrix {
@@ -227,6 +228,7 @@ script {
 				}
 			}
 		}
+}
 	}
 		}
 }
