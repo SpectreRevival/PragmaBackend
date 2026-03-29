@@ -2,8 +2,6 @@ pipeline {
     agent none
 
     stages {
-stage('status checks'){
-		parallel {
 		stage('Build Matrix') {
             matrix {
 
@@ -123,6 +121,8 @@ script {
 			}
 		}
 	}
+stage("static analyzers"){
+parallel {
 	stage("Code formatter"){
 		agent { label 'linux' }
 		steps {
@@ -229,8 +229,9 @@ script {
 			}
 		}
 }
+}}
 	}
 		}
 }
-}
+
 
