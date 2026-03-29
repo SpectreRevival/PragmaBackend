@@ -205,7 +205,7 @@ pipeline {
     }
     post {
 	always {
-		step([$class: 'GitHubCommitStatusSetter', contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: ' jenkins/build-status']])
+        step([$class: 'GitHubCommitStatusSetter', contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'jenkins/build-status']])
 	}
     }
 }
