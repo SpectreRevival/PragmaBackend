@@ -4,11 +4,7 @@ pipeline {
     stages {
         stage('Build Matrix') {
             options {
-                throttleJobProperty(
-                    categories: ['RamIntensiveJob'],
-                    throttleEnabled: true,
-                    throttleOption: 'category'
-                )
+                throttle(['RamIntensiveJob'])
             }
             matrix {
                 axes {
@@ -165,11 +161,7 @@ pipeline {
 
                 stage("Code linter") {
                     options {
-                        throttleJobProperty(
-                            categories: ['RamIntensiveJob'],
-                            throttleEnabled: true,
-                            throttleOption: 'category'
-                        )
+                        throttle(['RamIntensiveJob'])
                     }
                     agent { label 'linux' }
                     steps {
