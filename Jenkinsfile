@@ -49,6 +49,22 @@ pipeline {
 			}
 		    }
 
+			stage("Write auth.json"){
+				steps {
+					withCredentials([
+						string(credentialsId: 'STEAM_KEY', variable: 'STEAM_KEY')
+					]){
+						script {
+							if(isUnix()){
+								sh "echo \"{\\\"steamApiKey\\\": \\\"${STEAM_KEY}\\\"}\" > auth.json"
+							} else {
+								bat "echo \"{\\\"steamApiKey\\\": \\\"${STEAM_KEY}\\\"}\" > auth.json"
+							}
+						}
+					}
+				}
+			}
+
 		    stage('Configure'){
 			steps {
 script {
