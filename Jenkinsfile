@@ -59,8 +59,9 @@ pipeline {
 								sh "echo \"{\\\"steamApiKey\\\": \\\"$STEAM_KEY\\\"}\" > auth.json"
 									} else {
 								powershell '''
-										$content = "{`"steamApiKey`": `"$env:STEAM_KEY`"}"
-									Set -Content -Path auth.json -Value $content
+										$content = "{`"steamApiKey`": `"$env:STEAM_KEY`"
+									} "
+									Set - Content - Path auth.json - Value $content
 									'''
 								}
 							}
@@ -75,12 +76,12 @@ script {
 				bat "if exist out rmdir /s /q out"
 				bat """
 								call \"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x64
-								cmake . --preset x64 -${ BUILD_TYPE }-win
+								cmake. --preset x64 - ${ BUILD_TYPE } -win
 								"""
 							} else {
                     sh """
-								rm -rf out
-								cmake . --preset x64 -${ BUILD_TYPE }-linux
+								rm - rf out
+								cmake. --preset x64 - ${ BUILD_TYPE } -linux
 								"""
 							}
 						}
@@ -93,7 +94,7 @@ script {
 							if (env.OS == 'windows') {
                                     bat """
 								call \"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x64
-								cmake--build out / build / x64 -${ BUILD_TYPE }-win
+								cmake--build out / build / x64 - ${ BUILD_TYPE } -win
 								"""
 							} else {
                                     sh "cmake --build out/build/x64-${BUILD_TYPE}-linux"
@@ -120,7 +121,7 @@ script {
 			}
 		}
 	}
-stage("static analyzers"){
+stage("code analysis"){
 parallel {
 	stage("Code formatter"){
 		agent { label 'linux' }
@@ -227,10 +228,9 @@ parallel {
 				}
 			}
 		}
-}
-}}
 	}
 		}
-
-
+}
+}
+}
 
