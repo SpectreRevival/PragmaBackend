@@ -91,7 +91,10 @@ script {
                         steps {
                             script {
                                 if (env.OS == 'windows') {
-                                    bat "cmake --build out/build/x64-${BUILD_TYPE}-win"
+                                    bat """
+					call \"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x64
+					cmake --build out/build/x64-${BUILD_TYPE}-win
+				    """
                                 } else {
                                     sh "cmake --build out/build/x64-${BUILD_TYPE}-linux"
                                 }
