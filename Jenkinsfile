@@ -21,7 +21,18 @@ pipeline {
                 stages {
 
                     stage('Checkout') {
-                        steps { checkout scm }
+                        steps { 
+				checkout scm
+				script {
+					if(isUnix()){
+						sh "git submodule sync --recursive"
+						sh "git submodule update --init --recursive"
+					} else {
+						bat "git submodule sync --recursive"
+						bat "git submodule update --init --recursive"
+					}
+				}
+			}
                     }
 
 	            stage('Get vcpkg commit'){
