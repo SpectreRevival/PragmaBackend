@@ -167,10 +167,9 @@ int main(int argc, char** argv) {
         spdlog::error("Failed to initialize handlers, exiting...", e.what());
     }
     try{
-        RequestRouter::CreateRouter(gamePort);
-        RequestRouter::CreateRouter(wsPort);
-        RequestRouter::CreateRouter(socialPort);
-        RequestRouter::Start();
+        RequestRouter::CreateServer(gamePort);
+        RequestRouter::CreateServer(wsPort);
+        RequestRouter::CreateServer(socialPort);
         logger->info("acceptor threads started");
         std::ofstream serverLockFile("./server.lock", std::ios::trunc | std::ios::out);
         while (!bStop) {

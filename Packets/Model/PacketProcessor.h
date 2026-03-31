@@ -1,7 +1,6 @@
 #pragma once
 #include "restinio/request_handler.hpp"
 #include "restinio/router/express.hpp"
-#include "restinio/settings.hpp"
 #include "restinio/traits.hpp"
 
 #include <HTTPRequestIdentifier.h>
@@ -9,12 +8,6 @@
 #include <SpectreWebsocketRequest.h>
 #include <string>
 #include <utility>
-
-struct RestinioServerTraits : public restinio::default_traits_t {
-    using logger_t = restinio::null_logger_t;
-    using timer_manager_t = restinio::asio_timer_manager_t;
-    using request_handler_t = restinio::router::express_router_t<>;
-};
 
 class HTTPPacketProcessor {
   private:
