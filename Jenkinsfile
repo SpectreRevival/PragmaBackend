@@ -209,7 +209,7 @@ pipeline {
             }
         }
 
-        stage("Build docker image"){
+        /*stage("Build docker image"){
             agent { label 'host' }
             steps {
                 script {
@@ -238,7 +238,7 @@ pipeline {
                 }
             }
 
-        }
+        }*/
     }
     post {
         always {
