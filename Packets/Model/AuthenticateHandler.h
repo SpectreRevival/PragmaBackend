@@ -3,8 +3,8 @@
 
 class AuthenticateHandler : public HTTPPacketProcessor {
   public:
-    explicit AuthenticateHandler(std::string route);
-    void Process(const http::request<http::string_body>& req, tcp::socket& sock) override;
+    explicit AuthenticateHandler(HTTPRequestIdentifier id);
+    std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> Process(restinio::request_handle_t req, restinio::router::route_params_t params) override;
 
   private:
     static std::string CreatePlayerFromSteam(const std::string& steam64, const std::string& displayName);

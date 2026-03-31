@@ -2,9 +2,8 @@
 // Created by astro on 27/09/2025.
 //
 
-#include "ConnectionAcceptor.h"
 #include "GetFriendsListAndRegisterOnlineHandler.h"
-#include "PlayerConnectionThread.h"
+#include "RequestRouter.h"
 #include "StaticHTTPPackets.cpp" // NOLINT
 #include "StaticWSPackets.cpp"   // NOLINT
 #include "SubmitProviderIdHandler.h"
@@ -52,6 +51,7 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <restinio/core.hpp>
 #include <spdlog/async.h>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -64,15 +64,12 @@ static uint16_t gamePort = 8081;
 static uint16_t socialPort = 8082;
 static uint16_t wsPort = 80;
 
-namespace asio = boost::asio;
 namespace beast = boost::beast;
 namespace http = beast::http;
 namespace websocket = beast::websocket;
-using tcp = asio::ip::tcp;
 namespace fs = std::filesystem;
 
 static std::shared_ptr<spdlog::logger> logger;
-static boost::asio::io_context ioc{};
 
 static void SetupLogger() {
     auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -98,10 +95,6 @@ static void HandleInterrupt(int /*sigint*/) {
 }
 
 static void ShutdownServer() {
-    for (PlayerConnectionThread* connection : PlayerConnectionThread::GetPlayerConnections()) {
-        spdlog::info("Shutting down connection to {}:{}", connection->GetIPAddress(), connection->GetPort());
-        delete connection;
-    }
 }
 
 // the main accept loop
@@ -122,8 +115,8 @@ int main(int argc, char** argv) {
 
         // feel like this needs cleaning up T_T
 
-        new SubmitProviderIdHandler("/v1/submitproviderid");
-        new AuthenticateHandler("/v1/account/authenticateorcreatev2");
+        new SubmitProviderIdHandler(HTTPRequestIdentifier("/v1/submitproviderid", HTTPRequestType::POST));
+        new AuthenticateHandler(HTTPRequestIdentifier("/v1/account/authenticateorcreatev2", HTTPRequestType::GET));
         new HeartbeatProcessor(SpectreRpcType("PlayerSessionRpc.HeartbeatV1Request"));
         new FieldFetchProcessor<Inventory>(
             SpectreRpcType("InventoryRpc.GetInventoryV2Request"),
@@ -174,22 +167,17 @@ int main(int argc, char** argv) {
         spdlog::error("Failed to initialize handlers, exiting...", e.what());
     }
     try{
-        auto gameAcceptor   = std::make_unique<ConnectionAcceptor>(ioc, gamePort);
-        auto socialAcceptor = std::make_unique<ConnectionAcceptor>(ioc, socialPort);
-        auto wsAcceptor     = std::make_unique<ConnectionAcceptor>(ioc, wsPort);
+        RequestRouter::CreateRouter(gamePort);
+        RequestRouter::CreateRouter(wsPort);
+        RequestRouter::CreateRouter(socialPort);
+        RequestRouter::Start();
         logger->info("acceptor threads started");
         std::ofstream serverLockFile("./server.lock", std::ios::trunc | std::ios::out);
-        std::jthread ioThread([&](std::stop_token st) {
-            while (!st.stop_requested()) {
-                ioc.run();
-            }
-        });
         while (!bStop) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-        ioThread.request_stop();
-        ioc.stop();
-        ioThread.join();
+        logger->info("Starting shutdown...");
+        RequestRouter::Shutdown();
         serverLockFile.close();
         fs::remove("./server.lock");
     } catch (const std::exception& e) {

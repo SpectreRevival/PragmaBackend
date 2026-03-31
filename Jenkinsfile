@@ -208,6 +208,37 @@ pipeline {
                 }
             }
         }
+
+        stage("Build docker image"){
+            agent { label 'host' }
+            steps {
+                script {
+                    stage("Checkout"){
+                        steps {
+                            checkout scm
+                        }
+                    }
+                    stage("Download x64-release-linux artifact"){
+                        steps {
+                            copyArtifacts(projectName: env.JOB_NAME, selector: specific(env.BUILD_NUMBER), filter: 'x64-release-linux/**', target: 'out/build/x64-release-linux/')
+                        }
+                    }
+                    stage("Build image"){
+                        steps {
+                            script {
+                                if(isUnix()){
+                                    sh "docker build -t pragmabackend:latest ."
+                                } else {
+                                    bat "docker build -t pragmabackend:latest ."
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+
+        }}
     }
     post {
 	always {

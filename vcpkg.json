@@ -50,6 +50,7 @@
     "qtbase",
     "qthttpserver",
     "qtmultimedia",
-    "qttranslations"
+    "qttranslations",
+    "restinio"
   ]
 }

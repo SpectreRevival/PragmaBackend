@@ -6,8 +6,8 @@
 #include <SubmitProviderIdHandler.h>
 #include <fstream>
 
-SubmitProviderIdHandler::SubmitProviderIdHandler(const std::string& route)
-    : HTTPPacketProcessor(route) {
+SubmitProviderIdHandler::SubmitProviderIdHandler(HTTPRequestIdentifier id)
+    : HTTPPacketProcessor(id) {
 }
 
 static std::string GetSteamApiKey() {
@@ -18,46 +18,27 @@ static std::string GetSteamApiKey() {
     return authJson.at("steamApiKey").get<std::string>();
 }
 
-static std::string ClientIp(const tcp::socket& sock) {
-    return sock.remote_endpoint().address().to_string();
-}
-
-void SubmitProviderIdHandler::Process(const http::request<http::string_body>& req, tcp::socket& sock) {
-    http::response<http::string_body> res;
-    res.version(req.version());
-    res.keep_alive(req.keep_alive());
-    res.set(http::field::content_type, "application/json; charset=UTF-8");
-    res.set(http::field::vary, "Origin");
-    auto reply = [&](http::status st, std::string body) {
-        res.result(st);
-        res.body() = std::move(body);
-        res.prepare_payload();
-        http::write(sock, res);
-    };
-    if (req.method() != http::verb::post) {
-        res.set(http::field::allow, "POST");
-        return reply(http::status::method_not_allowed, R"({"error":"method not allowed"})");
-    }
+std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> SubmitProviderIdHandler::Process(restinio::request_handle_t req, restinio::router::route_params_t params) {
     if (GetSteamApiKey().empty()) {
-        return reply(http::status::bad_request, R"({"error":"steamApiKey not configured"})");
+        return req->create_response(restinio::status_bad_request()).set_body("no steam api key provided");
     }
 
-    const auto body = json::parse(req.body(), nullptr, false);
+    const auto body = json::parse(req->body(), nullptr, false);
     if (body.is_discarded() || !body.contains("providerId") || !body.at("providerId").is_string()) {
-        return reply(http::status::bad_request, R"({"error":"providerId required"})");
+        return req->create_response(restinio::status_bad_request()).set_body("err: provider id required");
     }
     const std::string steam64 = body.at("providerId");
     if (steam64.empty()) {
-        return reply(http::status::bad_request, R"({"error":"providerId required"})");
+        return req->create_response(restinio::status_bad_request()).set_body("err: steam id required");
     }
 
     SteamValidator v(GetSteamApiKey());
     auto info = v.ValidateSteamId(steam64);
     if (!info) {
-        return reply(http::status::bad_request, R"({"error":"invalid steam id"})");
+        return req->create_response(restinio::status_bad_request()).set_body("err: invalid steam id");
     }
 
-    AuthLatch::Get().Put(ClientIp(sock), steam64, /*latch timer in seconds*/ 120);
+    AuthLatch::Get().Put(req->remote_endpoint().address().to_string(), steam64, /*latch timer in seconds*/ 120);
     // 120s for now until i sort the launcher out - astro
-    return reply(http::status::ok, R"({"ok":true})");
+    return req->create_response().set_body(R"({"ok":true})");
 }

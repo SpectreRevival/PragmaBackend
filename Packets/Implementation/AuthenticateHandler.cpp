@@ -46,8 +46,8 @@ static const AuthCfg& GetAuthCfg() {
     return cfg;
 }
 
-AuthenticateHandler::AuthenticateHandler(std::string route)
-    : HTTPPacketProcessor(std::move(route)) {
+AuthenticateHandler::AuthenticateHandler(HTTPRequestIdentifier id)
+    : HTTPPacketProcessor(id) {
 }
 
 static std::string ClientIp(const tcp::socket& sock) {
@@ -61,30 +61,12 @@ static std::string PlayerUuidFromSteam64(const std::string& steam64) {
     return boost::lexical_cast<std::string>(id);
 }
 
-void AuthenticateHandler::Process(const http::request<http::string_body>& req, tcp::socket& sock) {
-    http::response<http::string_body> res;
-    res.version(req.version());
-    res.keep_alive(req.keep_alive());
-    res.set(http::field::content_type, "application/json; charset=UTF-8");
-    res.set(http::field::vary, "Origin");
-
-    auto reply = [&](http::status st, std::string body) {
-        res.result(st);
-        res.body() = std::move(body);
-        res.prepare_payload();
-        http::write(sock, res);
-    };
+std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> AuthenticateHandler::Process(restinio::request_handle_t req, restinio::router::route_params_t params) {
     const std::string& steamKey = GetAuthCfg().steamApiKey;
-
-    if (req.method() != http::verb::post) {
-        res.set(http::field::allow, "POST");
-        return reply(http::status::method_not_allowed, R"({"error":"method not allowed"})");
-    }
-
-    const auto ip = ClientIp(sock);
+    const auto ip = req->remote_endpoint().address().to_string();
     const auto steam64 = AuthLatch::Get().TakeIfFresh(ip);
     if (steam64.empty()) {
-        return reply(http::status::bad_request, R"({"error":"NOSTEAMID"})");
+        return req->create_response(restinio::status_bad_request()).set_body(R"({"error":"NOSTEAMID"})");
     }
 
     auto& db = PlayerDatabase::Get();
@@ -101,7 +83,7 @@ void AuthenticateHandler::Process(const http::request<http::string_body>& req, t
     }
 
     if (db.IsBanned(playerId)) {
-        return reply(http::status::forbidden, R"({"error":"ACCOUNT BANNED. CONTACT ASTROVAL0 ON DISCORD"})");
+        return req->create_response(restinio::status_forbidden()).set_body(R"({"error":"ACCOUNT BANNED. CONTACT ASTROVAL0 ON DISCORD"})");
     }
 
     auto prof = db.GetField<ProfileData>(FieldKey::PROFILE_DATA, playerId);
@@ -114,7 +96,7 @@ void AuthenticateHandler::Process(const http::request<http::string_body>& req, t
         {"pragmaSocialToken", BuildJwt("SOCIAL", playerId, socialId, display, disc)}};
 
     json out = {{"pragmaTokens", tokens}};
-    return reply(http::status::ok, out.dump());
+    return req->create_response().set_body(out.dump());
 }
 
 std::string AuthenticateHandler::CreatePlayerFromSteam(const std::string& steam64, const std::string& displayName) {

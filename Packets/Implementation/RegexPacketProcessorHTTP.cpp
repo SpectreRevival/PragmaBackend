@@ -1,20 +1,12 @@
 #include <RegexPayloadProcessorHTTP.h>
 #include <spdlog/spdlog.h>
 
-void RegexPayloadProcessorHTTP::Process(const http::request<http::string_body>& req, tcp::socket& sock) {
-    http::response<http::string_body> res;
-    res.version(req.version());
-    res.keep_alive(req.keep_alive());
-    res.result(http::status::ok);
-    res.set(http::field::content_type, "application/json; charset=UTF-8");
-    res.set(http::field::vary, "Origin");
+std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> RegexPayloadProcessorHTTP::Process(restinio::request_handle_t req, restinio::router::route_params_t params) {
     for (const auto& [regex, payload] : resMap) {
-        if (std::regex_search(req.body(), regex.rx)) {
-            res.body() = payload->dump();
-            res.prepare_payload();
-            http::write(sock, res);
-            return;
+        if (std::regex_search(req->body(), regex.rx)) {
+            return req->create_response().set_body(payload->dump());
         }
     }
-    spdlog::error("Regex processor {} failed to find any valid response for the packet, dropping the packet.\nPacket contents: {}", GetRoute(), req.body());
+    return std::nullopt;
+    spdlog::error("Regex processor {} failed to find any valid response for the packet, dropping the packet.\nPacket contents: {}", GetRoute(), req->body());
 }

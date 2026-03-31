@@ -9,8 +9,8 @@ class StaticResponseProcessorHTTP : public HTTPPacketProcessor {
     std::shared_ptr<json> staticRes;
 
   public:
-    StaticResponseProcessorHTTP(const std::string& route, const std::shared_ptr<json>& res)
-        : HTTPPacketProcessor(route), staticRes(res){};
+    StaticResponseProcessorHTTP(HTTPRequestIdentifier id, const std::shared_ptr<json>& res)
+        : HTTPPacketProcessor(id), staticRes(res){};
 
-    void Process(const http::request<http::string_body>& req, tcp::socket& sock) override;
+    std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> Process(restinio::request_handle_t req, restinio::router::route_params_t params) override;
 };

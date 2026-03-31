@@ -1,31 +1,42 @@
 #pragma once
+#include "restinio/request_handler.hpp"
+#include "restinio/router/express.hpp"
+#include "restinio/settings.hpp"
+#include "restinio/traits.hpp"
+
+#include <HTTPRequestIdentifier.h>
 #include <SpectreRpcType.h>
 #include <SpectreWebsocketRequest.h>
-#include <boost/asio.hpp>
-#include <boost/beast/http.hpp>
 #include <string>
+#include <utility>
+
+struct RestinioServerTraits : public restinio::default_traits_t {
+    using logger_t = restinio::null_logger_t;
+    using timer_manager_t = restinio::asio_timer_manager_t;
+    using request_handler_t = restinio::router::express_router_t<>;
+};
 
 class HTTPPacketProcessor {
   private:
-    std::string route;
-    inline static std::unordered_map<std::string, HTTPPacketProcessor*> httpRoutes = {};
+    HTTPRequestIdentifier routeId;
+    inline static std::unordered_map<HTTPRequestIdentifier, HTTPPacketProcessor*> httpRoutes = {};
 
   public:
-    explicit HTTPPacketProcessor(std::string route)
-        : route(std::move(route)) {
-        httpRoutes[this->route] = this;
+    explicit HTTPPacketProcessor(HTTPRequestIdentifier routeId)
+        : routeId(std::move(routeId)) {
+        httpRoutes.insert_or_assign(routeId, this);
     };
     HTTPPacketProcessor(HTTPPacketProcessor& other) = delete;
     HTTPPacketProcessor(HTTPPacketProcessor&& other) = delete;
-    virtual void Process(const http::request<http::string_body>& req, tcp::socket& sock) = 0;
+    virtual std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> Process(restinio::request_handle_t req, restinio::router::route_params_t params) = 0;
     virtual ~HTTPPacketProcessor() {
-        httpRoutes.erase(route);
+        httpRoutes.erase(routeId);
     }
     [[nodiscard]] const std::string& GetRoute() const {
-        return route;
+        return routeId.GetRoute();
     }
-    static HTTPPacketProcessor* GetProcessorForRoute(const std::string& route) {
-        auto it = httpRoutes.find(route);
+    static HTTPPacketProcessor* GetProcessorForRoute(const HTTPRequestIdentifier& routeId) {
+        auto it = httpRoutes.find(routeId);
         return it == httpRoutes.end() ? nullptr : it->second;
     }
 };

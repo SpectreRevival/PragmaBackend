@@ -18,7 +18,7 @@ static void RegisterStaticHTTPHandlerFromFile(std::string route, std::string fil
     json res = json::parse(fileres);
     fileres.close();
     spdlog::info("registered static HTTP route {} from json file at {}", route, filename);
-    new StaticResponseProcessorHTTP(route, std::make_shared<json>(std::move(res)));
+    new StaticResponseProcessorHTTP(HTTPRequestIdentifier(route, HTTPRequestType::GET), std::make_shared<json>(std::move(res)));
 }
 #pragma warning(pop)
 
