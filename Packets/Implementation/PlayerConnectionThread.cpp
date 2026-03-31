@@ -82,6 +82,12 @@ void PlayerConnectionThread::OnHTTPRequestReceive(boost::beast::error_code err, 
         for (int i = 0; i < savedNotifs->notificationstodeliver_size(); i++) {
             const SavedNotification& savedNotif = savedNotifs->notificationstodeliver(i);
             std::unique_ptr<Notification> notification = std::make_unique<Notification>(SpectreRpcType(savedNotif.rpctype()), savedNotif.notificationid(), savedNotif.notificationdata());
+            if (std::ranges::any_of(notificationQueue._Get_container(),
+                [&notification](const std::unique_ptr<Notification>& notif) {
+                    return notif->GetNotificationId() == notification->GetNotificationId();
+                })) {
+                continue;
+            }
             notificationQueue.push(std::move(notification));
         }
         notificationSenderThread = std::jthread([this](std::stop_token st) {
@@ -127,7 +133,8 @@ void PlayerConnectionThread::OnWebsocketMessageReceive(boost::beast::error_code 
 }
 
 void PlayerConnectionThread::NotificationSenderThread(std::stop_token st) {
-    while (!st.stop_requested()) {
+    while (true) {
+        continue;
         if (!notificationQueueMutex.try_lock()) {
             continue;
         }
