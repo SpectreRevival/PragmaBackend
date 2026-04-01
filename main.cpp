@@ -166,24 +166,24 @@ int main(int argc, char** argv) {
     } catch (std::exception& e) {
         spdlog::error("Failed to initialize handlers, exiting...", e.what());
     }
+    std::ofstream serverLockFile("./server.lock", std::ios::trunc | std::ios::out);
     try{
         RequestRouter::CreateServer(gamePort);
         RequestRouter::CreateServer(wsPort);
         RequestRouter::CreateServer(socialPort);
         logger->info("acceptor threads started");
-        std::ofstream serverLockFile("./server.lock", std::ios::trunc | std::ios::out);
         while (!bStop) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         logger->info("Starting shutdown...");
-        RequestRouter::Shutdown();
-        serverLockFile.close();
-        fs::remove("./server.lock");
     } catch (const std::exception& e) {
         logger->error("unhandled exception caught in main: {}", e.what());
     }
     spdlog::info("Shutting down server...");
     ShutdownServer();
+    RequestRouter::Shutdown();
+    serverLockFile.close();
+    fs::remove("./server.lock");
     spdlog::info("Shutting down logging...");
     spdlog::shutdown();
     return 0;

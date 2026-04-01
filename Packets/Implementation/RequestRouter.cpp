@@ -1,5 +1,6 @@
 #include <RequestRouter.h>
 #include <restinio/websocket/websocket.hpp>
+#include <restinio/all.hpp>
 
 std::vector<restinio::running_server_handle_t<RestinioServerTraits>> RequestRouter::servers{};
 std::vector<rws::ws_handle_t> RequestRouter::websocketConnections{};
@@ -49,43 +50,14 @@ static restinio::request_handling_status_t HTTPProcessor(restinio::request_handl
 }
 
 void RequestRouter::CreateServer(uint16_t port) {
-    auto router = std::make_unique<restinio::router::express_router_t<>>();
-    router->http_get(R"(/.*)", [](restinio::request_handle_t req, restinio::router::route_params_t params) {
-        return HTTPProcessor(req, std::move(params), HTTPRequestType::GET, websocketConnections);
-    });
-    router->http_post(R"(/.*)", [](restinio::request_handle_t req, restinio::router::route_params_t params) {
-        return HTTPProcessor(req, std::move(params), HTTPRequestType::POST, websocketConnections);
-    });
-    router->http_put(R"(/.*)", [](restinio::request_handle_t req, restinio::router::route_params_t params) {
-        return HTTPProcessor(req, std::move(params), HTTPRequestType::PUT, websocketConnections);
-    });
-    router->http_head(R"(/.*)", [](restinio::request_handle_t req, restinio::router::route_params_t params) {
-        return HTTPProcessor(req, std::move(params), HTTPRequestType::HEAD, websocketConnections);
-    });
-    router->http_delete(R"(/.*)", [](restinio::request_handle_t req, restinio::router::route_params_t params) {
-        return HTTPProcessor(req, std::move(params), HTTPRequestType::DEL, websocketConnections);
-    });
-    router->add_handler(restinio::http_method_options(), "/", [](auto req, auto params) {
-        return req->create_response(restinio::status_no_content())
-                  .append_header(restinio::http_field::access_control_allow_origin, "*")
-                  .append_header(restinio::http_field::access_control_allow_methods, "GET, POST, PUT, DELETE, OPTIONS")
-                  .done();
-    });
-    router->non_matched_request_handler([](auto req) {
-        spdlog::debug("No match for: {}", req->header().request_target());
-        return req->create_response().set_body("nmatch").done();
-    });
-    servers.push_back(restinio::run_async(
-    restinio::own_io_context(),
-    restinio::server_settings_t<RestinioServerTraits>{}
-        .address("0.0.0.0")
-        .port(port)
-        .request_handler(std::move(router))
-        .read_next_http_message_timelimit(std::chrono::seconds(10))
-        .write_http_response_timelimit(std::chrono::seconds(3))
-        .handle_request_timeout(std::chrono::seconds(3)),
-    1
-));
+    servers.push_back(restinio::run_async<RestinioServerTraits>(
+        restinio::own_io_context(),
+        restinio::server_settings_t<RestinioServerTraits>{}
+            .port(port)
+            .address("0.0.0.0")
+            .request_handler(HTTPProcessor),
+            2
+            ));
 }
 
 void RequestRouter::Shutdown() {
