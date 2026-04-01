@@ -12,25 +12,19 @@
 class HTTPPacketProcessor {
   private:
     HTTPRequestIdentifier routeId;
-    inline static std::unordered_map<HTTPRequestIdentifier, HTTPPacketProcessor*> httpRoutes = {};
 
   public:
-    explicit HTTPPacketProcessor(HTTPRequestIdentifier routeId)
-        : routeId(std::move(routeId)) {
-        httpRoutes.insert_or_assign(routeId, this);
-    };
+    explicit HTTPPacketProcessor(HTTPRequestIdentifier routeId);
+    explicit HTTPPacketProcessor(HTTPRequestIdentifier routeId, uint16_t port);
     HTTPPacketProcessor(HTTPPacketProcessor& other) = delete;
     HTTPPacketProcessor(HTTPPacketProcessor&& other) = delete;
     virtual std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> Process(restinio::request_handle_t req, restinio::router::route_params_t params) = 0;
-    virtual ~HTTPPacketProcessor() {
-        httpRoutes.erase(routeId);
-    }
+    virtual restinio::request_handling_status_t ProcessResolveOptional(restinio::request_handle_t req, restinio::router::route_params_t params);
     [[nodiscard]] const std::string& GetRoute() const {
         return routeId.GetRoute();
     }
-    static HTTPPacketProcessor* GetProcessorForRoute(const HTTPRequestIdentifier& routeId) {
-        auto it = httpRoutes.find(routeId);
-        return it == httpRoutes.end() ? nullptr : it->second;
+    [[nodiscard]] const HTTPRequestType GetMethod() const {
+        return routeId.GetRequestType();
     }
 };
 

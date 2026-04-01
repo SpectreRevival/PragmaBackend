@@ -109,6 +109,9 @@ int main(int argc, char** argv) {
     try {
         SetupLogger();
         logger->info("starting server...");
+        RequestRouter::CreateRouter(gamePort);
+        RequestRouter::CreateRouter(socialPort);
+        RequestRouter::CreateRouter(wsPort);
         logger->info("Registering handlers...");
         RegisterStaticHTTPHandlers();
         RegisterStaticWSHandlers();
@@ -168,9 +171,7 @@ int main(int argc, char** argv) {
     }
     std::ofstream serverLockFile("./server.lock", std::ios::trunc | std::ios::out);
     try{
-        RequestRouter::CreateServer(gamePort);
-        RequestRouter::CreateServer(wsPort);
-        RequestRouter::CreateServer(socialPort);
+        RequestRouter::Start();
         logger->info("acceptor threads started");
         while (!bStop) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
