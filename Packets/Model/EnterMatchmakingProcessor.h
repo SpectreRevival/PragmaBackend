@@ -4,5 +4,5 @@
 class EnterMatchmakingProcessor : public WebsocketPacketProcessor {
   public:
     explicit EnterMatchmakingProcessor(const SpectreRpcType& rpcType);
-    void Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) override;
+    std::optional<WebsocketPayload> Process(SpectreWebsocketRequest& packet) override;
 };

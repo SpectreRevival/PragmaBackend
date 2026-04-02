@@ -60,8 +60,14 @@ void SpectreWebsocket::OnReceiveWebsocketMessage(rws::ws_handle_t websocketHandl
     WebsocketPacketProcessor* processor = WebsocketPacketProcessor::GetProcessorForRpc(request.GetRequestType());
     if (processor == nullptr) {
         spdlog::warn("Failed to find websocket message for rpc type {}", request.GetRequestType().GetName());
+        return;
     }
-    std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> response = processor->Process(request);
+    std::optional<WebsocketPayload> response = processor->Process(request);
+    if (!response.has_value()) {
+        return;
+    }
+    std::string finalResponse = FormulateFinalResponse(response.value().GetPayload(), request.GetRequestId(), request.GetResponseType());
+    websocketHandler->send_message(rws::final_frame_flag_t::not_final_frame, rws::opcode_t::text_frame, finalResponse);
 }
 
 std::string SpectreWebsocket::FormulateFinalResponse(const std::shared_ptr<json>& res) {

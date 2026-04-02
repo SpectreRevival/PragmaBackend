@@ -4,5 +4,5 @@
 class UpdatePartyPlayerProcessor : public WebsocketPacketProcessor {
   public:
     explicit UpdatePartyPlayerProcessor(SpectreRpcType rpcType);
-    void Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) override;
+    std::optional<WebsocketPayload> Process(SpectreWebsocketRequest& packet) override;
 };

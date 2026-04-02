@@ -12,12 +12,13 @@ restinio::request_handling_status_t RequestRouter::NonMatchedHTTPProcessor(resti
     if (req->header().connection() == restinio::http_connection_header_t::upgrade) {
         // upgrade connection to websocket
         websocketConnections.emplace_back(req);
+        // Upgrade the websocket connection and bind the message handler to the new SpectreWebsocket instance
         rws::ws_handle_t websocketHandle = rws::upgrade<RestinioServerTraits>(*req, rws::activation_t::immediate,
             std::bind(&SpectreWebsocket::OnReceiveWebsocketMessage, websocketConnections.back(), std::placeholders::_1, std::placeholders::_2));
         websocketConnections.back().websocketHandle = websocketHandle;
         return restinio::request_accepted();
     }
-    spdlog::debug("No processor found for a request to route {}", req->header().request_target());
+    spdlog::warn("No processor found for a request to route {}", req->header().request_target());
     return restinio::request_handling_status_t::not_handled;
 }
 

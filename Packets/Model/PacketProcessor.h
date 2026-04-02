@@ -8,6 +8,7 @@
 #include <SpectreWebsocketRequest.h>
 #include <string>
 #include <utility>
+#include <WebsocketPayload.h>
 
 class HTTPPacketProcessor {
   private:
@@ -24,7 +25,7 @@ class HTTPPacketProcessor {
     [[nodiscard]] const std::string& GetRoute() const {
         return routeId.GetRoute();
     }
-    [[nodiscard]] const HTTPRequestType GetMethod() const {
+    [[nodiscard]] HTTPRequestType GetMethod() const {
         return routeId.GetRequestType();
     }
 };
@@ -39,7 +40,7 @@ class WebsocketPacketProcessor {
         : rpcType(rpcType) {
         websocketRoutes[rpcType] = this;
     }
-    virtual std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> Process(SpectreWebsocketRequest& packet) = 0;
+    virtual std::optional<WebsocketPayload> Process(SpectreWebsocketRequest& packet) = 0;
     virtual ~WebsocketPacketProcessor() = default;
     [[nodiscard]] const SpectreRpcType& GetType() const {
         return rpcType;

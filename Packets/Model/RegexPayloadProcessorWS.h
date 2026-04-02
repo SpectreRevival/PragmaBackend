@@ -14,5 +14,5 @@ class RegexPayloadProcessorWS : public WebsocketPacketProcessor {
     RegexPayloadProcessorWS(const SpectreRpcType& rpcType, const std::unordered_map<Regex, std::shared_ptr<json>>& resMap)
         : WebsocketPacketProcessor(rpcType), resMap(resMap){};
 
-    void Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) override;
+    std::optional<WebsocketPayload> Process(SpectreWebsocketRequest& packet) override;
 };

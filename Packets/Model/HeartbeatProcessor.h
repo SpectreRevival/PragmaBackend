@@ -5,7 +5,7 @@ class HeartbeatProcessor : public WebsocketPacketProcessor {
   public:
     explicit HeartbeatProcessor(const SpectreRpcType& rpcType)
         : WebsocketPacketProcessor(rpcType){};
-    void Process(SpectreWebsocketRequest& packet, SpectreWebsocket& /*sock*/) override {
+    std::optional<WebsocketPayload> Process(SpectreWebsocketRequest& packet) override {
         packet.SendEmptyResponse();
     }
 };

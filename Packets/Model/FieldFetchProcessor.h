@@ -20,7 +20,7 @@ class FieldFetchProcessor : public WebsocketPacketProcessor {
         : FieldFetchProcessor(rpcType, key, PlayerDatabase::Get()) {
     }
 
-    void Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) override {
+    std::optional<WebsocketPayload> Process(SpectreWebsocketRequest& packet) override {
         sql::Statement query = dbRef.FormatStatement("SELECT {col} FROM {table} WHERE PlayerId=? LIMIT 1", field);
         query.bind(1, sock.GetPlayerId());
         std::unique_ptr<T> data = dbRef.GetField<T>(query, field);
