@@ -1,6 +1,8 @@
 #include <RequestRouter.h>
+#include <string>
 #include <restinio/websocket/websocket.hpp>
 #include <restinio/all.hpp>
+#include <SpectreWebsocket.h>
 
 std::unordered_map<uint16_t, std::unique_ptr<restinio::router::express_router_t<>>> RequestRouter::routers{};
 std::vector<restinio::running_server_handle_t<RestinioServerTraits>> RequestRouter::servers{};
@@ -9,7 +11,7 @@ std::vector<SpectreWebsocket> RequestRouter::websocketConnections{};
 restinio::request_handling_status_t RequestRouter::NonMatchedHTTPProcessor(restinio::request_handle_t req) {
     if (req->header().connection() == restinio::http_connection_header_t::upgrade) {
         // upgrade connection to websocket
-        websocketConnections.emplace_back(SpectreWebsocket(req));
+        websocketConnections.emplace_back(req);
         rws::ws_handle_t websocketHandle = rws::upgrade<RestinioServerTraits>(*req, rws::activation_t::immediate,
             std::bind(&SpectreWebsocket::OnReceiveWebsocketMessage, websocketConnections.back(), std::placeholders::_1, std::placeholders::_2));
         websocketConnections.back().websocketHandle = websocketHandle;

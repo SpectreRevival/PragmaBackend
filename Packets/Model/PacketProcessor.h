@@ -14,6 +14,7 @@ class HTTPPacketProcessor {
     HTTPRequestIdentifier routeId;
 
   public:
+    virtual ~HTTPPacketProcessor() = default;
     explicit HTTPPacketProcessor(HTTPRequestIdentifier routeId);
     explicit HTTPPacketProcessor(HTTPRequestIdentifier routeId, uint16_t port);
     HTTPPacketProcessor(HTTPPacketProcessor& other) = delete;
@@ -38,7 +39,7 @@ class WebsocketPacketProcessor {
         : rpcType(rpcType) {
         websocketRoutes[rpcType] = this;
     }
-    virtual void Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) = 0;
+    virtual std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> Process(SpectreWebsocketRequest& packet) = 0;
     virtual ~WebsocketPacketProcessor() = default;
     [[nodiscard]] const SpectreRpcType& GetType() const {
         return rpcType;

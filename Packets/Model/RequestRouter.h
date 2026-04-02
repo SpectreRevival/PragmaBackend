@@ -3,6 +3,7 @@
 #include <restinio/core.hpp>
 #include <PacketProcessor.h>
 #include <restinio/websocket/websocket.hpp>
+#include <SpectreWebsocket.h>
 
 namespace rws = restinio::websocket::basic;
 
@@ -17,7 +18,7 @@ private:
     static std::unordered_map<uint16_t, std::unique_ptr<restinio::router::express_router_t<>>> routers;
     static std::vector<restinio::running_server_handle_t<RestinioServerTraits>> servers;
     static std::vector<SpectreWebsocket> websocketConnections;
-    static void NonMatchedHTTPProcessor(restinio::request_handle_t req);
+    static restinio::request_handling_status_t NonMatchedHTTPProcessor(restinio::request_handle_t req);
 public:
     RequestRouter() = delete;
     static void CreateRouter(uint16_t port);

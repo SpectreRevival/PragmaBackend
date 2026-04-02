@@ -4,6 +4,8 @@
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
+#include <SpectreWebsocketRequest.h>
+#include <PacketProcessor.h>
 
 static pbuf::util::JsonPrintOptions opts = []() {
     static pbuf::util::JsonPrintOptions options;
@@ -53,18 +55,26 @@ SpectreWebsocket::SpectreWebsocket(restinio::request_handle_t initialRequest)
     }
 };
 
-void SpectreWebsocket::SendPacket(const std::shared_ptr<json>& res) {
+void SpectreWebsocket::OnReceiveWebsocketMessage(rws::ws_handle_t websocketHandler, rws::message_handle_t message) {
+    SpectreWebsocketRequest request(message->payload());
+    WebsocketPacketProcessor* processor = WebsocketPacketProcessor::GetProcessorForRpc(request.GetRequestType());
+    if (processor == nullptr) {
+        spdlog::warn("Failed to find websocket message for rpc type {}", request.GetRequestType().GetName());
+    }
+    std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> response = processor->Process(request);
+}
+
+std::string SpectreWebsocket::FormulateFinalResponse(const std::shared_ptr<json>& res) {
     json packet;
     packet["sequenceNumber"] = curSequenceNumber;
     packet["response"] = *res;
     curSequenceNumber++;
-    socket.text(true);
     // dont pass temporary because beast will fragment it
     std::string msg = packet.dump();
-    socket.write(boost::asio::buffer(msg));
+    return msg;
 }
 
-void SpectreWebsocket::SendPacket(const pbuf::Message& payload, const std::string& resType, int requestId) {
+std::string SpectreWebsocket::FormulateFinalResponse(const pbuf::Message& payload, const std::string& resType, int requestId) {
     // you shan't comment on this cursedness
     std::string finalRes = "{\"sequenceNumber\":" + std::to_string(curSequenceNumber) + R"(,"response":{"requestId":)" + std::to_string(requestId) + R"(,"type":")" + resType + R"(","payload":)";
     std::string resComponent;
@@ -74,47 +84,14 @@ void SpectreWebsocket::SendPacket(const pbuf::Message& payload, const std::strin
     }
     finalRes += resComponent + "}}";
     curSequenceNumber++;
-    socket.text(true);
-    socket.write(boost::asio::buffer(finalRes));
+    return finalRes;
 }
 
-void SpectreWebsocket::SendPacket(const std::string& resPayload, int requestId, const std::string& resType) {
+std::string SpectreWebsocket::FormulateFinalResponse(const std::string& resPayload, int requestId, const std::string& resType) {
     std::string finalRes = "{\"sequenceNumber\":" + std::to_string(curSequenceNumber) + R"(,"response":{"requestId":)" + std::to_string(requestId) + R"(,"type":")" + resType + R"(","payload":)";
     finalRes += resPayload + "}}";
     curSequenceNumber++;
-    socket.text(true);
-    socket.write(boost::asio::buffer(finalRes));
-}
-
-void SpectreWebsocket::SendNotification(const std::shared_ptr<json>& notifPayload, const SpectreRpcType& notificationType) {
-    json packet;
-    packet["sequenceNumber"] = curSequenceNumber;
-    packet["notification"]["type"] = notificationType.GetName();
-    packet["notification"]["payload"] = *notifPayload;
-    curSequenceNumber++;
-    socket.text(true);
-    std::string msg = packet.dump();
-    socket.write(boost::asio::buffer(msg));
-}
-
-void SpectreWebsocket::SendNotification(const std::string& notifPayload, const SpectreRpcType& notificationType) {
-    std::string finalPayload = "{\"sequenceNumber\":" + std::to_string(curSequenceNumber) + R"(,"notification":{"type":")" + notificationType.GetName() + R"(","payload":)" + notifPayload + "}}";
-    curSequenceNumber++;
-    socket.text(true);
-    socket.write(boost::asio::buffer(finalPayload));
-}
-
-void SpectreWebsocket::SendNotification(const pbuf::Message& notif, const SpectreRpcType& notificationType) {
-    std::string finalRes = "{\"sequenceNumber\":" + std::to_string(curSequenceNumber) + R"(,"notification":"type":")" + notificationType.GetName() + R"(","payload":)";
-    std::string payloadComponent;
-    if (!pbuf::util::MessageToJsonString(notif, &payloadComponent, opts).ok()) {
-        spdlog::error("Failed to serialize pbuf message to string in SendPacket");
-        throw;
-    }
-    finalRes += payloadComponent + "}}";
-    curSequenceNumber++;
-    socket.text(true);
-    socket.write(boost::asio::buffer(finalRes));
+    return finalRes;
 }
 
 const std::string& SpectreWebsocket::GetPlayerId() {
