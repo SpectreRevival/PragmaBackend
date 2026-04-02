@@ -4,38 +4,18 @@
 
 std::unordered_map<uint16_t, std::unique_ptr<restinio::router::express_router_t<>>> RequestRouter::routers{};
 std::vector<restinio::running_server_handle_t<RestinioServerTraits>> RequestRouter::servers{};
-std::vector<rws::ws_handle_t> RequestRouter::websocketConnections{};
+std::vector<SpectreWebsocket> RequestRouter::websocketConnections{};
 
-static std::string StringWithoutQuery(std::string original) {
-    auto queryPos = original.find('?');
-    return queryPos == std::string::npos ? original : original.substr(0, queryPos);
-}
-
-static restinio::request_handling_status_t NonMatchedHTTPProcessor(restinio::request_handle_t req, std::vector<rws::ws_handle_t>& wsConnections) {
-    return req->create_response().set_body("test").done();
+restinio::request_handling_status_t RequestRouter::NonMatchedHTTPProcessor(restinio::request_handle_t req) {
     if (req->header().connection() == restinio::http_connection_header_t::upgrade) {
         // upgrade connection to websocket
-        rws::ws_handle_t websocketHandler = rws::upgrade<RestinioServerTraits>(*req, rws::activation_t::immediate,
-            [](rws::ws_handle_t websocketHandler, rws::message_handle_t message) mutable {
-                if( rws::opcode_t::text_frame == message->opcode() ||
-                                rws::opcode_t::binary_frame == message->opcode() ||
-                                rws::opcode_t::continuation_frame == message->opcode() )
-                {
-
-                    websocketHandler->send_message( *message );
-                }
-                // Continue responding to pings
-                else if( rws::opcode_t::ping_frame == message->opcode() )
-                {
-                    auto resp = *message;
-                    resp.set_opcode( rws::opcode_t::pong_frame );
-                    websocketHandler->send_message( resp );
-                }
-            });
-        wsConnections.push_back(websocketHandler);
+        websocketConnections.emplace_back(SpectreWebsocket(req));
+        rws::ws_handle_t websocketHandle = rws::upgrade<RestinioServerTraits>(*req, rws::activation_t::immediate,
+            std::bind(&SpectreWebsocket::OnReceiveWebsocketMessage, websocketConnections.back(), std::placeholders::_1, std::placeholders::_2));
+        websocketConnections.back().websocketHandle = websocketHandle;
         return restinio::request_accepted();
     }
-    spdlog::debug("No processor found for a request");
+    spdlog::debug("No processor found for a request to route {}", req->header().request_target());
     return restinio::request_handling_status_t::not_handled;
 }
 

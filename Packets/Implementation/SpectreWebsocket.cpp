@@ -11,11 +11,10 @@ static pbuf::util::JsonPrintOptions opts = []() {
     return options;
 }();
 
-static std::string ExtractBearer(const http::request<http::string_body>& req) {
-    auto auth = req.base().at(http::field::authorization);
-    if (auth.empty()) return {};
+static std::string ExtractBearer(const std::string& authField) {
+    if (authField.empty()) return "";
     static constexpr std::string_view prefix = "Bearer ";
-    const std::string s = std::string(auth);
+    const std::string s = std::string(authField);
     if (!s.starts_with(prefix)) return {};
     return s.substr(prefix.size());
 }
@@ -41,10 +40,9 @@ static std::string DecodePlayerIdNoverify(const std::string& token) {
     return {};
 }
 
-SpectreWebsocket::SpectreWebsocket(ws& sock, const http::request<http::string_body>& req)
-    : socket(sock), curSequenceNumber(0) {
-    socket.auto_fragment(false); // ideally we dont want to have to use this but we should be fine for now
-    const auto bearer = ExtractBearer(req);
+SpectreWebsocket::SpectreWebsocket(restinio::request_handle_t initialRequest)
+    : curSequenceNumber(0) {
+    const auto bearer = ExtractBearer(initialRequest->header().get_field_or("Authorization", ""));
     const auto pid = bearer.empty() ? std::string() : DecodePlayerIdNoverify(bearer);
 
     if (!pid.empty()) {
@@ -54,10 +52,6 @@ SpectreWebsocket::SpectreWebsocket(ws& sock, const http::request<http::string_bo
         playerId = "1";
     }
 };
-
-const ws& SpectreWebsocket::GetRawSocket() const {
-    return socket;
-}
 
 void SpectreWebsocket::SendPacket(const std::shared_ptr<json>& res) {
     json packet;

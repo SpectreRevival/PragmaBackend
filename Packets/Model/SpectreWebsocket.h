@@ -6,25 +6,27 @@
 #include <boost/beast/websocket/ssl.hpp>
 #include <google/protobuf/message.h>
 #include <nlohmann/json.hpp>
+#include <restinio/all.hpp>
 
 using tcp = boost::asio::ip::tcp;
 namespace http = boost::beast::http;
-using ws = boost::beast::websocket::stream<tcp::socket>;
 using json = nlohmann::ordered_json;
 namespace pbuf = google::protobuf;
+namespace rws = restinio::websocket::basic;
 
 class SpectreWebsocket {
+    friend class RequestRouter;
   private:
-    ws& socket; // NOLINT
     int curSequenceNumber;
     std::string playerId;
+    rws::ws_handle_t websocketHandle;
 
   public:
-    SpectreWebsocket(ws& sock, const http::request<http::string_body>& req);
+    SpectreWebsocket(restinio::request_handle_t initiationRequest);
     /*
         Warning: Do not send packets through the socket directly, it bypasses abstraction and will cause bad things to happen
     */
-    [[nodiscard]] const ws& GetRawSocket() const;
+    void OnReceiveWebsocketMessage(rws::ws_handle_t websocketHandler, rws::message_handle_t message);
 
     void SendPacket(const std::shared_ptr<json>& res);
 
