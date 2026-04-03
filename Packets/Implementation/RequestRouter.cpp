@@ -21,7 +21,7 @@ restinio::request_handling_status_t RequestRouter::NonMatchedHTTPProcessor(resti
         websocketConnections.back().websocketHandle = websocketHandle;
         return restinio::request_accepted();
     }
-    spdlog::warn("No processor found for a request to route {}", req->header().request_target());
+    spdlog::warn("No processor found for a {} request to route {}", req->header().method().c_str(), req->header().request_target());
     return restinio::request_handling_status_t::not_handled;
 }
 

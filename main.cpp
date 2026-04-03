@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
         // feel like this needs cleaning up T_T
 
         new SubmitProviderIdHandler(HTTPRequestIdentifier("/v1/submitproviderid", HTTPRequestType::POST));
-        new AuthenticateHandler(HTTPRequestIdentifier("/v1/account/authenticateorcreatev2", HTTPRequestType::GET));
+        new AuthenticateHandler(HTTPRequestIdentifier("/v1/account/authenticateorcreatev2", HTTPRequestType::POST));
         new HeartbeatProcessor(SpectreRpcType("PlayerSessionRpc.HeartbeatV1Request"));
         new FieldFetchProcessor<Inventory>(
             SpectreRpcType("InventoryRpc.GetInventoryV2Request"),

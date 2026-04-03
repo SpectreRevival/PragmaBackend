@@ -23,6 +23,7 @@ static void RegisterStaticHTTPHandlerFromFile(std::string route, std::string fil
 #pragma warning(pop)
 
 static void RegisterStaticHTTPHandlers() {
+    RegisterStaticHTTPHandlerFromFile("//v1/info", (ResourcesUtilities::GetResourcesFolder() / "payloads" / "static" / "game" / "v1" / "info.json").string());
     for (const auto& file : fs::recursive_directory_iterator(ResourcesUtilities::GetResourcesFolder() / "payloads" / "static" / "game")) {
         if (!fs::is_regular_file(file)) continue;
         std::string route = (fs::absolute(file.path().parent_path()) / file.path().stem()).string();
