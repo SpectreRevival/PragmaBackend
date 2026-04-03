@@ -15,10 +15,10 @@ static void RegisterStaticHTTPHandlerFromFile(std::string route, std::string fil
     if (!fileres.is_open()) {
         throw std::runtime_error("failed to open file");
     }
-    json res = json::parse(fileres);
+    nlohmann::json res = nlohmann::json::parse(fileres);
     fileres.close();
     spdlog::info("registered static HTTP route {} from json file at {}", route, filename);
-    new StaticResponseProcessorHTTP(HTTPRequestIdentifier(route, HTTPRequestType::GET), std::make_shared<nlohmann::json>(std::move(res)));
+    new StaticResponseProcessorHTTP(HTTPRequestIdentifier(route, HTTPRequestType::GET), res);
 }
 #pragma warning(pop)
 

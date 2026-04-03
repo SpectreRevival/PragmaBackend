@@ -18,7 +18,7 @@ static void RegisterStaticHandlerFromFile(std::string filename, SpectreRpcType r
     nlohmann::json res = nlohmann::json::parse(resfile);
     resfile.close();
     spdlog::info("registered static WS {} from json file at {}", rpcType.GetName(), filename);
-    new StaticResponseProcessorWS(rpcType, std::make_shared<nlohmann::json>(std::move(res)));
+    new StaticResponseProcessorWS(rpcType, res);
 }
 
 static void RegisterRegexHandlerFromFiles(SpectreRpcType rpcType, std::initializer_list<std::pair<Regex, std::string>> map) {

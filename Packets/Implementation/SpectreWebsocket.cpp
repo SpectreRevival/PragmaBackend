@@ -67,7 +67,7 @@ void SpectreWebsocket::OnReceiveWebsocketMessage(rws::ws_handle_t websocketHandl
         return;
     }
     std::string finalResponse = FormulateFinalResponse(response.value().GetPayload(), request.GetRequestId(), request.GetResponseType());
-    websocketHandler->send_message(rws::final_frame_flag_t::not_final_frame, rws::opcode_t::text_frame, finalResponse);
+    websocketHandler->send_message(rws::final_frame_flag_t::final_frame, rws::opcode_t::text_frame, finalResponse);
 }
 
 std::string SpectreWebsocket::FormulateFinalResponse(const std::shared_ptr<json>& res) {

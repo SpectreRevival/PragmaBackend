@@ -10,5 +10,5 @@ std::optional<WebsocketPayload> RegexPayloadProcessorWS::Process(SpectreWebsocke
         }
     }
     spdlog::warn("Failed to find something to send for regex processor, sending empty packet");
-    return nlohmann::json{};
+    return nlohmann::json::object();
 }

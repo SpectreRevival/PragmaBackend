@@ -73,16 +73,12 @@ pipeline {
                         steps {
                             script {
                                 if (env.OS == 'windows') {
-                                    bat "if exist out rmdir /s /q out"
                                     bat """
                                         call \"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x64
                                         cmake --preset x64-${BUILD_TYPE}-win
                                     """
                                 } else {
-                                    sh """
-                                        rm -rf out
-                                        cmake --preset x64-${BUILD_TYPE}-linux
-                                    """
+                                    sh "cmake --preset x64-${BUILD_TYPE}-linux"
                                 }
                             }
                         }
