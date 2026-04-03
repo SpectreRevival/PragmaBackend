@@ -20,7 +20,7 @@ private:
     std::string playerId;
     // WARNING: NOT SET IN THE CONSTRUCTOR, BUT IMMEDIATELY AFTER
     rws::ws_handle_t websocketHandle;
-    std::queue<Notification> notificationsToDeliver;
+    std::deque<Notification> notificationsToDeliver;
     std::mutex notificationQueueLock;
     std::jthread notificationWorkerThread;
     void NotificationThread(std::stop_token st);

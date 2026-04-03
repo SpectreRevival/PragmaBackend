@@ -62,7 +62,7 @@ SpectreWebsocket::SpectreWebsocket(restinio::request_handle_t initialRequest)
     std::unique_ptr<SavedNotificationData> notificationsFromDisk = PlayerDatabase::Get().GetField<SavedNotificationData>(FieldKey::NOTIFICATION_DATA, playerId);
     for (int i = 0; i < notificationsFromDisk->notificationstodeliver_size(); i++) {
         const SavedNotification& currentNotif = notificationsFromDisk->notificationstodeliver(i);
-        notificationsToDeliver.push(Notification(SpectreRpcType(currentNotif.rpctype()), currentNotif.notificationid(), currentNotif.notificationdata()));
+        notificationsToDeliver.push_back(Notification(SpectreRpcType(currentNotif.rpctype()), currentNotif.notificationid(), currentNotif.notificationdata()));
     }
     notificationWorkerThread = std::jthread([this](std::stop_token st) {
         NotificationThread(st);
@@ -82,9 +82,9 @@ void SpectreWebsocket::NotificationThread(std::stop_token st) {
         }
         Notification& notification = notificationsToDeliver.front();
         websocketHandle->send_message(rws::final_frame_flag_t::final_frame, rws::opcode_t::text_frame, FormulateFinalNotification(notification));
-        notificationsToDeliver.pop();
+        notificationsToDeliver.pop_front();
         SavedNotificationData savedData;
-        for (const Notification& notif : notificationsToDeliver._Get_container()) {
+        for (const Notification& notif : notificationsToDeliver) {
             SavedNotification* newNotif = savedData.add_notificationstodeliver();
             newNotif->set_notificationdata(notif.GetNotificationData());
             newNotif->set_notificationid(notif.GetNotificationId());
@@ -156,7 +156,7 @@ std::optional<SpectreWebsocket*> SpectreWebsocket::GetConnectionForPlayer(const 
 
 void SpectreWebsocket::ScheduleNotification(Notification notif) {
     std::unique_lock lock(notificationQueueLock);
-    notificationsToDeliver.push(notif);
+    notificationsToDeliver.push_back(notif);
 }
 
 void SpectreWebsocket::ScheduleNotificationForPlayer(const std::string& playerId, Notification notif) {
