@@ -4,7 +4,7 @@
 static std::mt19937 rng = std::mt19937{std::random_device{}()};
 static uuids::uuid_random_generator gen{rng};
 
-Notification::Notification(const SpectreRpcType& notificationType, const pbuf::Message& notificationData)
+Notification::Notification(const SpectreRpcType& notificationType, const google::protobuf::Message& notificationData)
     : notificationType(notificationType), notificationId(uuids::to_string(gen())), notificationData(notificationData.SerializeAsString()) {
 }
 

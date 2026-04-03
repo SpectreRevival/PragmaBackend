@@ -1,6 +1,6 @@
 #pragma once
 #include <SpectreRpcType.h>
-#include <SpectreWebsocket.h>
+#include <google/protobuf/message.h>
 
 class Notification {
   private:
@@ -9,7 +9,7 @@ class Notification {
     std::string notificationData;
 
   public:
-    Notification(const SpectreRpcType& notificationType, const pbuf::Message& notificationData);
+    Notification(const SpectreRpcType& notificationType, const google::protobuf::Message& notificationData);
     Notification(const SpectreRpcType& notificationType, const std::string& notificationId, const std::string& notificationData);
     const SpectreRpcType& GetNotificationType() const;
     const std::string& GetNotificationId() const;

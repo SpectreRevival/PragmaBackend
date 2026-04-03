@@ -6,15 +6,18 @@
 
 std::unordered_map<uint16_t, std::unique_ptr<restinio::router::express_router_t<>>> RequestRouter::routers{};
 std::vector<restinio::running_server_handle_t<RestinioServerTraits>> RequestRouter::servers{};
-std::vector<SpectreWebsocket> RequestRouter::websocketConnections{};
+std::list<SpectreWebsocket> RequestRouter::websocketConnections{};
 
 restinio::request_handling_status_t RequestRouter::NonMatchedHTTPProcessor(restinio::request_handle_t req) {
     if (req->header().connection() == restinio::http_connection_header_t::upgrade) {
         // upgrade connection to websocket
         websocketConnections.emplace_back(req);
+        SpectreWebsocket& ws = websocketConnections.back();
         // Upgrade the websocket connection and bind the message handler to the new SpectreWebsocket instance
         rws::ws_handle_t websocketHandle = rws::upgrade<RestinioServerTraits>(*req, rws::activation_t::immediate,
-            std::bind(&SpectreWebsocket::OnReceiveWebsocketMessage, websocketConnections.back(), std::placeholders::_1, std::placeholders::_2));
+            [&ws](rws::ws_handle_t wsHandle, rws::message_handle_t wsMessage) {
+                ws.OnReceiveWebsocketMessage(wsHandle, wsMessage);
+            });
         websocketConnections.back().websocketHandle = websocketHandle;
         return restinio::request_accepted();
     }
