@@ -75,7 +75,9 @@ void RequestRouter::Start() {
                 restinio::server_settings_t<RestinioServerTraits>{}
                     .port(port)
                     .address("0.0.0.0")
-                    .request_handler(std::move(router)),
+                    .request_handler(std::move(router))
+                    .protocol(asio::ip::tcp::v4()),
+                    //.logger(spdlog_logger_t()),
                     2
             ));
     }

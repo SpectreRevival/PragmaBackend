@@ -8,9 +8,10 @@
 namespace rws = restinio::websocket::basic;
 
 struct RestinioServerTraits : public restinio::default_traits_t {
-    using logger_t = restinio::null_logger_t;
+    //using logger_t = spdlog_logger_t;
     using timer_manager_t = restinio::asio_timer_manager_t;
     using request_handler_t = restinio::router::express_router_t<>;
+    static constexpr bool use_connection_count_limiter = false;
 };
 
 class RequestRouter {

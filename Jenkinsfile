@@ -174,17 +174,17 @@ pipeline {
                                 sh "cmake --build out/build/x64-debug-linux --target generate_protos"
                             }
                             stage("Run linter") {
+                                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE'){
                                 sh """
                                     FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
                                     run-clang-tidy \$FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp -fix -p out/build/x64-debug-linux -extra-arg=-Werror
                                 """
+                                }
                             }
-			    post {
-				always {
                             stage("Create diff") {
                                 sh """
                                     if ! git diff --quiet; then
-                                        git diff > clang-tidy.patch
+                                        git diff > clang-format.patch
                                         echo \"Patch created, apply the patch from the artifacts section to fix\"
                                     else
                                         echo \"No changes required\"
@@ -192,17 +192,50 @@ pipeline {
                                 """
                             }
                             stage("Upload diff if exists") {
-                                if (fileExists('clang-tidy.patch')) {
-                                    archiveArtifacts artifacts: 'clang-tidy.patch', fingerprint: true
+                                if (fileExists('clang-format.patch')) {
+                                    archiveArtifacts artifacts: 'clang-format.patch', fingerprint: true
                                 }
                             }
                             stage("Fail if diff exists") {
-                                if (fileExists('clang-tidy.patch')) {
+                                if (fileExists('clang-format.patch')) {
                                     sh "exit 1"
                                 }
                             }
-			    }
-			    }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage("Run unit tests"){
+            matrix {
+                axes {
+                    axis {
+                        name 'OS'
+                        value 'linux', 'windows'
+                    }
+                }
+                agent { label '${OS}'}
+                stages {
+                    stage("Download artifact"){
+                        steps {
+                            copyArtifacts(
+                                projectName: env.JOB_NAME,
+                                selector: specific(env.BUILD_NUMBER),
+                                filter: 'package-release-${OS}/**',
+                                target: 'pragmabackend'
+                            )
+                        }
+                    }
+                    stage("Run tests"){
+                        steps {
+                            script {
+                                if(isUnix()){
+                                    sh "pragmabackend/tests/tests"
+                                } else {
+                                    bat "pragmabackend\tests\tests.exe"
+                                }
+                            }
                         }
                     }
                 }

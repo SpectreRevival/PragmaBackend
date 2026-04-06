@@ -96,6 +96,10 @@ void SpectreWebsocket::NotificationThread(std::stop_token st) {
 }
 
 void SpectreWebsocket::OnReceiveWebsocketMessage(rws::ws_handle_t websocketHandler, rws::message_handle_t message) {
+    if (message->opcode() == rws::opcode_t::ping_frame || message->opcode() == rws::opcode_t::pong_frame
+        || message->opcode() == rws::opcode_t::connection_close_frame) {
+        return;
+    }
     SpectreWebsocketRequest request(message->payload(), playerId);
     WebsocketPacketProcessor* processor = WebsocketPacketProcessor::GetProcessorForRpc(request.GetRequestType());
     if (processor == nullptr) {

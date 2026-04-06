@@ -1,20 +1,17 @@
 #include "boost/asio/connect.hpp"
 #include "nlohmann/json.hpp"
+#include "spdlog/spdlog.h"
 
 #include <TestHTTPClient.h>
 #include <TestWebsocketClient.h>
 #include <google/protobuf/util/json_util.h>
 
-TestWebsocketClient::TestWebsocketClient(unsigned short port)
-    :
-
-      workGuard(boost::asio::make_work_guard(ioCtx)),
-      nextRequestId(0) {
-    ioThread = std::thread([this] {
+TestWebsocketClient::TestWebsocketClient(unsigned short port){
+    ioThread = std::thread([this]() {
         ioCtx.run();
     });
-    boost::asio::ip::tcp::resolver resolver(ioCtx);
     ws = std::make_shared<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>>(ioCtx);
+    boost::asio::ip::tcp::resolver resolver(ioCtx);
     HTTPFetch(8081, "/v1/submitproviderid", R"({"providerId": "76561199041068696"})", boost::beast::http::verb::post);
     boost::beast::http::response<boost::beast::http::string_body> authRes = HTTPFetch(8081, "/v1/account/authenticateorcreatev2", R"({
     "providerId": "STEAM",
@@ -39,37 +36,41 @@ std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> T
     return ws;
 }
 
-boost::beast::flat_buffer TestWebsocketClient::SendPacket(const nlohmann::json& packet, SpectreRpcType rpcType) const {
-    std::string final = "{\"requestId\":" + std::to_string(nextRequestId) + R"(,"type":")" + rpcType.GetName() + R"(","payload":)" + packet.dump() + "}";
-    ws->write(boost::asio::buffer(final));
+boost::beast::flat_buffer TestWebsocketClient::SendPacket(const nlohmann::json& packet, SpectreRpcType rpcType) {
+    nlohmann::json wrapper;
+    wrapper["requestId"] = nextRequestId++;
+    wrapper["type"] = rpcType.GetName();
+    wrapper["payload"] = packet;
+    std::string final = wrapper.dump();
     boost::beast::flat_buffer buffer;
-    boost::asio::steady_timer timer(ws->get_executor());
-
-    // Timeout waiting for response after 3 seconds
-    timer.expires_after(std::chrono::seconds(3));
-    timer.async_wait([&](auto ec) {
-        if (!ec) {
-            boost::system::error_code ignore;
-            ws->next_layer().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore); // NOLINT
-            ws->next_layer().close(ignore);                                                 // NOLINT
-        }
-    });
-
     boost::system::error_code ec;
+    ws->write(boost::asio::buffer(final), ec);
+    if (ec) {
+        spdlog::error("Writing websocket request failed: {}", ec.message());
+        throw std::runtime_error("Server failed to receive request");
+    }
+
+    /*boost::asio::steady_timer timer(ioCtx);
+    timer.expires_after(std::chrono::seconds(3));
+    timer.async_wait([this](const boost::system::error_code& ec) {
+        if (!ec) {
+            spdlog::warn("Read timed out, closing ws");
+            ws->next_layer().close();
+        }
+    });*/
     ws->read(buffer, ec);
-
-    timer.cancel();
-
-    if (ec == boost::asio::error::operation_aborted) {
-        return {};
+    //timer.cancel();
+    if (ec) {
+        if (ec == boost::beast::websocket::error::closed) {
+            spdlog::warn("Client closed connection: {}", ec.message());
+            return {};
+        }
+        spdlog::error("read failed: {}", ec.message());
+        throw std::runtime_error("Failed to read request from server");
     }
     return buffer;
 }
 
 TestWebsocketClient::~TestWebsocketClient() {
-    workGuard.reset(); // allow io_context to stop
     ioCtx.stop();      // stop any pending operations
-    if (ioThread.joinable()) {
-        ioThread.join(); // wait for background thread
-    }
 }
