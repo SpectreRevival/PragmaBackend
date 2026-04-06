@@ -47,10 +47,6 @@
     "sqlitecpp",
     "stduuid",
     "tiny-process-library",
-    "qtbase",
-    "qthttpserver",
-    "qtmultimedia",
-    "qttranslations",
     "restinio"
   ]
 }
