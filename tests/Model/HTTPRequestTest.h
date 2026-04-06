@@ -5,6 +5,8 @@
 namespace fs = std::filesystem;
 using json = nlohmann::ordered_json;
 
+extern std::vector<std::string> skipRoutes;
+
 class HTTPRequestTest : public RequestTest {
 };
 

@@ -230,10 +230,23 @@ pipeline {
                     stage("Run tests"){
                         steps {
                             script {
+                                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE'){
+                                    if(isUnix()){
+                                        sh "pragmabackend/tests/tests"
+                                    } else {
+                                        bat "pragmabackend\\tests\\tests.exe"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    stage("Test environment cleanup"){
+                        steps {
+                            script {
                                 if(isUnix()){
-                                    sh "pragmabackend/tests/tests"
+                                    sh "pkill -9 pragmabackend"
                                 } else {
-                                    bat "pragmabackend\\tests\\tests.exe"
+                                    bat "taskkill /f /im pragmabackend.exe"
                                 }
                             }
                         }

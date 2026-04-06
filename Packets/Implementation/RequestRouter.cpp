@@ -6,19 +6,19 @@
 
 std::unordered_map<uint16_t, std::unique_ptr<restinio::router::express_router_t<>>> RequestRouter::routers{};
 std::vector<restinio::running_server_handle_t<RestinioServerTraits>> RequestRouter::servers{};
-std::list<SpectreWebsocket> RequestRouter::websocketConnections{};
+std::vector<std::shared_ptr<SpectreWebsocket>> RequestRouter::websocketConnections{};
 
 restinio::request_handling_status_t RequestRouter::NonMatchedHTTPProcessor(restinio::request_handle_t req) {
     if (req->header().connection() == restinio::http_connection_header_t::upgrade) {
         // upgrade connection to websocket
-        websocketConnections.emplace_back(req);
-        SpectreWebsocket& ws = websocketConnections.back();
+        std::shared_ptr<SpectreWebsocket> newWS = std::make_shared<SpectreWebsocket>(req);
+        websocketConnections.emplace_back(newWS);
         // Upgrade the websocket connection and bind the message handler to the new SpectreWebsocket instance
         rws::ws_handle_t websocketHandle = rws::upgrade<RestinioServerTraits>(*req, rws::activation_t::immediate,
-            [&ws](rws::ws_handle_t wsHandle, rws::message_handle_t wsMessage) {
-                ws.OnReceiveWebsocketMessage(wsHandle, wsMessage);
+            [newWS](rws::ws_handle_t wsHandle, rws::message_handle_t wsMessage) {
+                newWS->OnReceiveWebsocketMessage(wsHandle, wsMessage);
             });
-        websocketConnections.back().websocketHandle = websocketHandle;
+        websocketConnections.back()->websocketHandle = websocketHandle;
         return restinio::request_accepted();
     }
     spdlog::warn("No processor found for a {} request to route {}", req->header().method().c_str(), req->header().request_target());
