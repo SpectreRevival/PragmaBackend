@@ -124,6 +124,32 @@ pipeline {
             }
         }
 
+        stage("Build docker server container"){
+            agent { label 'host && windows' }
+            steps {
+                script {
+                    stage("Checkout"){
+                        checkout scm
+                    }
+                    stage("Unstash linux build"){
+                        dir('out/build/x64-release-linux'){
+                            unstash 'linuxbuild'
+                        }
+                    }
+                    stage("Build docker image"){
+                        bat "docker build -t pragmabackend:latest ."
+                    }
+                    stage("Save image to file"){
+                        bat "docker save pragmabackend:latest -o pragmabackend-docker.tar"
+                    }
+                    stage("Archive image"){
+                        archiveArtifacts artifacts: 'pragmabackend-docker.tar', fingerprint: true
+                        bat "del pragmabackend-docker.tar"
+                    }
+                }
+            }
+        }
+
         stage("code analysis") {
             parallel {
                 stage("Code formatter") {
@@ -225,7 +251,7 @@ pipeline {
                         values 'linux', 'windows'
                     }
                 }
-                agent { label '${OS}'}
+                agent { label "${OS}" }
                 stages {
                     stage("Download artifact"){
                         steps {
@@ -260,32 +286,6 @@ pipeline {
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-
-        stage("Build docker server container"){
-            agent { label 'host && windows' }
-            steps {
-                script {
-                    stage("Checkout"){
-                        checkout scm
-                    }
-                    stage("Unstash linux build"){
-                        dir('out/build/x64-release-linux'){
-                            unstash 'linuxbuild'
-                        }
-                    }
-                    stage("Build docker image"){
-                        bat "docker build -t pragmabackend:latest ."
-                    }
-                    stage("Save image to file"){
-                        bat "docker save pragmabackend:latest -o pragmabackend-docker.tar"
-                    }
-                    stage("Archive image"){
-                        archiveArtifacts artifacts: 'pragmabackend-docker.tar', fingerprint: true
-                        bat "del pragmabackend-docker.tar"
                     }
                 }
             }
