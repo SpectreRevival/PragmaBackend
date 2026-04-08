@@ -114,7 +114,7 @@ pipeline {
                     }
 	            stage("Stash for dockerfile"){
 			when {
-			    expression { BUILD_TYPE = "release" && OS = "linux" }
+			    expression { BUILD_TYPE == "release" && OS == "linux" }
 			}
 			steps {
 			    stash name: 'linuxbuild', includes: 'out/build/x64-release-linux/**'
