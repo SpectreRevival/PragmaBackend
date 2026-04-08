@@ -132,8 +132,9 @@ pipeline {
                         checkout scm
                     }
                     stage("Unstash linux build"){
-                        dir('out/build/x64-release-linux'){
+                        dir('out/build'){
                             unstash 'linuxbuild'
+                            bat "rename package-release-linux x64-release-linux"
                         }
                     }
                     stage("Build docker image"){
