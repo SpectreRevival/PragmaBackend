@@ -133,8 +133,8 @@ pipeline {
                     }
                     stage("Unstash linux build"){
                         dir('out/build'){
-                            bat "if exist \"out\\build\\x64-release-linux\" rmdir /s /q out\\build\\x64-release-linux"
-                            bat "if exist \"out\\build\\package-release-linux\" rmdir /s /q out\\build\\package-release-linux"
+                            bat "if exist x64-release-linux rmdir /s /q x64-release-linux"
+                            bat "if exist package-release-linux rmdir /s /q package-release-linux"
                             unstash 'linuxbuild'
                             bat "rename package-release-linux x64-release-linux"
                         }
