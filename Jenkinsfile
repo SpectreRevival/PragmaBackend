@@ -112,12 +112,18 @@ pipeline {
                             }
                         }
                     }
-	            stage("Stash for dockerfile"){
+	            stage("Stash"){
 			when {
-			    expression { BUILD_TYPE == "release" && OS == "linux" }
+			    expression { BUILD_TYPE == "release"}
 			}
 			steps {
-			    stash name: 'linuxbuild', includes: 'package-release-linux/**'
+                            script {
+                              if(env.OS == 'windows'){
+                                  stash name: 'winbuild', includes: 'package-release-win/**'
+                              } else {
+			          stash name: 'linuxbuild', includes: 'package-release-linux/**'
+                              }
+                            }
 			}
 		    }
                 }
@@ -256,14 +262,23 @@ pipeline {
                 }
                 agent { label "${OS}" }
                 stages {
-                    stage("Download artifact"){
+                    stage("Unstash"){
                         steps {
-                            copyArtifacts(
-                                projectName: env.JOB_NAME,
-                                selector: specific(env.BUILD_NUMBER),
-                                filter: "package-release-${OS}/**",
-                                target: 'pragmabackend'
-                            )
+                            script {
+                                if(env.OS == 'windows'){
+                                    bat "if not exist testdir mkdir testdir"
+                                    bat "if exist testdir\\package-release-win"
+                                    dir('testdir'){
+                                        unstash 'winbuild'
+                                    }
+                                } else {
+                                    sh "mkdir -p testdir"
+                                    sh "rm -rf testdir/package-release-linux"
+                                    dir('testdir'){
+                                        unstash 'linuxbuild'
+                                    }
+                                }
+                            }
                         }
                     }
                     stage("Run tests"){
@@ -271,9 +286,9 @@ pipeline {
                             script {
                                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE'){
                                     if(isUnix()){
-                                        sh "pragmabackend/tests/tests"
+                                        sh "testdir/package-release-linux/tests/tests"
                                     } else {
-                                        bat "pragmabackend\\tests\\tests.exe"
+                                        bat "testdir\\package-release-win\\tests\\tests.exe"
                                     }
                                 }
                             }
