@@ -156,6 +156,7 @@ pipeline {
                             }
                             stage("Fail if diff exists") {
                                 if (fileExists('clang-format.patch')) {
+                                    sh "rm clang-format.patch"
                                     sh "exit 1"
                                 }
                             }
@@ -206,6 +207,7 @@ pipeline {
                             }
                             stage("Fail if diff exists") {
                                 if (fileExists('clang-tidy.patch')) {
+				    sh "rm clang-tidy.patch"
                                     sh "exit 1"
                                 }
                             }
