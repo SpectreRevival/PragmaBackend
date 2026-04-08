@@ -117,7 +117,7 @@ pipeline {
 			    expression { BUILD_TYPE == "release" && OS == "linux" }
 			}
 			steps {
-			    stash name: 'linuxbuild', includes: 'out/build/x64-release-linux/**'
+			    stash name: 'linuxbuild', includes: 'package-release-linux/**'
 			}
 		    }
                 }
