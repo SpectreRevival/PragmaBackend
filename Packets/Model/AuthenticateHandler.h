@@ -4,8 +4,7 @@
 class AuthenticateHandler : public HTTPPacketProcessor {
   public:
     explicit AuthenticateHandler(HTTPRequestIdentifier id);
-    std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> Process(restinio::request_handle_t req, restinio::router::route_params_t params) override;
-
+    std::optional<drogon::HttpResponsePtr> Process(const drogon::HttpRequestPtr& req) override;
   private:
     static std::string CreatePlayerFromSteam(const std::string& steam64, const std::string& displayName);
     static std::string BuildJwt(

@@ -19,27 +19,37 @@ static std::string GetSteamApiKey() {
     return authJson.at("steamApiKey").get<std::string>();
 }
 
-std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> SubmitProviderIdHandler::Process(restinio::request_handle_t req, restinio::router::route_params_t /*params*/) {
+std::optional<drogon::HttpResponsePtr> SubmitProviderIdHandler::Process(const drogon::HttpRequestPtr& req) {
     if (GetSteamApiKey().empty()) {
-        return req->create_response(restinio::status_bad_request()).set_body("no steam api key provided");
+        auto res = HttpResponse::newHttpResponse();
+        res->setBody("no steam api key provided");
+        return res;
     }
 
     const auto body = nlohmann::json::parse(req->body(), nullptr, false);
     if (body.is_discarded() || !body.contains("providerId") || !body.at("providerId").is_string()) {
-        return req->create_response(restinio::status_bad_request()).set_body("err: provider id required");
+        auto res = HttpResponse::newHttpResponse();
+        res->setBody("err: provider id required");
+        return res;
     }
     const std::string steam64 = body.at("providerId");
     if (steam64.empty()) {
-        return req->create_response(restinio::status_bad_request()).set_body("err: steam id required");
+        auto res = HttpResponse::newHttpResponse();
+        res->setBody("err: steam id required");
+        return res;
     }
 
     SteamValidator v(GetSteamApiKey());
     auto info = v.ValidateSteamId(steam64);
     if (!info) {
-        return req->create_response(restinio::status_bad_request()).set_body("err: invalid steam id");
+        auto res = HttpResponse::newHttpResponse();
+        res->setBody("err: invalid steam id");
+        return res;
     }
 
-    AuthLatch::Get().Put(req->remote_endpoint().address().to_string(), steam64, /*latch timer in seconds*/ 120);
+    AuthLatch::Get().Put(req->peerAddr().toIp(), steam64, /*latch timer in seconds*/ 120);
     // 120s for now until i sort the launcher out - astro
-    return req->create_response().set_body(R"({"ok":true})");
+    auto res = HttpResponse::newHttpResponse();
+    res->setBody(R"({"ok":true})");
+    return res;
 }

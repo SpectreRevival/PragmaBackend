@@ -1,35 +1,27 @@
 #pragma once
 #include <Notification.h>
 #include <SpectreRpcType.h>
+#include <drogon/WebSocketController.h>
 #include <functional>
+#include <drogon/drogon.h>
 #include <google/protobuf/message.h>
 #include <nlohmann/json.hpp>
-#include <restinio/websocket/websocket.hpp>
 
 using json = nlohmann::ordered_json;
 namespace pbuf = google::protobuf;
-namespace rws = restinio::websocket::basic;
+using namespace drogon;
 
 class SpectreWebsocket {
-    friend class RequestRouter;
-
-  private:
-    static std::unordered_map<std::string, SpectreWebsocket*> connectionsByPlayerId;
-    static std::mutex connectionsMapMutex;
-
     std::atomic_int curSequenceNumber;
     std::string playerId;
-    // WARNING: NOT SET IN THE CONSTRUCTOR, BUT IMMEDIATELY AFTER
-    rws::ws_handle_t websocketHandle;
     std::deque<Notification> notificationsToDeliver;
     std::mutex notificationQueueLock;
     std::jthread notificationWorkerThread;
+    WebSocketConnectionPtr con;
     void NotificationThread(const std::stop_token& st);
+public:
+    explicit SpectreWebsocket(const drogon::HttpRequestPtr& req, const drogon::WebSocketConnectionPtr& con);
 
-  public:
-    explicit SpectreWebsocket(const restinio::request_handle_t& initialRequest);
-
-    void OnReceiveWebsocketMessage(const rws::ws_handle_t& websocketHandler, const rws::message_handle_t& message);
 
     std::string FormulateFinalResponse(const std::shared_ptr<json>& res);
 
@@ -42,7 +34,19 @@ class SpectreWebsocket {
     const std::string& GetPlayerId();
 
     void ScheduleNotification(const Notification& notif);
+};
 
+class SpectreWebsocketController : public drogon::WebSocketController<SpectreWebsocketController> {
+    WS_PATH_LIST_BEGIN
+    WS_PATH_ADD("/");
+    WS_PATH_LIST_END
+private:
+    static std::unordered_map<std::string, WebSocketConnectionPtr> connectionsByPlayerId;
+    static std::mutex connectionsMapMutex;
+public:
+    void handleNewConnection(const drogon::HttpRequestPtr& req, const drogon::WebSocketConnectionPtr& con) override;
+    void handleNewMessage(const drogon::WebSocketConnectionPtr& con, std::string &&message, const drogon::WebSocketMessageType &) override;
     static std::optional<SpectreWebsocket*> GetConnectionForPlayer(const std::string& playerId);
     static void ScheduleNotificationForPlayer(const std::string& playerId, const Notification& notif);
+    static void AddConnection(const std::string& playerId, WebSocketConnectionPtr con);
 };

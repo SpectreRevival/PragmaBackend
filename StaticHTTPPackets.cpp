@@ -18,7 +18,7 @@ static void RegisterStaticHTTPHandlerFromFile(std::string route, std::string fil
     nlohmann::json res = nlohmann::json::parse(fileres);
     fileres.close();
     spdlog::info("registered static HTTP route {} from json file at {}", route, filename);
-    new StaticResponseProcessorHTTP(HTTPRequestIdentifier(route, HTTPRequestType::GET), res);
+    new StaticResponseProcessorHTTP(HTTPRequestIdentifier(route, Get), res);
 }
 #pragma warning(pop)
 

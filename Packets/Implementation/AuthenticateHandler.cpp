@@ -62,12 +62,15 @@ static std::string PlayerUuidFromSteam64(const std::string& steam64) {
     return boost::lexical_cast<std::string>(id);
 }
 
-std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> AuthenticateHandler::Process(restinio::request_handle_t req, restinio::router::route_params_t /*params*/) {
+std::optional<drogon::HttpResponsePtr> AuthenticateHandler::Process(const drogon::HttpRequestPtr& req){
     const std::string& steamKey = GetAuthCfg().steamApiKey;
-    const auto ip = req->remote_endpoint().address().to_string();
-    const auto steam64 = AuthLatch::Get().TakeIfFresh(ip);
+    const std::string ip = req->peerAddr().toIp();
+    const std::string steam64 = AuthLatch::Get().TakeIfFresh(ip);
     if (steam64.empty()) {
-        return req->create_response(restinio::status_bad_request()).set_body(R"({"error":"NOSTEAMID"})");
+        auto res = HttpResponse::newHttpResponse();
+        res->setBody(R"({"error":"NOSTEAMID"})");
+        res->setStatusCode(k200OK);
+        return res;
     }
 
     auto& db = PlayerDatabase::Get();
@@ -84,7 +87,9 @@ std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_
     }
 
     if (db.IsBanned(playerId)) {
-        return req->create_response(restinio::status_forbidden()).set_body(R"({"error":"ACCOUNT BANNED. CONTACT ASTROVAL0 ON DISCORD"})");
+        auto res = HttpResponse::newHttpResponse();
+        res->setBody(R"({"error":"ACCOUNT BANNED. CONTACT ASTROVAL0 ON DISCORD"})");
+        return res;
     }
 
     auto prof = db.GetField<ProfileData>(FieldKey::PROFILE_DATA, playerId);
@@ -97,7 +102,8 @@ std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_
         {"pragmaSocialToken", BuildJwt("SOCIAL", playerId, socialId, display, disc)}};
 
     nlohmann::json out = {{"pragmaTokens", tokens}};
-    return req->create_response().set_body(out.dump());
+    auto res = HttpResponse::newHttpResponse();
+    res->setBody(out.dump());
 }
 
 std::string AuthenticateHandler::CreatePlayerFromSteam(const std::string& steam64, const std::string& displayName) {

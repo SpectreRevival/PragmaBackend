@@ -3,7 +3,6 @@
 //
 
 #include "GetFriendsListAndRegisterOnlineHandler.h"
-#include "RequestRouter.h"
 #include "StaticHTTPPackets.cpp" // NOLINT
 #include "StaticWSPackets.cpp"   // NOLINT
 #include "SubmitProviderIdHandler.h"
@@ -51,7 +50,6 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
-#include <restinio/core.hpp>
 #include <spdlog/async.h>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -59,6 +57,7 @@
 #include <spdlog/spdlog.h>
 #include <string>
 #include <thread>
+#include <drogon/drogon.h>
 
 static uint16_t gamePort = 8081;
 static uint16_t socialPort = 8082;
@@ -85,10 +84,8 @@ static void SetupLogger() {
     spdlog::set_default_logger(logger);
 }
 
-bool bStop = false;
-
 static void HandleInterrupt(int /*sigint*/) {
-    bStop = true;
+    drogon::app().quit();
 }
 
 static void ShutdownServer() {
@@ -106,17 +103,14 @@ int main(int argc, char** argv) {
     try {
         SetupLogger();
         logger->info("starting server...");
-        RequestRouter::CreateRouter(gamePort);
-        RequestRouter::CreateRouter(socialPort);
-        RequestRouter::CreateRouter(wsPort);
         logger->info("Registering handlers...");
         RegisterStaticHTTPHandlers();
         RegisterStaticWSHandlers();
 
         // feel like this needs cleaning up T_T
 
-        new SubmitProviderIdHandler(HTTPRequestIdentifier("/v1/submitproviderid", HTTPRequestType::POST));
-        new AuthenticateHandler(HTTPRequestIdentifier("/v1/account/authenticateorcreatev2", HTTPRequestType::POST));
+        new SubmitProviderIdHandler(HTTPRequestIdentifier("/v1/submitproviderid", Post));
+        new AuthenticateHandler(HTTPRequestIdentifier("/v1/account/authenticateorcreatev2", Post));
         new HeartbeatProcessor(SpectreRpcType("PlayerSessionRpc.HeartbeatV1Request"));
         new FieldFetchProcessor<Inventory>(
             SpectreRpcType("InventoryRpc.GetInventoryV2Request"),
@@ -167,18 +161,19 @@ int main(int argc, char** argv) {
     }
     std::ofstream serverLockFile("./server.lock", std::ios::trunc | std::ios::out);
     try {
-        RequestRouter::Start();
-        logger->info("acceptor threads started");
-        while (!bStop) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
+        drogon::app().setClientMaxBodySize(100 * 1024 * 1024);
+        drogon::app().setIdleConnectionTimeout(0);
+        drogon::app().addListener("0.0.0.0", gamePort);
+        drogon::app().addListener("0.0.0.0", socialPort);
+        drogon::app().addListener("0.0.0.0", wsPort);
+        logger->info("running server");
+        drogon::app().run();
         logger->info("Starting shutdown...");
     } catch (const std::exception& e) {
         logger->error("unhandled exception caught in main: {}", e.what());
     }
     spdlog::info("Shutting down server...");
     ShutdownServer();
-    RequestRouter::Shutdown();
     serverLockFile.close();
     fs::remove("./server.lock");
     spdlog::info("Shutting down logging...");

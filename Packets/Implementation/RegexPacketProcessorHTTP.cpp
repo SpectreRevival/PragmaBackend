@@ -1,10 +1,12 @@
 #include <RegexPayloadProcessorHTTP.h>
 #include <spdlog/spdlog.h>
 
-std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> RegexPayloadProcessorHTTP::Process(restinio::request_handle_t req, restinio::router::route_params_t /*params*/) {
+    std::optional<drogon::HttpResponsePtr> RegexPayloadProcessorHTTP::Process(const drogon::HttpRequestPtr& req){
     for (const auto& [regex, payload] : resMap) {
-        if (std::regex_search(req->body(), regex.rx)) {
-            return req->create_response().set_body(payload->dump());
+        if (std::regex_search(req->body().begin(), req->body().end(), regex.rx)) {
+            auto res = HttpResponse::newHttpResponse();
+            res->setBody(payload->dump());
+            return res;
         }
     }
     return std::nullopt;

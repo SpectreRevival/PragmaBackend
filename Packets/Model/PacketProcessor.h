@@ -1,14 +1,13 @@
 #pragma once
-#include "restinio/request_handler.hpp"
-#include "restinio/router/express.hpp"
-#include "restinio/traits.hpp"
-
 #include <HTTPRequestIdentifier.h>
 #include <SpectreRpcType.h>
 #include <SpectreWebsocketRequest.h>
 #include <WebsocketPayload.h>
+#include <drogon/HttpResponse.h>
 #include <string>
 #include <utility>
+
+using namespace drogon;
 
 class HTTPPacketProcessor {
   private:
@@ -20,12 +19,11 @@ class HTTPPacketProcessor {
     explicit HTTPPacketProcessor(HTTPRequestIdentifier routeId, uint16_t port);
     HTTPPacketProcessor(HTTPPacketProcessor& other) = delete;
     HTTPPacketProcessor(HTTPPacketProcessor&& other) = delete;
-    virtual std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> Process(restinio::request_handle_t req, restinio::router::route_params_t params) = 0;
-    virtual restinio::request_handling_status_t ProcessResolveOptional(restinio::request_handle_t req, restinio::router::route_params_t params);
+    virtual std::optional<drogon::HttpResponsePtr> Process(const drogon::HttpRequestPtr& req) = 0;
     [[nodiscard]] const std::string& GetRoute() const {
         return routeId.GetRoute();
     }
-    [[nodiscard]] HTTPRequestType GetMethod() const {
+    [[nodiscard]] drogon::HttpMethod GetMethod() const {
         return routeId.GetRequestType();
     }
 };

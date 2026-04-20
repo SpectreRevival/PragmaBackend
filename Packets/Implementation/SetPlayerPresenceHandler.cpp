@@ -32,5 +32,5 @@ void UpdatePlayerPresence(PlayerPresence& newPresence, const std::string& player
     updateNotification.mutable_newpresence()->set_playerid(playerId);
     updateNotification.mutable_newpresence()->set_version(std::to_string(version));
     updateNotification.mutable_newpresence()->set_basicpresence(newPresence.basicpresence());
-    SpectreWebsocket::ScheduleNotificationForPlayer(playerId, Notification(SpectreRpcType("FriendRpc.PresenceUpdateV1Notification"), updateNotification));
+    SpectreWebsocketController::ScheduleNotificationForPlayer(playerId, Notification(SpectreRpcType("FriendRpc.PresenceUpdateV1Notification"), updateNotification));
 }

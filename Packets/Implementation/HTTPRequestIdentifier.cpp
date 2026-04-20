@@ -3,16 +3,16 @@
 #include <HTTPRequestIdentifier.h>
 #include <utility>
 
-HTTPRequestIdentifier::HTTPRequestIdentifier(std::string route, HTTPRequestType reqType)
+HTTPRequestIdentifier::HTTPRequestIdentifier(std::string route, drogon::HttpMethod reqType)
     : route(std::move(std::move(route))), reqType(reqType) {
 }
 
 HTTPRequestIdentifier::HTTPRequestIdentifier(std::string route)
-    : route(route), reqType(HTTPRequestType::GET) {
+    : route(route), reqType(drogon::Get) {
     spdlog::warn("No request type provided for route {}, assuming GET", route);
 }
 
-const HTTPRequestType& HTTPRequestIdentifier::GetRequestType() const {
+const drogon::HttpMethod& HTTPRequestIdentifier::GetRequestType() const {
     return reqType;
 }
 

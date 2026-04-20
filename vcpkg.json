@@ -47,6 +47,6 @@
     "sqlitecpp",
     "stduuid",
     "tiny-process-library",
-    "restinio"
+    "drogon"
   ]
 }

@@ -1,19 +1,19 @@
 #pragma once
-#include <HTTPRequestType.h>
+#include <drogon/HttpTypes.h>
 #include <functional>
 #include <string>
 
 class HTTPRequestIdentifier {
   private:
     std::string route;
-    HTTPRequestType reqType;
+    drogon::HttpMethod reqType;
 
   public:
-    explicit HTTPRequestIdentifier(std::string route, HTTPRequestType reqType);
+    explicit HTTPRequestIdentifier(std::string route, drogon::HttpMethod reqType);
     HTTPRequestIdentifier(std::string route);
     bool operator==(const HTTPRequestIdentifier& other) const;
     [[nodiscard]] const std::string& GetRoute() const;
-    [[nodiscard]] const HTTPRequestType& GetRequestType() const;
+    [[nodiscard]] const drogon::HttpMethod& GetRequestType() const;
 };
 
 namespace std {

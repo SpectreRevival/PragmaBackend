@@ -1,21 +1,25 @@
 #include <PacketProcessor.h>
-#include <RequestRouter.h>
+#include <drogon/drogon.h>
 #include <utility>
+using namespace drogon;
 
 HTTPPacketProcessor::HTTPPacketProcessor(HTTPRequestIdentifier routeId)
     : routeId(std::move(std::move(routeId))) {
-    RequestRouter::RegisterHTTPProcessor(this);
+    app().registerHandler("/api/v1/status",
+                          [this, routeId](const HttpRequestPtr& req, std::function<void(const HttpResponsePtr&)>&& callback) {
+                              if (auto res = Process(req); res.has_value()) {
+                                  callback(res.value());
+                              } else {
+                                  spdlog::warn("Packet of route {} type {} dropped because processor refused to respond", routeId.GetRoute(), static_cast<unsigned int>(routeId.GetRequestType()));
+                                  auto errorRes = HttpResponse::newHttpResponse();
+                                  errorRes->setStatusCode(k500InternalServerError);
+                                  callback(errorRes);
+                              }
+                          },
+                          {routeId.GetRequestType()} // Constraints: only allow GET
+    );
 }
 
 HTTPPacketProcessor::HTTPPacketProcessor(HTTPRequestIdentifier routeId, uint16_t port)
     : routeId(std::move(std::move(routeId))) {
-    RequestRouter::RegisterHTTPProcessor(port, this);
-}
-
-restinio::request_handling_status_t HTTPPacketProcessor::ProcessResolveOptional(restinio::request_handle_t req, restinio::router::route_params_t params) {
-    std::optional<restinio::response_builder_t<restinio::restinio_controlled_output_t>> response = Process(std::move(req), std::move(params));
-    if (!response.has_value()) {
-        return restinio::request_handling_status_t::not_handled;
-    }
-    return response.value().done();
 }
