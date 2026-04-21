@@ -81,7 +81,7 @@ pipeline {
                             script {
                                 if (env.OS == 'windows') {
                                     bat """
-                                        call \"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x64
+                                        call \"C:\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x64
                                         cmake --preset x64-${BUILD_TYPE}-win
                                     """
                                 } else {
