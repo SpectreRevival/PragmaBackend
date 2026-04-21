@@ -2,6 +2,13 @@ pipeline {
     agent none
 
     stages {
+        stage("Spell check"){
+            agent { label 'linux' }
+            steps {
+                checkout scm
+                sh 'codespell'
+            }
+        }
         stage('Build Matrix') {
             matrix {
                 axes {

@@ -146,7 +146,7 @@ void SpectreWebsocket::ScheduleNotification(const Notification& notif) {
 }
 
 void SpectreWebsocketController::ScheduleNotificationForPlayer(const std::string& playerId, const Notification& notif) {
-    std::optional<SpectreWebsocket*> connection = GetConnectionForPlayer(playerId);
+    std::optional<WebSocketConnectionPtr> connection = GetConnectionForPlayer(playerId);
     if (!connection.has_value()) {
         // player is not logged in, save the notification to disk instead
         std::unique_ptr<SavedNotificationData> notifData = PlayerDatabase::Get().GetField<SavedNotificationData>(FieldKey::NOTIFICATION_DATA, playerId);
@@ -156,7 +156,7 @@ void SpectreWebsocketController::ScheduleNotificationForPlayer(const std::string
         newNotif->set_rpctype(notif.GetNotificationType().GetName());
         PlayerDatabase::Get().SetField(FieldKey::NOTIFICATION_DATA, notifData.get(), playerId);
     } else {
-        connection.value()->ScheduleNotification(notif);
+        connection.value()->getContext<SpectreWebsocket>()->ScheduleNotification(notif);
     }
 }
 
@@ -169,7 +169,7 @@ SpectreWebsocket::SpectreWebsocket(const drogon::HttpRequestPtr& req, const drog
     if (!pid.empty()) {
         playerId = pid;
     } else {
-        spdlog::error("no playerid ???? investigate me!, thinks will be SEVERELY wrong for connection with ip {} port {}", initialRequest->remote_endpoint().address().to_string(), initialRequest->remote_endpoint().port());
+        spdlog::error("no playerid ???? investigate me!, thinks will be SEVERELY wrong for connection with {}", req->peerAddr().toIpPort());
         playerId = "1";
     }
     std::unique_ptr<SavedNotificationData> notificationsFromDisk = PlayerDatabase::Get().GetField<SavedNotificationData>(FieldKey::NOTIFICATION_DATA, playerId);
@@ -191,4 +191,8 @@ void SpectreWebsocketController::AddConnection(const std::string& playerId, WebS
 void SpectreWebsocketController::handleNewConnection(const drogon::HttpRequestPtr& req, const drogon::WebSocketConnectionPtr& con) {
     std::shared_ptr<SpectreWebsocket> wsCtx = std::make_shared<SpectreWebsocket>(req, con);
     con->setContext(wsCtx);
+}
+
+void SpectreWebsocketController::handleConnectionClosed(const WebSocketConnectionPtr& conPtr) {
+
 }

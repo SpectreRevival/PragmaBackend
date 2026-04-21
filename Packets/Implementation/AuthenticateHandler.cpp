@@ -104,6 +104,7 @@ std::optional<drogon::HttpResponsePtr> AuthenticateHandler::Process(const drogon
     nlohmann::json out = {{"pragmaTokens", tokens}};
     auto res = HttpResponse::newHttpResponse();
     res->setBody(out.dump());
+    return res;
 }
 
 std::string AuthenticateHandler::CreatePlayerFromSteam(const std::string& steam64, const std::string& displayName) {

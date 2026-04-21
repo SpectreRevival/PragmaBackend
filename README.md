@@ -117,7 +117,7 @@ PRs welcome. If you contribute:
 * * if your absolute path is `E:\dev\spectre\srv\pragmabackend` then your toolchain file path is `E:\dev\spectre\srv\pragmabackend\vcpkg\scripts\buildsystems\vcpkg.cmake`
  
 **failed to open InventoryStore file**
-* you didnt follow the instructions properly so it couldnt build fully.
+* you didn't follow the instructions properly so it couldn't build fully.
 
 **Port already in use**
 

@@ -46,6 +46,7 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
 #include <csignal>
+#include <cstddef>
 #include <ctime>
 #include <filesystem>
 #include <iostream>
@@ -161,7 +162,8 @@ int main(int argc, char** argv) {
     }
     std::ofstream serverLockFile("./server.lock", std::ios::trunc | std::ios::out);
     try {
-        drogon::app().setClientMaxBodySize(100 * 1024 * 1024);
+        std::shared_ptr<SpectreWebsocketController> wsController = std::make_shared<SpectreWebsocketController>();
+        drogon::app().setClientMaxBodySize(static_cast<size_t>(100 * 1024 * 1024));
         drogon::app().setIdleConnectionTimeout(0);
         drogon::app().addListener("0.0.0.0", gamePort);
         drogon::app().addListener("0.0.0.0", socialPort);

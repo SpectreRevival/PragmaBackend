@@ -36,17 +36,18 @@ public:
     void ScheduleNotification(const Notification& notif);
 };
 
-class SpectreWebsocketController : public drogon::WebSocketController<SpectreWebsocketController> {
-    WS_PATH_LIST_BEGIN
-    WS_PATH_ADD("/");
-    WS_PATH_LIST_END
+class SpectreWebsocketController : public WebSocketController<SpectreWebsocketController> {
 private:
     static std::unordered_map<std::string, WebSocketConnectionPtr> connectionsByPlayerId;
     static std::mutex connectionsMapMutex;
 public:
-    void handleNewConnection(const drogon::HttpRequestPtr& req, const drogon::WebSocketConnectionPtr& con) override;
-    void handleNewMessage(const drogon::WebSocketConnectionPtr& con, std::string &&message, const drogon::WebSocketMessageType &) override;
-    static std::optional<SpectreWebsocket*> GetConnectionForPlayer(const std::string& playerId);
+    void handleNewConnection(const drogon::HttpRequestPtr& req, const WebSocketConnectionPtr& con) override;
+    void handleNewMessage(const drogon::WebSocketConnectionPtr& con, std::string &&message, const WebSocketMessageType & msgType) override;
+    void handleConnectionClosed(const WebSocketConnectionPtr & conPtr) override;
+    static std::optional<WebSocketConnectionPtr> GetConnectionForPlayer(const std::string& playerId);
     static void ScheduleNotificationForPlayer(const std::string& playerId, const Notification& notif);
     static void AddConnection(const std::string& playerId, WebSocketConnectionPtr con);
+    WS_PATH_LIST_BEGIN
+    WS_PATH_ADD("/");
+    WS_PATH_LIST_END
 };
