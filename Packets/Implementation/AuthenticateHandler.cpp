@@ -64,7 +64,7 @@ static std::string PlayerUuidFromSteam64(const std::string& steam64) {
     return boost::lexical_cast<std::string>(id);
 }
 
-std::optional<drogon::HttpResponsePtr> AuthenticateHandler::Process(const drogon::HttpRequestPtr& req){
+std::optional<drogon::HttpResponsePtr> AuthenticateHandler::Process(const drogon::HttpRequestPtr& req) {
     const std::string& steamKey = GetAuthCfg().steamApiKey;
     const std::string ip = req->peerAddr().toIp();
     const std::string steam64 = AuthLatch::Get().TakeIfFresh(ip);

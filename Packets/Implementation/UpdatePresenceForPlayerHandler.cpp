@@ -5,8 +5,8 @@
 #include <UpdatePlayerPresenceRequest.pb.h>
 #include <UpdatePresenceForPlayerHandler.h>
 
-UpdatePresenceForPlayerHandler::UpdatePresenceForPlayerHandler(SpectreRpcType rpcType) : WebsocketPacketProcessor(rpcType) {
-
+UpdatePresenceForPlayerHandler::UpdatePresenceForPlayerHandler(SpectreRpcType rpcType)
+    : WebsocketPacketProcessor(rpcType) {
 }
 
 std::optional<WebsocketPayload> UpdatePresenceForPlayerHandler::Process(SpectreWebsocketRequest& packet) {

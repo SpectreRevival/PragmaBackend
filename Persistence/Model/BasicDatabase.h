@@ -13,7 +13,7 @@ class BasicDatabase {
     std::string tableName;
 
   public:
-    BasicDatabase(const fs::path& dbPath, const std::string& tableName);
+    BasicDatabase(const fs::path& dbPath, std::string tableName);
     sql::Database* GetRaw();
     sql::Database& GetRawRef();
     const std::string& GetTableName();

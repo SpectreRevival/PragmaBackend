@@ -65,7 +65,7 @@ class ProtobufDatabase : public BasicDatabase {
     }
 
   public:
-    ProtobufDatabase(const fs::path& dbPath, std::string tableName, std::string keyFieldName, const std::string& keyFieldType);
+    ProtobufDatabase(const fs::path& dbPath, const std::string& tableName, std::string keyFieldName, const std::string& keyFieldType);
 
     template <typename T>
     std::vector<std::unique_ptr<T>> GetFields(sql::Statement& query, FieldKey key) {

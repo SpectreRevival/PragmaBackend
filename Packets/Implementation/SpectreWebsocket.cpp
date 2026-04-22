@@ -168,9 +168,9 @@ void SpectreWebsocketController::ScheduleNotificationForPlayer(const std::string
     }
 }
 
-SpectreWebsocket::SpectreWebsocket(const drogon::HttpRequestPtr& req, const drogon::WebSocketConnectionPtr& connection) {
-    con = connection;
-    curSequenceNumber = 0;
+SpectreWebsocket::SpectreWebsocket(const drogon::HttpRequestPtr& req, const drogon::WebSocketConnectionPtr& connection)
+    : con(connection), curSequenceNumber(0) {
+
     const auto bearer = ExtractBearer(req->getHeader("Authorization"));
     const auto pid = bearer.empty() ? std::string() : DecodePlayerIdNoverify(bearer);
 
@@ -202,5 +202,4 @@ void SpectreWebsocketController::handleNewConnection(const drogon::HttpRequestPt
 }
 
 void SpectreWebsocketController::handleConnectionClosed(const WebSocketConnectionPtr& conPtr) {
-
 }

@@ -17,12 +17,10 @@ WebsocketPayload::WebsocketPayload(const nlohmann::json& json)
 
 WebsocketPayload::WebsocketPayload(std::string payload, std::initializer_list<Notification> postSendNotifications)
     : payload(std::move(payload)), postSendNotifications(postSendNotifications) {
-
 }
 
 WebsocketPayload::WebsocketPayload(const nlohmann::json& json, std::initializer_list<Notification> postSendNotifications)
     : payload(json.dump()), postSendNotifications(postSendNotifications) {
-
 }
 
 WebsocketPayload::WebsocketPayload(const google::protobuf::Message& message, std::initializer_list<Notification> postSendNotifications)
@@ -35,13 +33,12 @@ WebsocketPayload::WebsocketPayload(const google::protobuf::Message& message, std
     }
 }
 
-WebsocketPayload::WebsocketPayload(std::string message, std::vector<Notification> postSendNotifications) :
-payload(message), postSendNotifications(postSendNotifications) {
-
+WebsocketPayload::WebsocketPayload(std::string message, std::vector<Notification> postSendNotifications)
+    : payload(std::move(std::move(message))), postSendNotifications(std::move(std::move(postSendNotifications))) {
 }
 
 WebsocketPayload::WebsocketPayload(const google::protobuf::Message& message, std::vector<Notification> postSendNotifications)
-    : postSendNotifications(postSendNotifications) {
+    : postSendNotifications(std::move(std::move(postSendNotifications))) {
     static google::protobuf::util::JsonPrintOptions opts{};
     opts.always_print_fields_with_no_presence = true;
     if (!google::protobuf::util::MessageToJsonString(message, &payload, opts).ok()) {
@@ -51,12 +48,11 @@ WebsocketPayload::WebsocketPayload(const google::protobuf::Message& message, std
 }
 
 WebsocketPayload::WebsocketPayload(const nlohmann::json& json, std::vector<Notification> postSendNotifications)
-    : payload(json.dump()), postSendNotifications(postSendNotifications) {
-
+    : payload(json.dump()), postSendNotifications(std::move(std::move(postSendNotifications))) {
 }
 
 WebsocketPayload::WebsocketPayload(const google::protobuf::Message& message)
-    : WebsocketPayload(message, {}){}
+    : WebsocketPayload(message, {}) {}
 
 const std::vector<Notification>& WebsocketPayload::GetPostSendNotifications() const {
     return postSendNotifications;

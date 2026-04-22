@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 #include <utility>
 
-ProtobufDatabase::ProtobufDatabase(const fs::path& dbPath, std::string tableName, std::string keyFieldName, const std::string& /*keyFieldType*/)
+ProtobufDatabase::ProtobufDatabase(const fs::path& dbPath, const std::string& tableName, std::string keyFieldName, const std::string& /*keyFieldType*/)
     : BasicDatabase(dbPath, tableName), keyFieldName(std::move(keyFieldName)) {
     GetRaw()->exec("CREATE TABLE IF NOT EXISTS " + GetTableName() + " (" + GetKeyFieldName() + " " + GetKeyFieldType() + " PRIMARY KEY);");
 }

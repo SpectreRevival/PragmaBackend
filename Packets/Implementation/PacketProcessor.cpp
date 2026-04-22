@@ -17,10 +17,9 @@ HTTPPacketProcessor::HTTPPacketProcessor(HTTPRequestIdentifier routeId)
                                   callback(errorRes);
                               }
                           },
-                          {this->routeId.GetRequestType()}
-    );
+                          {this->routeId.GetRequestType()});
 }
 
-HTTPPacketProcessor::HTTPPacketProcessor(HTTPRequestIdentifier routeId, uint16_t port)
+HTTPPacketProcessor::HTTPPacketProcessor(HTTPRequestIdentifier routeId, uint16_t /*port*/)
     : routeId(std::move(std::move(routeId))) {
 }

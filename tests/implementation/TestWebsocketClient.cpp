@@ -7,7 +7,7 @@
 #include <google/protobuf/util/json_util.h>
 
 TestWebsocketClient::TestWebsocketClient(unsigned short port)
-    : ioCtx(), nextRequestId(0), workGuard(boost::asio::make_work_guard(ioCtx)) {
+    : nextRequestId(0), workGuard(boost::asio::make_work_guard(ioCtx)) {
     workerThread = std::thread([this]() { ioCtx.run(); });
     boost::asio::ip::tcp::resolver resolver(ioCtx);
     ws = std::make_shared<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>>(ioCtx);
@@ -72,10 +72,11 @@ boost::beast::flat_buffer TestWebsocketClient::SendPacket(const nlohmann::json& 
                             ws->async_read(*buffer, [promise, buffer, timer, fulfilled](boost::system::error_code ec, std::size_t) {
                                 timer->cancel(); // Triggers the timer's handler with boost::asio::error::operation_aborted
                                 if (!fulfilled->exchange(true)) {
-                                    if (ec)
+                                    if (ec) {
                                         promise->set_value({});
-                                    else
+                                    } else {
                                         promise->set_value(std::move(*buffer));
+                                    }
                                 }
                             });
 

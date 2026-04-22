@@ -1,7 +1,7 @@
 #include <RegexPayloadProcessorHTTP.h>
 #include <spdlog/spdlog.h>
 
-    std::optional<drogon::HttpResponsePtr> RegexPayloadProcessorHTTP::Process(const drogon::HttpRequestPtr& req){
+std::optional<drogon::HttpResponsePtr> RegexPayloadProcessorHTTP::Process(const drogon::HttpRequestPtr& req) {
     for (const auto& [regex, payload] : resMap) {
         if (std::regex_search(req->body().begin(), req->body().end(), regex.rx)) {
             auto res = HttpResponse::newHttpResponse();

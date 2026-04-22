@@ -2,8 +2,8 @@
 #include <Notification.h>
 #include <SpectreRpcType.h>
 #include <drogon/WebSocketController.h>
-#include <functional>
 #include <drogon/drogon.h>
+#include <functional>
 #include <google/protobuf/message.h>
 #include <nlohmann/json.hpp>
 
@@ -20,9 +20,9 @@ class SpectreWebsocket {
     std::jthread notificationWorkerThread;
     std::weak_ptr<WebSocketConnection> con;
     void NotificationThread(const std::stop_token& st);
-public:
-    explicit SpectreWebsocket(const drogon::HttpRequestPtr& req, const drogon::WebSocketConnectionPtr& con);
 
+  public:
+    explicit SpectreWebsocket(const drogon::HttpRequestPtr& req, const drogon::WebSocketConnectionPtr& con);
 
     std::string FormulateFinalResponse(const std::shared_ptr<json>& res);
 
@@ -38,13 +38,14 @@ public:
 };
 
 class SpectreWebsocketController : public WebSocketController<SpectreWebsocketController> {
-private:
+  private:
     static std::unordered_map<std::string, WebSocketConnectionPtr> connectionsByPlayerId;
     static std::mutex connectionsMapMutex;
-public:
+
+  public:
     void handleNewConnection(const drogon::HttpRequestPtr& req, const WebSocketConnectionPtr& con) override;
-    void handleNewMessage(const drogon::WebSocketConnectionPtr& con, std::string &&message, const WebSocketMessageType & msgType) override;
-    void handleConnectionClosed(const WebSocketConnectionPtr & conPtr) override;
+    void handleNewMessage(const drogon::WebSocketConnectionPtr& con, std::string&& message, const WebSocketMessageType& messageType) override;
+    void handleConnectionClosed(const WebSocketConnectionPtr& conPtr) override;
     static std::optional<WebSocketConnectionPtr> GetConnectionForPlayer(const std::string& playerId);
     static void ScheduleNotificationForPlayer(const std::string& playerId, const Notification& notif);
     static void AddConnection(const std::string& playerId, WebSocketConnectionPtr con);
