@@ -40,15 +40,19 @@ class ProtobufDatabase : public BasicDatabase {
     std::string keyFieldName;
     std::string keyFieldType;
     pbuf::util::JsonParseOptions parseOpts;
-    static std::unordered_map<FieldKey, ProtobufDatabaseFieldData> fieldData;
+    static std::unordered_map<FieldKey, ProtobufDatabaseFieldData>& getFieldData() {
+        static std::unordered_map<FieldKey, ProtobufDatabaseFieldData> instance;
+        return instance;
+    }
+
     template <typename T>
     std::unique_ptr<T> DefaultOrNullptr(FieldKey key) {
         static_assert(std::is_base_of_v<pbuf::Message, T>, "Type provided to DefaultOrNullptr must inherit from protobuf::Message");
-        if (fieldData.at(key).GetDefaultValue() == nullptr) {
+        if (getFieldData().at(key).GetDefaultValue() == nullptr) {
             return nullptr;
         }
         spdlog::info("Returning default value for FieldKey: {}", static_cast<uint32_t>(key));
-        const T* typed = dynamic_cast<const T*>(fieldData.at(key).GetDefaultValue());
+        const T* typed = dynamic_cast<const T*>(getFieldData().at(key).GetDefaultValue());
         if (!typed) {
             // Handle type mismatch
             spdlog::error("type mismatch in DefaultOrNullptr");
@@ -69,7 +73,7 @@ class ProtobufDatabase : public BasicDatabase {
         std::vector<std::unique_ptr<T>> output;
         while (query.executeStep()) {
             if (query.getColumnCount() != 1) {
-                spdlog::warn("Multiple columns returned by query passed into GetFields w FieldKey {}, ignoring all columns except first one", fieldData.at(key).GetFieldName());
+                spdlog::warn("Multiple columns returned by query passed into GetFields w FieldKey {}, ignoring all columns except first one", getFieldData().at(key).GetFieldName());
             }
             const char* blob = static_cast<const char*>(query.getColumn(0).getBlob());
             int sz = query.getColumn(0).getBytes();
@@ -101,7 +105,7 @@ class ProtobufDatabase : public BasicDatabase {
         }
         if (query.getColumnCount() != 1) {
             spdlog::warn("Multiple columns returned by query passed into GetField w FieldKey {}, ignoring all columns except first one",
-                         fieldData.at(key).GetFieldName());
+                         getFieldData().at(key).GetFieldName());
         }
         const char* blob = static_cast<const char*>(query.getColumn(0).getBlob());
         int sz = query.getColumn(0).getBytes();
@@ -154,7 +158,7 @@ class ProtobufDatabase : public BasicDatabase {
                 spdlog::error("{}", e.what());
             }
         }
-        fieldData.insert_or_assign(key, std::move(dat));
+        getFieldData().insert_or_assign(key, std::move(dat));
     }
 
     bool IsFieldPopulated(FieldKey key, const std::string& dbKey);

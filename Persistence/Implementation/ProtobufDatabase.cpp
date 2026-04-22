@@ -3,8 +3,6 @@
 #include <spdlog/spdlog.h>
 #include <utility>
 
-std::unordered_map<FieldKey, ProtobufDatabaseFieldData> ProtobufDatabase::fieldData{};
-
 ProtobufDatabase::ProtobufDatabase(const fs::path& dbPath, std::string tableName, std::string keyFieldName, const std::string& /*keyFieldType*/)
     : BasicDatabase(dbPath, tableName), keyFieldName(std::move(keyFieldName)) {
     GetRaw()->exec("CREATE TABLE IF NOT EXISTS " + GetTableName() + " (" + GetKeyFieldName() + " " + GetKeyFieldType() + " PRIMARY KEY);");
@@ -41,7 +39,7 @@ void ProtobufDatabase::SetField(sql::Statement& statement, FieldKey key, const p
         statement.bind(dataBindIndex, bytes.data(), bytes.size());
         statement.exec();
     } catch (const std::exception& e) {
-        spdlog::error("Failed to set field with FieldKey {}: {}", fieldData.at(key).GetFieldName(), e.what());
+        spdlog::error("Failed to set field with FieldKey {}: {}", getFieldData().at(key).GetFieldName(), e.what());
         throw;
     }
 }
@@ -63,7 +61,7 @@ bool ProtobufDatabase::IsFieldPopulated(FieldKey key, const std::string& dbKey) 
 }
 
 const std::string& ProtobufDatabase::GetFieldName(FieldKey key) {
-    return fieldData.at(key).GetFieldName();
+    return getFieldData().at(key).GetFieldName();
 }
 
 const std::string& ProtobufDatabase::GetKeyFieldName() {
