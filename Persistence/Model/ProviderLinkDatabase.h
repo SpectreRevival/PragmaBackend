@@ -1,5 +1,5 @@
 #pragma once
-#include "Database.h"
+#include "ProtobufDatabase.h"
 
 #include <AuthProvider.h>
 #include <string>

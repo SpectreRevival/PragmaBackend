@@ -1,7 +1,7 @@
 #pragma once
-#include "Database.h"
+#include "ProtobufDatabase.h"
 
-class PlayerDatabase : public Database {
+class PlayerDatabase : public ProtobufDatabase {
   private:
     static PlayerDatabase inst;
 

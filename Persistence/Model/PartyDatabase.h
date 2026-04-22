@@ -1,9 +1,9 @@
 #pragma once
-#include "Database.h"
+#include "ProtobufDatabase.h"
 
 #include <CreatePartyRequest.pb.h>
 
-class PartyDatabase : public Database {
+class PartyDatabase : public ProtobufDatabase {
   private:
     static PartyDatabase inst;
 

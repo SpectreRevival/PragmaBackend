@@ -8,7 +8,7 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
-class DatabaseFieldData {
+class ProtobufDatabaseFieldData {
   private:
     FieldKey fieldKey;
     std::string fieldName;
@@ -17,12 +17,12 @@ class DatabaseFieldData {
     static google::protobuf::util::JsonParseOptions parseOpts;
 
   public:
-    DatabaseFieldData(FieldKey fieldKey, std::string className,
+    ProtobufDatabaseFieldData(FieldKey fieldKey, std::string className,
                       std::unique_ptr<google::protobuf::Message> defaultFieldValue = nullptr,
                       std::function<bool(google::protobuf::Message*)> updateHandler = nullptr);
 
     template <typename T>
-    static DatabaseFieldData WithDefaultFromPath(FieldKey fieldKey, std::string className, const std::filesystem::path& defaultFieldValuePath,
+    static ProtobufDatabaseFieldData WithDefaultFromPath(FieldKey fieldKey, std::string className, const std::filesystem::path& defaultFieldValuePath,
                                                  std::function<bool(google::protobuf::Message*)> updateHandler = nullptr) {
         const std::ifstream defaultFile(defaultFieldValuePath);
         std::stringstream buf;
@@ -33,7 +33,7 @@ class DatabaseFieldData {
             spdlog::error("failed to parse default message: {}", status.message());
             throw;
         }
-        return DatabaseFieldData(fieldKey, className, std::move(defaultFieldValue), updateHandler);
+        return ProtobufDatabaseFieldData(fieldKey, className, std::move(defaultFieldValue), updateHandler);
     }
 
     bool PreUpdateField(google::protobuf::Message* newData);

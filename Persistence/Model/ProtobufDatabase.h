@@ -1,8 +1,8 @@
 #pragma once
 #include "BasicDatabase.h"
 #include "CaseHelper.h"
-#include "DatabaseFieldData.h"
 #include "FieldKey.h"
+#include "ProtobufDatabaseFieldData.h"
 
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <filesystem>
@@ -35,12 +35,12 @@ namespace sql = SQLite;
     std::unique_ptr<PlayerName> nameFetched = playerData.GetField<PlayerName>(fetchStatement, FieldKey::PLAYER_INGAME_NAME);
     spdlog::info("name: {}", nameFetched->name());
 */
-class Database : public BasicDatabase {
+class ProtobufDatabase : public BasicDatabase {
   private:
     std::string keyFieldName;
     std::string keyFieldType;
     pbuf::util::JsonParseOptions parseOpts;
-    static std::unordered_map<FieldKey, DatabaseFieldData> fieldData;
+    static std::unordered_map<FieldKey, ProtobufDatabaseFieldData> fieldData;
     template <typename T>
     std::unique_ptr<T> DefaultOrNullptr(FieldKey key) {
         static_assert(std::is_base_of_v<pbuf::Message, T>, "Type provided to DefaultOrNullptr must inherit from protobuf::Message");
@@ -61,7 +61,7 @@ class Database : public BasicDatabase {
     }
 
   public:
-    Database(const fs::path& dbPath, std::string tableName, std::string keyFieldName, const std::string& keyFieldType);
+    ProtobufDatabase(const fs::path& dbPath, std::string tableName, std::string keyFieldName, const std::string& keyFieldType);
 
     template <typename T>
     std::vector<std::unique_ptr<T>> GetFields(sql::Statement& query, FieldKey key) {
@@ -137,7 +137,7 @@ class Database : public BasicDatabase {
 
     sql::Statement FormatStatement(std::string command, FieldKey key);
 
-    void AddPrototype(FieldKey key, DatabaseFieldData dat) {
+    void AddPrototype(FieldKey key, ProtobufDatabaseFieldData dat) {
         sql::Statement colQuery(*GetRaw(), "PRAGMA table_info(" + GetTableName() + ");");
         bool colExists = false;
         while (colQuery.executeStep()) {

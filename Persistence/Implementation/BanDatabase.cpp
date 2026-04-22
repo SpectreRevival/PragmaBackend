@@ -8,7 +8,7 @@ BanDatabase& BanDatabase::Get() {
     return inst;
 }
 
-BanDatabase::BanDatabase(const fs::path& path) : Database(path, "bans", "player_id", "TEXT") {
+BanDatabase::BanDatabase(const fs::path& path) : BasicDatabase(path, "bans") {
     GetRaw()->exec("CREATE TABLE IF NOT EXISTS bans("
             "player_id TEXT PRIMARY KEY,"
             "reason TEXT,"
