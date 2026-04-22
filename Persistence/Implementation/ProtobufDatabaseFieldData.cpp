@@ -6,8 +6,8 @@
 #include <utility>
 
 ProtobufDatabaseFieldData::ProtobufDatabaseFieldData(FieldKey fieldKey, std::string className,
-                                     std::unique_ptr<google::protobuf::Message> defaultFieldValue,
-                                     std::function<bool(google::protobuf::Message*)> updateHandler)
+                                                     std::unique_ptr<google::protobuf::Message> defaultFieldValue,
+                                                     std::function<bool(google::protobuf::Message*)> updateHandler)
     : fieldKey(fieldKey), fieldName(std::move(className)), defaultFieldValue(std::move(defaultFieldValue)), updateHandler(std::move(updateHandler)) {
 }
 

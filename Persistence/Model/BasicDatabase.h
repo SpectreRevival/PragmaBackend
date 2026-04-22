@@ -7,11 +7,12 @@ namespace fs = std::filesystem;
 namespace sql = SQLite;
 
 class BasicDatabase {
-private:
+  private:
     fs::path filename;
     sql::Database dbRaw;
     std::string tableName;
-public:
+
+  public:
     BasicDatabase(const fs::path& dbPath, const std::string& tableName);
     sql::Database* GetRaw();
     sql::Database& GetRawRef();

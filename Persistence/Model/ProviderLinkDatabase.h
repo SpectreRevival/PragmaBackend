@@ -5,9 +5,10 @@
 #include <string>
 
 class ProviderLinkDatabase : public BasicDatabase {
-private:
+  private:
     static ProviderLinkDatabase inst;
-public:
+
+  public:
     static ProviderLinkDatabase& Get();
     ProviderLinkDatabase(const fs::path& dbPath);
     std::string LookupPlayerByProvider(AuthProvider provider, const std::string& providerId);

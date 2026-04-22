@@ -8,18 +8,18 @@ BanDatabase& BanDatabase::Get() {
     return inst;
 }
 
-BanDatabase::BanDatabase(const fs::path& path) : BasicDatabase(path, "bans") {
+BanDatabase::BanDatabase(const fs::path& path)
+    : BasicDatabase(path, "bans") {
     GetRaw()->exec("CREATE TABLE IF NOT EXISTS bans("
-            "player_id TEXT PRIMARY KEY,"
-            "reason TEXT,"
-            "banned_until INTEGER DEFAULT 0)");
+                   "player_id TEXT PRIMARY KEY,"
+                   "reason TEXT,"
+                   "banned_until INTEGER DEFAULT 0)");
     SQLite::Statement probe(*GetRaw(), "SELECT 1 FROM pragma_table_info('bans') WHERE name='banned_until';");
     if (!probe.executeStep()) {
         GetRaw()->exec("ALTER TABLE bans ADD COLUMN banned_until INTEGER DEFAULT 0;");
         GetRaw()->exec("UPDATE bans SET banned_until=0 WHERE banned_until IS NULL;");
     }
 }
-
 
 bool BanDatabase::IsBanned(const std::string& playerId) {
     auto* raw = GetRaw();

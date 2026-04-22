@@ -8,7 +8,8 @@ ProviderLinkDatabase& ProviderLinkDatabase::Get() {
     return inst;
 }
 
-ProviderLinkDatabase::ProviderLinkDatabase(const fs::path& dbPath) : BasicDatabase(dbPath, "providers") {
+ProviderLinkDatabase::ProviderLinkDatabase(const fs::path& dbPath)
+    : BasicDatabase(dbPath, "providers") {
     GetRaw()->exec(
         "CREATE TABLE IF NOT EXISTS providers ("
         "provider TEXT NOT NULL,"

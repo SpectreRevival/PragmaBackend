@@ -18,12 +18,12 @@ class ProtobufDatabaseFieldData {
 
   public:
     ProtobufDatabaseFieldData(FieldKey fieldKey, std::string className,
-                      std::unique_ptr<google::protobuf::Message> defaultFieldValue = nullptr,
-                      std::function<bool(google::protobuf::Message*)> updateHandler = nullptr);
+                              std::unique_ptr<google::protobuf::Message> defaultFieldValue = nullptr,
+                              std::function<bool(google::protobuf::Message*)> updateHandler = nullptr);
 
     template <typename T>
     static ProtobufDatabaseFieldData WithDefaultFromPath(FieldKey fieldKey, std::string className, const std::filesystem::path& defaultFieldValuePath,
-                                                 std::function<bool(google::protobuf::Message*)> updateHandler = nullptr) {
+                                                         std::function<bool(google::protobuf::Message*)> updateHandler = nullptr) {
         const std::ifstream defaultFile(defaultFieldValuePath);
         std::stringstream buf;
         buf << defaultFile.rdbuf();
