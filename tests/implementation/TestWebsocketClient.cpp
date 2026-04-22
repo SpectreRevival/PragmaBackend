@@ -43,7 +43,7 @@ std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> T
     return ws;
 }
 
-boost::beast::flat_buffer TestWebsocketClient::SendPacket(const nlohmann::json& packet, SpectreRpcType rpcType) {
+boost::beast::flat_buffer TestWebsocketClient::SendPacket(const nlohmann::json& packet, SpectreRpcType rpcType) { //NOLINT
     auto promise = std::make_shared<std::promise<boost::beast::flat_buffer>>();
     auto future = promise->get_future();
     auto buffer = std::make_shared<boost::beast::flat_buffer>();
@@ -86,7 +86,7 @@ boost::beast::flat_buffer TestWebsocketClient::SendPacket(const nlohmann::json& 
                                     if (!fulfilled->exchange(true)) {
                                         boost::system::error_code ignored;
                                         // Forcing the socket closed is the only way to break an active async_read
-                                        ws->next_layer().close(ignored);
+                                        (void)ws->next_layer().close(ignored);
                                         promise->set_value({});
                                     }
                                 }
