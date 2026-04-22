@@ -86,7 +86,7 @@ boost::beast::flat_buffer TestWebsocketClient::SendPacket(const nlohmann::json& 
                                     if (!fulfilled->exchange(true)) {
                                         boost::system::error_code ignored;
                                         // Forcing the socket closed is the only way to break an active async_read
-                                        (void)ws->next_layer().close(ignored);
+                                        ignored = ws->next_layer().close(ignored);
                                         promise->set_value({});
                                     }
                                 }
