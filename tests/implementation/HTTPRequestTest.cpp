@@ -1,3 +1,5 @@
+#include "ResourcesUtilities.h"
+
 #include <HTTPRequestTest.h>
 #include <JsonTestUtil.h>
 #include <TestHTTPClient.h>
