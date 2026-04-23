@@ -1,5 +1,6 @@
 #pragma once
 #include <gtest/gtest.h>
+#include <thread>
 
 class BackendEnvironment : public ::testing::Environment {
   private:

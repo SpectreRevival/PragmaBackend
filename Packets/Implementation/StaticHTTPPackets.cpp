@@ -1,4 +1,3 @@
-#pragma once
 #include <ResourcesUtilities.h>
 #include <StaticResponseProcessorHTTP.h>
 #include <algorithm>

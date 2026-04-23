@@ -1,4 +1,3 @@
-#pragma once
 #include <RegexPayloadProcessorWS.h>
 #include <ResourcesUtilities.h>
 #include <StaticResponseProcessorWS.h>
