@@ -26,8 +26,10 @@ PlayerDatabase::PlayerDatabase(const fs::path& path)
     AddPrototype(FieldKey::NOTIFICATION_DATA, ProtobufDatabaseFieldData::WithDefaultFromPath<SavedNotificationData>(FieldKey::NOTIFICATION_DATA, "notificationData", ResourcesUtilities::GetResourcesFolder() / "payloads" / "ws" / "game" / "DefaultSavedNotifications.json"));
 }
 
-PlayerDatabase PlayerDatabase::inst(PersistenceUtilities::GetSavePath() / "playerdata.sqlite");
-
 PlayerDatabase& PlayerDatabase::Get() {
+    static PlayerDatabase inst = []() {
+        PlayerDatabase db{PersistenceUtilities::GetSavePath() / "playerdata.sqlite"};
+        return db;
+    }();
     return inst;
 }

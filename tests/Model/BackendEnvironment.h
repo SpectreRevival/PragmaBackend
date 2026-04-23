@@ -1,10 +1,9 @@
 #pragma once
 #include <gtest/gtest.h>
-#include <process.hpp>
 
 class BackendEnvironment : public ::testing::Environment {
   private:
-    std::unique_ptr<TinyProcessLib::Process> server;
+    std::jthread server;
 
   public:
     void SetUp() override;

@@ -10,7 +10,7 @@
 
 namespace fs = std::filesystem;
 
-static void RegisterStaticHandlerFromFile(std::string filename, SpectreRpcType rpcType) {
+void RegisterStaticHandlerFromFile(std::string filename, SpectreRpcType rpcType) {
     std::ifstream resfile(filename);
     if (!resfile.is_open()) {
         throw std::runtime_error("failed to open response file");
@@ -21,7 +21,7 @@ static void RegisterStaticHandlerFromFile(std::string filename, SpectreRpcType r
     new StaticResponseProcessorWS(rpcType, res);
 }
 
-static void RegisterRegexHandlerFromFiles(SpectreRpcType rpcType, std::initializer_list<std::pair<Regex, std::string>> map) {
+void RegisterRegexHandlerFromFiles(SpectreRpcType rpcType, std::initializer_list<std::pair<Regex, std::string>> map) {
     std::unordered_map<Regex, std::shared_ptr<nlohmann::json>> map2;
     for (const auto& [regex, filename] : map) {
         std::ifstream resfile(filename);

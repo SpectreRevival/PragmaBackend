@@ -5,9 +5,6 @@
 #include <string>
 
 class ProviderLinkDatabase : public BasicDatabase {
-  private:
-    static ProviderLinkDatabase inst;
-
   public:
     static ProviderLinkDatabase& Get();
     ProviderLinkDatabase(const fs::path& dbPath);

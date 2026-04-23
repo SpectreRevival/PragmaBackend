@@ -4,9 +4,6 @@
 #include <CreatePartyRequest.pb.h>
 
 class PartyDatabase : public ProtobufDatabase {
-  private:
-    static PartyDatabase inst;
-
   public:
     static PartyDatabase& Get();
     explicit PartyDatabase(const fs::path& path);

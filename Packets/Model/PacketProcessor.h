@@ -12,7 +12,6 @@ using namespace drogon;
 class HTTPPacketProcessor {
   private:
     HTTPRequestIdentifier routeId;
-
   public:
     virtual ~HTTPPacketProcessor() = default;
     explicit HTTPPacketProcessor(HTTPRequestIdentifier routeId);

@@ -56,9 +56,11 @@ PartyDatabase::PartyDatabase(const fs::path& path)
     AddPrototype(FieldKey::PARTY_MEMBERS, ProtobufDatabaseFieldData(FieldKey::PARTY_MEMBERS, "partyMembers"));
 }
 
-PartyDatabase PartyDatabase::inst(PersistenceUtilities::GetSavePath() / "playerdata.sqlite");
-
 PartyDatabase& PartyDatabase::Get() {
+    static PartyDatabase inst = []() {
+        PartyDatabase db{PersistenceUtilities::GetSavePath() / "playerdata.sqlite"};
+        return db;
+    }();
     return inst;
 }
 

@@ -4,6 +4,8 @@
 #include <ResourcesUtilities.h>
 #include <filesystem>
 #include <thread>
+#include <fstream>
+#include <ServerMainThread.h>
 
 namespace fs = std::filesystem;
 
@@ -20,27 +22,35 @@ void BackendEnvironment::SetUp() {
     // Wait for file handle release in case that there was a backend instance already running
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     std::filesystem::remove(PersistenceUtilities::GetSavePath() / "playerdata.sqlite");
-    server = std::make_unique<TinyProcessLib::Process>(
-        std::string(std::filesystem::absolute(exePath).string() + " 8081 8082 8083"),
-        ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path().string(),
-        [](const char* bytes, size_t n) {
-            std::cout << std::string(bytes, n);
-        },
-        [](const char* bytes, size_t n) {
-            std::cerr << std::string(bytes, n);
-        });
+    static std::vector<std::string> argStrings{
+        ResourcesUtilities::GetCurrentExecutablePath().string(),
+        "8081",
+        "8082",
+        "8083"
+    };
+    static std::vector<char*> args{
+        argStrings[0].data(),
+        argStrings[1].data(),
+        argStrings[2].data(),
+        argStrings[3].data()
+    };
+    server = std::jthread([](std::stop_token st) {
+        MainThread(4, args.data(), st);
+    });
     while (true) {
-        if (fs::exists(ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path() / "server.lock")) {
+        if (serverOnline) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             break;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
 
 void BackendEnvironment::TearDown() {
-    if (server) {
-        server->kill();
+    if (server.joinable()) {
+        server.request_stop();
+        server.join();
         std::this_thread::sleep_for(std::chrono::seconds(1)); // wait for windows to release file handle
-        server.reset();
     }
     std::filesystem::remove(PersistenceUtilities::GetSavePath() / "playerdata.sqlite");
     std::filesystem::remove(ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path() / "server.lock");

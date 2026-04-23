@@ -10,7 +10,7 @@ namespace fs = std::filesystem;
 
 #pragma warning(push) // disable msvc's complaining about us not saving the processors in vars, they'll be cleaned up when our program ends.
 #pragma warning(disable : 4101)
-static void RegisterStaticHTTPHandlerFromFile(std::string route, std::string filename) {
+void RegisterStaticHTTPHandlerFromFile(std::string route, std::string filename) {
     std::ifstream fileres(filename);
     if (!fileres.is_open()) {
         throw std::runtime_error("failed to open file");
@@ -22,7 +22,7 @@ static void RegisterStaticHTTPHandlerFromFile(std::string route, std::string fil
 }
 #pragma warning(pop)
 
-static void RegisterStaticHTTPHandlers() {
+void RegisterStaticHTTPHandlers() {
     RegisterStaticHTTPHandlerFromFile("//v1/info", (ResourcesUtilities::GetResourcesFolder() / "payloads" / "static" / "game" / "v1" / "info.json").string());
     for (const auto& file : fs::recursive_directory_iterator(ResourcesUtilities::GetResourcesFolder() / "payloads" / "static" / "game")) {
         if (!fs::is_regular_file(file)) continue;

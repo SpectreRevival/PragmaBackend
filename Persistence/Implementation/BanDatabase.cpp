@@ -2,9 +2,12 @@
 
 #include <BanDatabase.h>
 
-BanDatabase BanDatabase::inst{PersistenceUtilities::GetSavePath() / "playerdata.sqlite"};
 
 BanDatabase& BanDatabase::Get() {
+    static BanDatabase inst = []() {
+        BanDatabase db{PersistenceUtilities::GetSavePath() / "playerdata.sqlite"};
+        return db;
+    }();
     return inst;
 }
 

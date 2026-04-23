@@ -2,9 +2,11 @@
 
 #include <ProviderLinkDatabase.h>
 
-ProviderLinkDatabase ProviderLinkDatabase::inst{PersistenceUtilities::GetSavePath() / "playerdata.sqlite"};
-
 ProviderLinkDatabase& ProviderLinkDatabase::Get() {
+    static ProviderLinkDatabase inst = []() {
+        ProviderLinkDatabase db{PersistenceUtilities::GetSavePath() / "playerdata.sqlite"};
+        return db;
+    }();
     return inst;
 }
 
