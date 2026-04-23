@@ -158,6 +158,16 @@ void InitializeHandlers() {
     new GetFriendsListAndRegisterOnlineHandler(
         SpectreRpcType("FriendRpc.GetFriendListAndRegisterOnlineV1Request"));
     new UpdatePresenceForPlayerHandler(SpectreRpcType("MtnPlayerPresenceServiceRpc.UpdatePresenceForPlayerV1Request"));
+    drogon::app().setClientMaxBodySize(static_cast<size_t>(100 * 1024 * 1024));
+    drogon::app().setIdleConnectionTimeout(0);
+    drogon::app().addListener("0.0.0.0", gamePort);
+    drogon::app().addListener("0.0.0.0", socialPort);
+    drogon::app().addListener("0.0.0.0", wsPort);
+    drogon::app().registerBeginningAdvice([]() {
+        logger->info("Server bound!");
+        serverOnline = true;
+    });
+    drogon::app().setThreadNum(4);
 }
 
 int MainThread(int argc, char** argv, std::stop_token st) {
@@ -180,17 +190,7 @@ int MainThread(int argc, char** argv, std::stop_token st) {
     logger->info("starting server...");
     try {
         std::shared_ptr<SpectreWebsocketController> wsController = std::make_shared<SpectreWebsocketController>();
-        drogon::app().setClientMaxBodySize(static_cast<size_t>(100 * 1024 * 1024));
-        drogon::app().setIdleConnectionTimeout(0);
-        drogon::app().addListener("0.0.0.0", gamePort);
-        drogon::app().addListener("0.0.0.0", socialPort);
-        drogon::app().addListener("0.0.0.0", wsPort);
-        drogon::app().registerBeginningAdvice([]() {
-            logger->info("Server bound!");
-            serverOnline = true;
-        });
         logger->info("starting server...");
-        drogon::app().setThreadNum(4);
         drogon::app().run();
         serverOnline = false;
         logger->info("Starting shutdown...");
