@@ -3,10 +3,8 @@
 #include <thread>
 
 class BackendEnvironment : public ::testing::Environment {
-  private:
-    std::jthread server;
-
   public:
+    static void CleanStoredInformation();
     void SetUp() override;
 
     void TearDown() override;

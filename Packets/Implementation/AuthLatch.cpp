@@ -25,3 +25,7 @@ std::string AuthLatch::TakeIfFresh(const std::string& ip) {
     map.erase(it);
     return out;
 }
+
+void AuthLatch::Clear() {
+    map.clear();
+}
