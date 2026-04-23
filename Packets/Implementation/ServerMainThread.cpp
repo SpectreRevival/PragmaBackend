@@ -171,6 +171,11 @@ void InitializeHandlers() {
 }
 
 int MainThread(int argc, char** argv, std::stop_token st) {
+    if (argc == 4) {
+        gamePort = std::stoi(std::string(argv[1]));
+        socialPort = std::stoi(std::string(argv[2]));
+        wsPort = std::stoi(std::string(argv[3]));
+    }
     if (!loggerSetup) {
         loggerSetup = true;
         SetupLogger();
@@ -182,11 +187,6 @@ int MainThread(int argc, char** argv, std::stop_token st) {
     std::stop_callback callback(st, []() {
         drogon::app().quit();
     });
-    if (argc == 4) {
-        gamePort = std::stoi(std::string(argv[1]));
-        socialPort = std::stoi(std::string(argv[2]));
-        wsPort = std::stoi(std::string(argv[3]));
-    }
     logger->info("starting server...");
     try {
         std::shared_ptr<SpectreWebsocketController> wsController = std::make_shared<SpectreWebsocketController>();
