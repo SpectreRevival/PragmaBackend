@@ -4,17 +4,18 @@
 #include <ResourcesUtilities.h>
 #include <filesystem>
 #include <thread>
+#define WIN32_LEAN_AND_MEAN // why is this a thing. it literally won't compile w/o it
 #include <windows.h>
 
 namespace fs = std::filesystem;
 
-static void RunBackendWindows() {
+static DWORD RunBackendWindows() {
     STARTUPINFOA si = {sizeof(si)};
     PROCESS_INFORMATION pi = {};
     std::filesystem::path exePath = ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path() /
                                     "pragmabackend.exe";
-    BOOL ok = CreateProcessA("C:\\Windows\\System32\\cmd.exe",
-        (LPSTR)(std::string("/c ") + exePath.string()).c_str(),
+    BOOL ok = CreateProcessA(exePath.string().c_str(),
+        (LPSTR)"8081 8082 8083",
         nullptr,
         nullptr,
         TRUE,
@@ -24,8 +25,13 @@ static void RunBackendWindows() {
         &si,
         &pi);
     FreeConsole();
-    AttachConsole(pi.dwProcessId);
+    FreeConsole();
+    for (int i = 0; i < 50; i++) {
+        if (AttachConsole(pi.dwProcessId) != 0) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
     SetConsoleCtrlHandler(nullptr, TRUE);
+    return pi.dwProcessId;
 }
 
 void BackendEnvironment::SetUp() {
@@ -39,7 +45,7 @@ void BackendEnvironment::SetUp() {
     std::system("pkill -9 pragmabackend"); // NOLINT
 #endif
     std::filesystem::remove(PersistenceUtilities::GetSavePath() / "playerdata.sqlite");
-    RunBackendWindows();
+    backendPID = RunBackendWindows();
     while (true) {
         if (fs::exists(ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path() / "server.lock")) {
             break;
@@ -48,7 +54,11 @@ void BackendEnvironment::SetUp() {
 }
 
 void BackendEnvironment::TearDown() {
-    GenerateConsoleCtrlEvent(NULL, FALSE);
+    GenerateConsoleCtrlEvent(CTRL_C_EVENT, NULL);
+    SetConsoleCtrlHandler(nullptr, FALSE);
+    HANDLE h = OpenProcess(SYNCHRONIZE, FALSE, backendPID);
+    WaitForSingleObject(h, INFINITE);
+    CloseHandle(h);
     std::this_thread::sleep_for(std::chrono::seconds(1)); // wait for windows to release file handle
     std::filesystem::remove(PersistenceUtilities::GetSavePath() / "playerdata.sqlite");
     std::filesystem::remove(ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path() / "server.lock");
