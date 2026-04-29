@@ -51,5 +51,6 @@ class SpectreWebsocketController : public WebSocketController<SpectreWebsocketCo
     static void AddConnection(const std::string& playerId, WebSocketConnectionPtr con);
     WS_PATH_LIST_BEGIN
     WS_PATH_ADD("/");
+    WS_PATH_ADD("/v1/rpc");
     WS_PATH_LIST_END
 };

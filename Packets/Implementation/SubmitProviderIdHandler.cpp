@@ -23,6 +23,7 @@ std::optional<drogon::HttpResponsePtr> SubmitProviderIdHandler::Process(const dr
     if (GetSteamApiKey().empty()) {
         auto res = HttpResponse::newHttpResponse();
         res->setBody("no steam api key provided");
+        res->setStatusCode(k400BadRequest);
         return res;
     }
 
@@ -30,12 +31,14 @@ std::optional<drogon::HttpResponsePtr> SubmitProviderIdHandler::Process(const dr
     if (body.is_discarded() || !body.contains("providerId") || !body.at("providerId").is_string()) {
         auto res = HttpResponse::newHttpResponse();
         res->setBody("err: provider id required");
+        res->setStatusCode(k400BadRequest);
         return res;
     }
     const std::string steam64 = body.at("providerId");
     if (steam64.empty()) {
         auto res = HttpResponse::newHttpResponse();
         res->setBody("err: steam id required");
+        res->setStatusCode(k400BadRequest);
         return res;
     }
 
@@ -44,6 +47,7 @@ std::optional<drogon::HttpResponsePtr> SubmitProviderIdHandler::Process(const dr
     if (!info) {
         auto res = HttpResponse::newHttpResponse();
         res->setBody("err: invalid steam id");
+        res->setStatusCode(k400BadRequest);
         return res;
     }
 

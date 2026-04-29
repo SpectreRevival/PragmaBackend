@@ -71,7 +71,7 @@ std::optional<drogon::HttpResponsePtr> AuthenticateHandler::Process(const drogon
     if (steam64.empty()) {
         auto res = HttpResponse::newHttpResponse();
         res->setBody(R"({"error":"NOSTEAMID"})");
-        res->setStatusCode(k200OK);
+        res->setStatusCode(k400BadRequest);
         return res;
     }
 
@@ -90,6 +90,7 @@ std::optional<drogon::HttpResponsePtr> AuthenticateHandler::Process(const drogon
     if (BanDatabase::Get().IsBanned(playerId)) {
         auto res = HttpResponse::newHttpResponse();
         res->setBody(R"({"error":"ACCOUNT BANNED. CONTACT ASTROVAL0 ON DISCORD"})");
+        res->setStatusCode(k403Forbidden);
         return res;
     }
 
