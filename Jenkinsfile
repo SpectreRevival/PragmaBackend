@@ -136,9 +136,9 @@ pipeline {
                             }
                         }
                     }
-                } // end matrix stages
-            } // end matrix
-        } // end Build Matrix
+                } 
+            } 
+        }
 
         stage("Post-matrix parallel tasks") {
             parallel {
@@ -161,140 +161,101 @@ pipeline {
                     }
                 }
 
-                stage("Code analysis") {
-                    stages { // REQUIRED WRAPPER FOR NESTED PARALLEL
-                        stage("Execution") {
-                            parallel {
-                                stage("Code formatter") {
-                                    agent { label 'linux' }
-                                    steps {
-                                        script {
-                                            checkout scm
-                                            sh """
-                                                FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
-                                                clang-format -i \$FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp
-                                            """
-                                            sh """
-                                                if ! git diff --quiet; then
-                                                    git diff > clang-format.patch
-                                                    echo "Patch created, apply the patch from the artifacts section to fix"
-                                                else
-                                                    echo "No changes required"
-                                                fi
-                                            """
-                                            if (fileExists('clang-format.patch')) {
-                                                archiveArtifacts artifacts: 'clang-format.patch', fingerprint: true
-                                                sh "rm clang-format.patch"
-                                                error("Formatting changes required")
-                                            }
-                                        }
-                                    }
-                                }
-
-                                stage("Code linter") {
-                                    agent { label 'linux' }
-                                    options { throttle(['RamIntensiveJob']) }
-                                    steps {
-                                        script {
-                                            checkout scm
-                                            sh "git submodule sync --recursive"
-                                            sh "git submodule update --init --recursive"
-                                            sh "cmake --preset x64-debug-linux"
-                                            sh "cmake --build out/build/x64-debug-linux --target generate_protos"
-
-                                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                                sh """
-                                                    FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
-                                                    run-clang-tidy \$FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp -fix -p out/build/x64-debug-linux -extra-arg=-Werror
-                                                """
-                                            }
-                                            sh """
-                                                if ! git diff --quiet; then
-                                                    git diff > clang-tidy.patch
-                                                    echo "Patch created, apply the patch from the artifacts section to fix"
-                                                else
-                                                    echo "No changes required"
-                                                fi
-                                            """
-                                            if (fileExists('clang-tidy.patch')) {
-                                                archiveArtifacts artifacts: 'clang-tidy.patch', fingerprint: true
-                                                sh "rm clang-tidy.patch"
-                                                error("Linter changes required")
-                                            }
-                                        }
-                                    }
-                                }
+                stage("Code formatter") {
+                    agent { label 'linux' }
+                    steps {
+                        script {
+                            checkout scm
+                            sh """
+                                FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
+                                clang-format -i \$FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp
+                            """
+                            sh """
+                                if ! git diff --quiet; then
+                                    git diff > clang-format.patch
+                                    echo "Patch created, apply the patch from the artifacts section to fix"
+                                else
+                                    echo "No changes required"
+                                fi
+                            """
+                            if (fileExists('clang-format.patch')) {
+                                archiveArtifacts artifacts: 'clang-format.patch', fingerprint: true
+                                sh "rm clang-format.patch"
+                                error("Formatting changes required")
                             }
                         }
                     }
                 }
 
-                stage("Run unit tests") {
-                    stages { // REQUIRED WRAPPER FOR NESTED MATRIX
-                        stage("Execution") {
-                            matrix {
-                                axes {
-                                    axis {
-                                        name 'OS'
-                                        values 'linux', 'windows'
-                                    }
-                                }
+                stage("Code linter") {
+                    agent { label 'linux' }
+                    options { throttle(['RamIntensiveJob']) }
+                    steps {
+                        script {
+                            checkout scm
+                            sh "git submodule sync --recursive"
+                            sh "git submodule update --init --recursive"
+                            sh "cmake --preset x64-debug-linux"
+                            sh "cmake --build out/build/x64-debug-linux --target generate_protos"
 
-                                agent { label "${OS}" }
-
-                                stages {
-                                    stage("Unstash") {
-                                        steps {
-                                            script {
-                                                if (env.OS == 'windows') {
-                                                    bat "if not exist testdir mkdir testdir"
-                                                    dir('testdir') {
-                                                        unstash 'winbuild'
-                                                    }
-                                                } else {
-                                                    sh "mkdir -p testdir"
-                                                    sh "rm -rf testdir/package-release-linux"
-                                                    dir('testdir') {
-                                                        unstash 'linuxbuild'
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    stage("Run tests") {
-                                        steps {
-                                            script {
-                                                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                                    if (isUnix()) {
-                                                        sh "testdir/package-release-linux/tests/tests"
-                                                    } else {
-                                                        bat "testdir\\package-release-win\\tests\\tests.exe"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    stage("Test environment cleanup") {
-                                        steps {
-                                            script {
-                                                if (isUnix()) {
-                                                    sh "pkill -9 pragmabackend || true"
-                                                } else {
-                                                    bat "taskkill /f /im pragmabackend.exe || exit 0"
-                                                }
-                                            }
-                                        }
-                                    }
-                                } // end matrix inner stages
-                            } // end matrix
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                sh """
+                                    FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
+                                    run-clang-tidy \$FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp -fix -p out/build/x64-debug-linux -extra-arg=-Werror
+                                """
+                            }
+                            sh """
+                                if ! git diff --quiet; then
+                                    git diff > clang-tidy.patch
+                                    echo "Patch created, apply the patch from the artifacts section to fix"
+                                else
+                                    echo "No changes required"
+                                fi
+                            """
+                            if (fileExists('clang-tidy.patch')) {
+                                archiveArtifacts artifacts: 'clang-tidy.patch', fingerprint: true
+                                sh "rm clang-tidy.patch"
+                                error("Linter changes required")
+                            }
                         }
                     }
                 }
-            } // end parent parallel
+
+                stage("Unit tests - Linux") {
+                    agent { label 'linux' }
+                    steps {
+                        script {
+                            sh "mkdir -p testdir"
+                            sh "rm -rf testdir/package-release-linux"
+                            dir('testdir') {
+                                unstash 'linuxbuild'
+                            }
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                sh "testdir/package-release-linux/tests/tests"
+                            }
+                            sh "pkill -9 pragmabackend || true"
+                        }
+                    }
+                }
+
+                stage("Unit tests - Windows") {
+                    agent { label 'windows' }
+                    steps {
+                        script {
+                            bat "if not exist testdir mkdir testdir"
+                            dir('testdir') {
+                                unstash 'winbuild'
+                            }
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                bat "testdir\\package-release-win\\tests\\tests.exe"
+                            }
+                            bat "taskkill /f /im pragmabackend.exe || exit 0"
+                        }
+                    }
+                }
+            } 
         }
-    } // end outer stages
+    } 
 
     post {
         always {
