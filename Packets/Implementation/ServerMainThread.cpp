@@ -14,6 +14,7 @@
 #include <FieldFetchProcessor.h>
 #include <FieldKey.h>
 #include <GetBulkProfileDataProcessor.h>
+#include <GetHostConnectionDetailsProcessor.h>
 #include <GetLoginDataProcessor.h>
 #include <GetPlayerDataProcessor.h>
 #include <HeartbeatProcessor.h>
@@ -153,6 +154,8 @@ void InitializeHandlers() {
         SpectreRpcType("PartyRpc.UpdatePartyPlayerV1Request"));
     new EnterMatchmakingProcessor(
         SpectreRpcType("PartyRpc.EnterMatchmakingV1Request"));
+    new GetHostConnectionDetailsProcessor(
+        SpectreRpcType("GameInstanceRpc.GetHostConnectionDetailsV1Request"));
     new IsInPartyHandler(
         SpectreRpcType("MultiplayerRpc.InitializePartyV1Request"));
     new IsInPartyHandler(
