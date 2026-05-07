@@ -2,15 +2,13 @@
 #include "ProviderLinkDatabase.h"
 #include "ResourcesUtilities.h"
 
-#include <AuthLatch.h>
 #include <AuthenticateHandler.h>
 #include <OutfitLoadout.pb.h>
 #include <PlayerData.pb.h>
 #include <PlayerDatabase.h>
 #include <ProfileData.pb.h>
-#include <SteamValidator.h>
+#include <SteamAuthTicket.h>
 #include <WeaponLoadout.pb.h>
-#include <boost/asio/ip/tcp.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/name_generator_sha1.hpp>
 #include <boost/uuid/random_generator.hpp>
@@ -24,38 +22,8 @@
 #include <string>
 #include <utility>
 
-using tcp = boost::asio::ip::tcp;
-
-namespace {
-    struct AuthCfg {
-        std::string steamApiKey;
-    };
-} // namespace
-
-static const AuthCfg& GetAuthCfg() {
-    static AuthCfg cfg = [] {
-        AuthCfg c{};
-        auto tryPath = [&](const char* p) {
-            if (std::ifstream f(p); f.is_open()) {
-                auto j = nlohmann::json::parse(f, nullptr, false);
-                if (!j.is_discarded() && j.contains("steamApiKey") && j.at("steamApiKey").is_string()) {
-                    c.steamApiKey = j.at("steamApiKey").get<std::string>();
-                }
-            }
-        };
-        tryPath("auth.json");
-        return c;
-    }();
-    return cfg;
-}
-
 AuthenticateHandler::AuthenticateHandler(HTTPRequestIdentifier id)
     : HTTPPacketProcessor(std::move(id)) {
-}
-
-static std::string ClientIp(const tcp::socket& sock) {
-    // just gonna let this throw; ends up 500 anyway
-    return sock.remote_endpoint().address().to_string();
 }
 
 static std::string PlayerUuidFromSteam64(const std::string& steam64) {
@@ -65,9 +33,15 @@ static std::string PlayerUuidFromSteam64(const std::string& steam64) {
 }
 
 std::optional<drogon::HttpResponsePtr> AuthenticateHandler::Process(const drogon::HttpRequestPtr& req) {
-    const std::string& steamKey = GetAuthCfg().steamApiKey;
-    const std::string ip = req->peerAddr().toIp();
-    const std::string steam64 = AuthLatch::Get().TakeIfFresh(ip);
+    const auto body = nlohmann::json::parse(req->body(), nullptr, false);
+    if (body.is_discarded() || !body.contains("providerToken") || !body.at("providerToken").is_string()) {
+        auto res = HttpResponse::newHttpResponse();
+        res->setBody(R"({"error":"NOSTEAMID"})");
+        res->setStatusCode(k400BadRequest);
+        return res;
+    }
+
+    const std::string steam64 = SteamAuthTicket::ExtractSteamId64(body.at("providerToken").get<std::string>());
     if (steam64.empty()) {
         auto res = HttpResponse::newHttpResponse();
         res->setBody(R"({"error":"NOSTEAMID"})");
@@ -76,14 +50,8 @@ std::optional<drogon::HttpResponsePtr> AuthenticateHandler::Process(const drogon
     }
 
     auto playerId = ProviderLinkDatabase::Get().LookupPlayerByProvider(AuthProvider::STEAM, steam64);
-
     if (playerId.empty()) {
-        std::string persona = "Player";
-        if (!steamKey.empty()) {
-            SteamValidator v(steamKey);
-            if (auto info = v.ValidateSteamId(steam64)) persona = info->personaName;
-        }
-        playerId = CreatePlayerFromSteam(steam64, persona);
+        playerId = CreatePlayerFromSteam(steam64, "Player");
         ProviderLinkDatabase::Get().UpsertProviderMap(AuthProvider::STEAM, steam64, playerId);
     }
 
@@ -140,26 +108,6 @@ std::string AuthenticateHandler::CreatePlayerFromSteam(const std::string& steam6
     return uuid;
 }
 
-static std::string B64urlJson(const nlohmann::json& j) {
-    const std::string s = j.dump();
-    static const char* t = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    std::string out;
-    out.reserve(((s.size() + 2) / 3) * 4);
-    int val = 0;
-    int valb = -6;
-    for (unsigned char c : s) {
-        val = (val << 8) + c;
-        valb += 8;
-        while (valb >= 0) {
-            out.push_back(t[(val >> valb) & 0x3F]);
-            valb -= 6;
-        }
-    }
-    if (valb > -6) out.push_back(t[((val << 8) >> (valb + 8)) & 0x3F]);
-    while ((out.size() % 4) != 0U) out.push_back('=');
-    while (!out.empty() && out.back() == '=') out.pop_back();
-    return out;
-}
 static const std::string& GetPragmaPrivateKey() {
     static std::string pragmaPrivateKey = [] {
         std::ifstream keyFile(ResourcesUtilities::GetResourcesFolder() / "pragma_private.pem");

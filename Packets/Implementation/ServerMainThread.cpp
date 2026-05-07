@@ -4,7 +4,6 @@
 
 #include "GetFriendsListAndRegisterOnlineHandler.h"
 #include "ResourcesUtilities.h"
-#include "SubmitProviderIdHandler.h"
 #include "UpdatePresenceForPlayerHandler.h"
 
 #include <AuthenticateHandler.h>
@@ -117,7 +116,6 @@ void InitializeHandlers() {
 
     // feel like this needs cleaning up T_T
 
-    new SubmitProviderIdHandler(HTTPRequestIdentifier("/v1/submitproviderid", Post));
     new AuthenticateHandler(HTTPRequestIdentifier("/v1/account/authenticateorcreatev2", Post));
     new HeartbeatProcessor(SpectreRpcType("PlayerSessionRpc.HeartbeatV1Request"));
     new FieldFetchProcessor<Inventory>(

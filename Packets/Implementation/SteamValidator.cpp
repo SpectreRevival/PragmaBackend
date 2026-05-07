@@ -2,6 +2,7 @@
 #include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
+#include <chrono>
 #include <spdlog/spdlog.h>
 
 using tcp = boost::asio::ip::tcp;
@@ -17,12 +18,15 @@ std::string SteamValidator::HttpGet(const std::string& host, const std::string& 
 
     boost::beast::tcp_stream stream{ioc};
     const auto results = resolver.resolve(host, "80");
+    stream.expires_after(std::chrono::seconds(3));
     stream.connect(results);
     http::request<http::string_body> req{http::verb::get, target, 11};
     req.set(http::field::host, host);
+    stream.expires_after(std::chrono::seconds(3));
     http::write(stream, req);
     boost::beast::flat_buffer buffer;
     http::response<http::string_body> res;
+    stream.expires_after(std::chrono::seconds(3));
     http::read(stream, buffer, res);
     boost::system::error_code ec;
     stream.socket().shutdown(tcp::socket::shutdown_both, ec); // NOLINT
@@ -32,10 +36,9 @@ std::string SteamValidator::HttpGet(const std::string& host, const std::string& 
 std::optional<SteamPlayerInfo> SteamValidator::ValidateSteamId(const std::string& steam64) const {
     if (apiKey.empty()) return std::nullopt;
 
-    auto body = HttpGet("api.steampowered.com",
-                        "/ISteamUser/GetPlayerSummaries/v2/?key=" + apiKey + "&steamids=" + steam64 /* + "&format=json"*/);
-
     try {
+        auto body = HttpGet("api.steampowered.com",
+                            "/ISteamUser/GetPlayerSummaries/v2/?key=" + apiKey + "&steamids=" + steam64 /* + "&format=json"*/);
         auto j = json::parse(body);
         auto& players = j.at("response").at("players");
 
@@ -46,7 +49,7 @@ std::optional<SteamPlayerInfo> SteamValidator::ValidateSteamId(const std::string
         out.personaName = player.value("personaname", "");
         return out;
     } catch (const std::exception& e) {
-        spdlog::error("Failed to parse Steam API response: {}", e.what());
+        spdlog::warn("Steam API validation failed: {}", e.what());
         return std::nullopt;
     }
 }
