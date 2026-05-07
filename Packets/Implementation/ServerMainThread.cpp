@@ -23,6 +23,7 @@
 #include <LegacyPlayerData.pb.h>
 #include <OutfitLoadout.pb.h>
 #include <PacketProcessor.h>
+#include <PartyDatabase.h>
 #include <PersistenceUtilities.h>
 #include <PlayerDatabase.h>
 #include <SaveOutfitLoadoutProcessor.h>
@@ -110,6 +111,7 @@ void InitializeHandlers() {
         loggerSetup = true;
         SetupLogger();
     }
+    PartyDatabase::Get().ClearAllParties();
     RegisterStaticHTTPHandlers();
     RegisterStaticWSHandlers();
 

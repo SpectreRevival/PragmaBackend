@@ -3,9 +3,14 @@
 #include <SpectreRpcType.h>
 #include <drogon/WebSocketController.h>
 #include <drogon/drogon.h>
+#include <atomic>
+#include <condition_variable>
+#include <deque>
 #include <functional>
 #include <google/protobuf/message.h>
+#include <mutex>
 #include <nlohmann/json.hpp>
+#include <stop_token>
 
 using json = nlohmann::ordered_json;
 namespace pbuf = google::protobuf;
@@ -16,7 +21,7 @@ class SpectreWebsocket {
     std::string playerId;
     std::deque<Notification> notificationsToDeliver;
     std::mutex notificationQueueLock;
-    std::condition_variable notificationQueueCondition;
+    std::condition_variable_any notificationQueueCondition;
     std::jthread notificationWorkerThread;
     std::weak_ptr<WebSocketConnection> con;
     void NotificationThread(const std::stop_token& st);

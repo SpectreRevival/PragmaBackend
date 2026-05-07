@@ -4,6 +4,7 @@
 #include <google/protobuf/util/json_util.h>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
+#include <stdexcept>
 
 namespace pbuf = google::protobuf;
 using reqbuf = boost::beast::flat_buffer;
@@ -31,7 +32,7 @@ class SpectreWebsocketRequest {
             &message);
         if (!status.ok()) {
             spdlog::error("Failed to parse incoming request to message: {}", status.message());
-            throw;
+            throw std::runtime_error("failed to parse websocket payload protobuf");
         }
         return std::make_unique<T>(message);
     }
