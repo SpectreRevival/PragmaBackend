@@ -237,4 +237,27 @@ void SpectreWebsocketController::handleNewConnection(const drogon::HttpRequestPt
 }
 
 void SpectreWebsocketController::handleConnectionClosed(const WebSocketConnectionPtr& conPtr) {
+    std::shared_ptr<SpectreWebsocket> ctx = conPtr->getContext<SpectreWebsocket>();
+    if (!ctx) {
+        return;
+    }
+
+    const std::string playerId = ctx->GetPlayerId();
+    {
+        std::unique_lock connectionsMapLock(connectionsMapMutex);
+        auto it = connectionsByPlayerId.find(playerId);
+        if (it != connectionsByPlayerId.end() && it->second == conPtr) {
+            connectionsByPlayerId.erase(it);
+        }
+    }
+
+    // party cleanup iterates every party and holds the recursive mutex,
+    // we don't want it stalling other requests on the event loop?
+    std::thread([playerId]() {
+        try {
+            PartyDatabase::Get().RemovePlayerFromParties(playerId);
+        } catch (const std::exception& e) {
+            spdlog::warn("failed to remove player {} from parties on websocket close: {}", playerId, e.what());
+        }
+    }).detach();
 }
