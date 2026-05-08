@@ -1,5 +1,8 @@
 #pragma once
+#include "BasicDatabase.h"
+#include "CaseHelper.h"
 #include "FieldKey.h"
+#include "ProtobufDatabaseFieldData.h"
 
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <filesystem>
@@ -32,25 +35,24 @@ namespace sql = SQLite;
     std::unique_ptr<PlayerName> nameFetched = playerData.GetField<PlayerName>(fetchStatement, FieldKey::PLAYER_INGAME_NAME);
     spdlog::info("name: {}", nameFetched->name());
 */
-class Database {
+class ProtobufDatabase : public BasicDatabase {
   private:
-    fs::path filename;
-    sql::Database dbRaw;
-    std::string tableName;
     std::string keyFieldName;
     std::string keyFieldType;
     pbuf::util::JsonParseOptions parseOpts;
-    static std::unordered_map<FieldKey, const std::string> classNames;
-    static std::unordered_map<FieldKey, std::unique_ptr<const pbuf::Message>> defaultFieldValues;
+    static std::unordered_map<FieldKey, ProtobufDatabaseFieldData>& getFieldData() {
+        static std::unordered_map<FieldKey, ProtobufDatabaseFieldData> instance;
+        return instance;
+    }
+
     template <typename T>
     std::unique_ptr<T> DefaultOrNullptr(FieldKey key) {
         static_assert(std::is_base_of_v<pbuf::Message, T>, "Type provided to DefaultOrNullptr must inherit from protobuf::Message");
-        auto defaultValue = defaultFieldValues.find(key);
-        if (defaultValue == defaultFieldValues.end()) {
+        if (getFieldData().at(key).GetDefaultValue() == nullptr) {
             return nullptr;
         }
         spdlog::info("Returning default value for FieldKey: {}", static_cast<uint32_t>(key));
-        const T* typed = dynamic_cast<const T*>(defaultValue->second.get());
+        const T* typed = dynamic_cast<const T*>(getFieldData().at(key).GetDefaultValue());
         if (!typed) {
             // Handle type mismatch
             spdlog::error("type mismatch in DefaultOrNullptr");
@@ -63,10 +65,7 @@ class Database {
     }
 
   public:
-    Database(const fs::path& dbPath, std::string tableName, std::string keyFieldName, const std::string& keyFieldType);
-
-    sql::Database* GetRaw();
-    sql::Database& GetRawRef();
+    ProtobufDatabase(const fs::path& dbPath, const std::string& tableName, std::string keyFieldName, const std::string& keyFieldType);
 
     template <typename T>
     std::vector<std::unique_ptr<T>> GetFields(sql::Statement& query, FieldKey key) {
@@ -74,7 +73,7 @@ class Database {
         std::vector<std::unique_ptr<T>> output;
         while (query.executeStep()) {
             if (query.getColumnCount() != 1) {
-                spdlog::warn("Multiple columns returned by query passed into GetFields w FieldKey {}, ignoring all columns except first one", classNames.at(key));
+                spdlog::warn("Multiple columns returned by query passed into GetFields w FieldKey {}, ignoring all columns except first one", getFieldData().at(key).GetFieldName());
             }
             const char* blob = static_cast<const char*>(query.getColumn(0).getBlob());
             int sz = query.getColumn(0).getBytes();
@@ -105,7 +104,8 @@ class Database {
             return std::move(DefaultOrNullptr<T>(key));
         }
         if (query.getColumnCount() != 1) {
-            spdlog::warn("Multiple columns returned by query passed into GetField w FieldKey {}, ignoring all columns except first one", classNames.at(key));
+            spdlog::warn("Multiple columns returned by query passed into GetField w FieldKey {}, ignoring all columns except first one",
+                         getFieldData().at(key).GetFieldName());
         }
         const char* blob = static_cast<const char*>(query.getColumn(0).getBlob());
         int sz = query.getColumn(0).getBytes();
@@ -141,37 +141,24 @@ class Database {
 
     sql::Statement FormatStatement(std::string command, FieldKey key);
 
-    template <typename T>
-    void AddPrototype(FieldKey key) {
-        static_assert(std::is_base_of_v<pbuf::Message, T>, "Type provided to AddPrototype must inherit from protobuf::Message");
-        classNames.insert({key, std::string(T::descriptor()->name())});
-        sql::Statement colQuery(dbRaw, "PRAGMA table_info(" + GetTableName() + ");");
+    void AddPrototype(FieldKey key, ProtobufDatabaseFieldData dat) {
+        sql::Statement colQuery(*GetRaw(), "PRAGMA table_info(" + GetTableName() + ");");
         bool colExists = false;
         while (colQuery.executeStep()) {
             std::string colName = colQuery.getColumn(1).getText();
-            if (colName == T::descriptor()->name()) {
+            if (CaseInsensitiveEquals(colName, dat.GetFieldName())) {
                 colExists = true;
                 break;
             }
         }
         if (!colExists) {
-            dbRaw.exec("ALTER TABLE " + GetTableName() + " ADD COLUMN " + std::string(T::descriptor()->name()) + " BLOB;");
+            try {
+                GetRaw()->exec("ALTER TABLE " + GetTableName() + " ADD COLUMN " + dat.GetFieldName() + " BLOB;");
+            } catch (std::exception& e) {
+                spdlog::error("{}", e.what());
+            }
         }
-    }
-
-    template <typename T>
-    void AddPrototype(const FieldKey key, const fs::path& defaultFieldValuePath) {
-        AddPrototype<T>(key);
-        const std::ifstream defaultFile(defaultFieldValuePath);
-        std::stringstream buf;
-        buf << defaultFile.rdbuf();
-        const std::string data = buf.str();
-        T defaultFieldData;
-        if (auto status = pbuf::util::JsonStringToMessage(data, &defaultFieldData, parseOpts); !status.ok()) {
-            spdlog::error("failed to parse default message: {}", status.message());
-            throw;
-        }
-        defaultFieldValues[key] = std::make_unique<const T>(defaultFieldData);
+        getFieldData().insert_or_assign(key, std::move(dat));
     }
 
     bool IsFieldPopulated(FieldKey key, const std::string& dbKey);
@@ -181,7 +168,6 @@ class Database {
 
     static const std::string& GetFieldName(FieldKey key);
 
-    const std::string& GetTableName();
     const std::string& GetKeyFieldName();
     const std::string& GetKeyFieldType();
 };

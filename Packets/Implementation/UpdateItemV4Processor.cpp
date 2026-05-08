@@ -8,17 +8,17 @@ UpdateItemV4Processor::UpdateItemV4Processor(SpectreRpcType rpcType)
     : WebsocketPacketProcessor(rpcType) {
 }
 
-static void SendSuccessfulUpdate(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) {
-    std::shared_ptr<json> resjson = packet.GetBaseJsonResponse();
-    resjson->at("payload")["success"] = true;
-    sock.SendPacket(resjson);
+static nlohmann::json SendSuccessfulUpdate() {
+    nlohmann::json res{};
+    res["success"] = true;
+    return res;
 }
 
-void UpdateItemV4Processor::Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) {
+std::optional<WebsocketPayload> UpdateItemV4Processor::Process(SpectreWebsocketRequest& packet) {
     sql::Statement invQuery = PlayerDatabase::Get().FormatStatement(
         "SELECT {col} from {table} WHERE PlayerId = ?",
         FieldKey::PLAYER_INVENTORY);
-    invQuery.bind(1, sock.GetPlayerId());
+    invQuery.bind(1, packet.GetPlayerId());
     std::unique_ptr<Inventory> playerI = PlayerDatabase::Get().GetField<Inventory>(invQuery, FieldKey::PLAYER_INVENTORY);
     std::unique_ptr<UpdateSingleItemMessage> itemUpdate = packet.GetPayloadAsMessage<UpdateSingleItemMessage>();
     FullInventory* playerInv = playerI->mutable_full();
@@ -32,8 +32,7 @@ void UpdateItemV4Processor::Process(SpectreWebsocketRequest& packet, SpectreWebs
         }
         if (curItem == nullptr) {
             spdlog::warn("Couldn't find item with instance id {} in a item update request, skipping", itemUpdate->instanceditemupdate().instanceid());
-            SendSuccessfulUpdate(packet, sock);
-            return;
+            return SendSuccessfulUpdate();
         }
         if (itemUpdate->instanceditemupdate().ext().setviewed()) {
             curItem->mutable_ext()->set_viewed(true);
@@ -53,11 +52,10 @@ void UpdateItemV4Processor::Process(SpectreWebsocketRequest& packet, SpectreWebs
         }
         if (curItem == nullptr) {
             spdlog::warn("Couldn't find item with instance id {} in a item update request, skipping", itemUpdate->stackeditemupdate().instanceid());
-            SendSuccessfulUpdate(packet, sock);
-            return;
+            return SendSuccessfulUpdate();
         }
         curItem->set_amount(itemUpdate->stackeditemupdate().newamount());
     }
-    PlayerDatabase::Get().SetField(FieldKey::PLAYER_INVENTORY, playerI.get(), sock.GetPlayerId());
-    SendSuccessfulUpdate(packet, sock);
+    PlayerDatabase::Get().SetField(FieldKey::PLAYER_INVENTORY, playerI.get(), packet.GetPlayerId());
+    return SendSuccessfulUpdate();
 }

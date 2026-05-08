@@ -1,3 +1,5 @@
+#include "BanDatabase.h"
+#include "ProviderLinkDatabase.h"
 #include "ResourcesUtilities.h"
 
 #include <AuthLatch.h>
@@ -20,6 +22,7 @@
 #include <nlohmann/json.hpp>
 #include <random>
 #include <string>
+#include <utility>
 
 using tcp = boost::asio::ip::tcp;
 
@@ -34,7 +37,7 @@ static const AuthCfg& GetAuthCfg() {
         AuthCfg c{};
         auto tryPath = [&](const char* p) {
             if (std::ifstream f(p); f.is_open()) {
-                auto j = json::parse(f, nullptr, false);
+                auto j = nlohmann::json::parse(f, nullptr, false);
                 if (!j.is_discarded() && j.contains("steamApiKey") && j.at("steamApiKey").is_string()) {
                     c.steamApiKey = j.at("steamApiKey").get<std::string>();
                 }
@@ -46,8 +49,8 @@ static const AuthCfg& GetAuthCfg() {
     return cfg;
 }
 
-AuthenticateHandler::AuthenticateHandler(std::string route)
-    : HTTPPacketProcessor(std::move(route)) {
+AuthenticateHandler::AuthenticateHandler(HTTPRequestIdentifier id)
+    : HTTPPacketProcessor(std::move(id)) {
 }
 
 static std::string ClientIp(const tcp::socket& sock) {
@@ -61,34 +64,18 @@ static std::string PlayerUuidFromSteam64(const std::string& steam64) {
     return boost::lexical_cast<std::string>(id);
 }
 
-void AuthenticateHandler::Process(const http::request<http::string_body>& req, tcp::socket& sock) {
-    http::response<http::string_body> res;
-    res.version(req.version());
-    res.keep_alive(req.keep_alive());
-    res.set(http::field::content_type, "application/json; charset=UTF-8");
-    res.set(http::field::vary, "Origin");
-
-    auto reply = [&](http::status st, std::string body) {
-        res.result(st);
-        res.body() = std::move(body);
-        res.prepare_payload();
-        http::write(sock, res);
-    };
+std::optional<drogon::HttpResponsePtr> AuthenticateHandler::Process(const drogon::HttpRequestPtr& req) {
     const std::string& steamKey = GetAuthCfg().steamApiKey;
-
-    if (req.method() != http::verb::post) {
-        res.set(http::field::allow, "POST");
-        return reply(http::status::method_not_allowed, R"({"error":"method not allowed"})");
-    }
-
-    const auto ip = ClientIp(sock);
-    const auto steam64 = AuthLatch::Get().TakeIfFresh(ip);
+    const std::string ip = req->peerAddr().toIp();
+    const std::string steam64 = AuthLatch::Get().TakeIfFresh(ip);
     if (steam64.empty()) {
-        return reply(http::status::bad_request, R"({"error":"NOSTEAMID"})");
+        auto res = HttpResponse::newHttpResponse();
+        res->setBody(R"({"error":"NOSTEAMID"})");
+        res->setStatusCode(k400BadRequest);
+        return res;
     }
 
-    auto& db = PlayerDatabase::Get();
-    auto playerId = db.LookupPlayerByProvider("STEAM", steam64);
+    auto playerId = ProviderLinkDatabase::Get().LookupPlayerByProvider(AuthProvider::STEAM, steam64);
 
     if (playerId.empty()) {
         std::string persona = "Player";
@@ -97,24 +84,29 @@ void AuthenticateHandler::Process(const http::request<http::string_body>& req, t
             if (auto info = v.ValidateSteamId(steam64)) persona = info->personaName;
         }
         playerId = CreatePlayerFromSteam(steam64, persona);
-        db.UpsertProviderMap("STEAM", steam64, playerId);
+        ProviderLinkDatabase::Get().UpsertProviderMap(AuthProvider::STEAM, steam64, playerId);
     }
 
-    if (db.IsBanned(playerId)) {
-        return reply(http::status::forbidden, R"({"error":"ACCOUNT BANNED. CONTACT ASTROVAL0 ON DISCORD"})");
+    if (BanDatabase::Get().IsBanned(playerId)) {
+        auto res = HttpResponse::newHttpResponse();
+        res->setBody(R"({"error":"ACCOUNT BANNED. CONTACT ASTROVAL0 ON DISCORD"})");
+        res->setStatusCode(k403Forbidden);
+        return res;
     }
 
-    auto prof = db.GetField<ProfileData>(FieldKey::PROFILE_DATA, playerId);
+    auto prof = PlayerDatabase::Get().GetField<ProfileData>(FieldKey::PROFILE_DATA, playerId);
     const std::string display = prof ? prof->displayname().displayname() : "Player";
     const std::string disc = prof ? prof->displayname().discriminator() : "0000";
     const std::string socialId = playerId;
 
-    json tokens = {
+    nlohmann::json tokens = {
         {"pragmaGameToken", BuildJwt("GAME", playerId, socialId, display, disc)},
         {"pragmaSocialToken", BuildJwt("SOCIAL", playerId, socialId, display, disc)}};
 
-    json out = {{"pragmaTokens", tokens}};
-    return reply(http::status::ok, out.dump());
+    nlohmann::json out = {{"pragmaTokens", tokens}};
+    auto res = HttpResponse::newHttpResponse();
+    res->setBody(out.dump());
+    return res;
 }
 
 std::string AuthenticateHandler::CreatePlayerFromSteam(const std::string& steam64, const std::string& displayName) {

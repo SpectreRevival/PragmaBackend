@@ -16,26 +16,26 @@ static void PerformItemUpdate(InstancedItem& item, const InstancedItemUpdate& up
     item.mutable_ext()->set_viewed(update.ext().setviewed());
 }
 
-void UpdateItemsV0Processor::Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) {
-    std::shared_ptr<json> res = packet.GetBaseJsonResponse();
+std::optional<WebsocketPayload> UpdateItemsV0Processor::Process(SpectreWebsocketRequest& packet) {
+    nlohmann::json res{};
     sql::Statement invQuery = PlayerDatabase::Get().FormatStatement(
         "SELECT {col} from {table} WHERE PlayerId = ?",
         FieldKey::PLAYER_INVENTORY);
-    invQuery.bind(1, sock.GetPlayerId());
+    invQuery.bind(1, packet.GetPlayerId());
     std::unique_ptr<Inventory> playerI = PlayerDatabase::Get().GetField<Inventory>(invQuery, FieldKey::PLAYER_INVENTORY);
     pbu::JsonPrintOptions opts;
     opts.always_print_fields_with_no_presence = true;
     FullInventory* playerInv = playerI->mutable_full();
     int invLevel = stoi(playerInv->version());
     playerInv->set_version(std::to_string(invLevel + 1));
-    res->at("payload")["segment"]["removedStackables"] = json::array();
-    res->at("payload")["segment"]["removedInstanced"] = json::array();
-    res->at("payload")["segment"]["previousVersion"] = std::to_string(invLevel);
-    res->at("payload")["segment"]["instanced"] = json::array();
-    res->at("payload")["segment"]["stackables"] = json::array();
-    res->at("payload")["segment"]["version"] = playerInv->version();
-    res->at("payload")["delta"]["instanced"] = json::array();
-    res->at("payload")["delta"]["stackables"] = json::array();
+    res["segment"]["removedStackables"] = nlohmann::json::array();
+    res["segment"]["removedInstanced"] = nlohmann::json::array();
+    res["segment"]["previousVersion"] = std::to_string(invLevel);
+    res["segment"]["instanced"] = nlohmann::json::array();
+    res["segment"]["stackables"] = nlohmann::json::array();
+    res["segment"]["version"] = playerInv->version();
+    res["delta"]["instanced"] = nlohmann::json::array();
+    res["delta"]["stackables"] = nlohmann::json::array();
     std::unique_ptr<UpdatesItemMessage> itemUpdates = packet.GetPayloadAsMessage<UpdatesItemMessage>();
     pbuf::util::JsonPrintOptions options;
     options.always_print_fields_with_no_presence = true;
@@ -55,16 +55,16 @@ void UpdateItemsV0Processor::Process(SpectreWebsocketRequest& packet, SpectreWeb
             spdlog::warn("Couldn't find item with instance id {} in a item update request, skipping", instanceId);
             continue;
         }
-        json curDelta;
+        nlohmann::json curDelta;
         curDelta["catalogId"] = curItem->catalogid();
         curDelta["operation"] = "UPDATED";
-        curDelta["tags"] = json::array();
+        curDelta["tags"] = nlohmann::json::array();
         std::string itemInitialStr;
         if (!pbu::MessageToJsonString(*curItem, &itemInitialStr, opts).ok()) {
             spdlog::error("Failed to convert item to string");
             throw std::runtime_error("Failed to convert item to string");
         }
-        json itemInitial = json::parse(itemInitialStr);
+        nlohmann::json itemInitial = nlohmann::json::parse(itemInitialStr);
         curDelta["initial"] = itemInitial;
         PerformItemUpdate(*curItem, itemUpdate);
         std::string finalItemStr;
@@ -72,11 +72,11 @@ void UpdateItemsV0Processor::Process(SpectreWebsocketRequest& packet, SpectreWeb
             spdlog::error("Failed to convert item to string");
             throw std::runtime_error("Failed to convert item to string");
         }
-        json finalItem = json::parse(finalItemStr);
+        nlohmann::json finalItem = nlohmann::json::parse(finalItemStr);
         curDelta["final"] = finalItem;
-        res->at("payload")["delta"]["instanced"].push_back(curDelta);
-        res->at("payload")["segment"]["instanced"].push_back(finalItem);
+        res["delta"]["instanced"].push_back(curDelta);
+        res["segment"]["instanced"].push_back(finalItem);
     }
-    PlayerDatabase::Get().SetField(FieldKey::PLAYER_INVENTORY, playerI.get(), sock.GetPlayerId());
-    sock.SendPacket(res);
+    PlayerDatabase::Get().SetField(FieldKey::PLAYER_INVENTORY, playerI.get(), packet.GetPlayerId());
+    return res;
 }

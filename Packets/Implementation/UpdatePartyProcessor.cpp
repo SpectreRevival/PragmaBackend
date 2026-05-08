@@ -22,7 +22,7 @@ namespace {
     }
 } // namespace
 
-void UpdatePartyProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) {
+std::optional<WebsocketPayload> UpdatePartyProcessor::Process(SpectreWebsocketRequest& packet) {
     std::unique_ptr<UpdatePartyRequest> req = packet.GetPayloadAsMessage<UpdatePartyRequest>();
     PartyResponse res = PartyDatabase::Get().GetPartyRes(req->partyid());
     Party* party = res.mutable_party();
@@ -51,5 +51,5 @@ void UpdatePartyProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebso
     }
     BumpPartyVersion(party);
     PartyDatabase::Get().SaveParty(res.party());
-    sock.SendPacket(PartyDatabase::SerializePartyToString(res), packet.GetRequestId(), packet.GetResponseType());
+    return PartyDatabase::SerializePartyToString(res);
 }

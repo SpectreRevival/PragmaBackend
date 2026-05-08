@@ -1,6 +1,5 @@
 #pragma once
 #include <SpectreRpcType.h>
-#include <SpectreWebsocket.h>
 #include <boost/beast/core.hpp>
 #include <google/protobuf/util/json_util.h>
 #include <nlohmann/json.hpp>
@@ -11,17 +10,17 @@ using reqbuf = boost::beast::flat_buffer;
 
 class SpectreWebsocketRequest {
   private:
-    SpectreWebsocket& websocket;
-    reqbuf requestBuf;
+    std::string reqBody;
     SpectreRpcType requestType;
-    std::shared_ptr<json> reqJson;
+    std::shared_ptr<nlohmann::json> reqJson;
     std::string payloadAsStr;
-    int m_requestId;
+    int requestId;
+    std::string playerId;
 
   public:
-    SpectreWebsocketRequest(SpectreWebsocket& sock, reqbuf req);
+    SpectreWebsocketRequest(std::string& reqBody, std::string& playerId);
 
-    std::shared_ptr<json> GetPayload() const;
+    std::shared_ptr<nlohmann::json> GetPayload() const;
 
     template <typename T>
     std::unique_ptr<T> GetPayloadAsMessage() {
@@ -37,24 +36,13 @@ class SpectreWebsocketRequest {
         return std::make_unique<T>(message);
     }
 
-    reqbuf* GetRawBuffer() {
-        return &requestBuf;
-    }
-
-    [[nodiscard]] SpectreWebsocket& GetSocket() const {
-        return websocket;
-    }
-
-    [[nodiscard]] SpectreRpcType GetRequestType() const {
-        return requestType;
-    }
+    [[nodiscard]] SpectreRpcType GetRequestType() const;
 
     std::string GetResponseType() const;
 
-    [[nodiscard]] int GetRequestId() const {
-        return m_requestId;
-    }
+    [[nodiscard]] int GetRequestId() const;
 
-    std::shared_ptr<json> GetBaseJsonResponse();
-    void SendEmptyResponse();
+    const std::string& GetBody() const;
+
+    const std::string& GetPlayerId() const;
 };

@@ -1,3 +1,5 @@
+#include "ProviderLinkDatabase.h"
+
 #include <CaseHelper.h>
 #include <CreatePartyProcessor.h>
 #include <CreatePartyRequest.pb.h>
@@ -34,7 +36,7 @@ std::string CreatePartyProcessor::GetNewInviteCode() {
     }
 }
 
-void CreatePartyProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) {
+std::optional<WebsocketPayload> CreatePartyProcessor::Process(SpectreWebsocketRequest& packet) {
     std::unique_ptr<CreatePartyRequest> req = packet.GetPayloadAsMessage<CreatePartyRequest>();
     PartyResponse createdPartyRes;
 
@@ -54,10 +56,10 @@ void CreatePartyProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebso
     creatingPlayer->set_isleader(true);
     creatingPlayer->set_isready(false);
 
-    std::unique_ptr<ProfileData> playerProfile = PlayerDatabase::Get().GetField<ProfileData>(FieldKey::PROFILE_DATA, sock.GetPlayerId());
+    std::unique_ptr<ProfileData> playerProfile = PlayerDatabase::Get().GetField<ProfileData>(FieldKey::PROFILE_DATA, packet.GetPlayerId());
     creatingPlayer->mutable_displayname()->CopyFrom(playerProfile->displayname());
-    creatingPlayer->set_playerid(sock.GetPlayerId());
-    creatingPlayer->set_socialid(sock.GetPlayerId());
+    creatingPlayer->set_playerid(packet.GetPlayerId());
+    creatingPlayer->set_socialid(packet.GetPlayerId());
 
     PartyMemberExtraInfo* creatingPlayerExtra = creatingPlayer->mutable_ext();
     creatingPlayerExtra->set_version("173322");
@@ -65,15 +67,15 @@ void CreatePartyProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebso
     creatingPlayerExtra->set_rankedmodeunlocked(true);
 
     PartyMemberPlayerData* partyPlayerDat = creatingPlayerExtra->mutable_playerdata();
-    std::unique_ptr<PlayerData> playerDat = PlayerDatabase::Get().GetField<PlayerData>(FieldKey::PLAYER_DATA, sock.GetPlayerId());
-    partyPlayerDat->mutable_defenderweaponloadout()->set_playerid(sock.GetPlayerId());
+    std::unique_ptr<PlayerData> playerDat = PlayerDatabase::Get().GetField<PlayerData>(FieldKey::PLAYER_DATA, packet.GetPlayerId());
+    partyPlayerDat->mutable_defenderweaponloadout()->set_playerid(packet.GetPlayerId());
     partyPlayerDat->mutable_defenderweaponloadout()->set_loadoutid(playerDat->defenderweaponloadoutid());
-    partyPlayerDat->mutable_attackerweaponloadout()->set_playerid(sock.GetPlayerId());
+    partyPlayerDat->mutable_attackerweaponloadout()->set_playerid(packet.GetPlayerId());
     partyPlayerDat->mutable_attackerweaponloadout()->set_loadoutid(playerDat->attackerweaponloadoutid());
     partyPlayerDat->mutable_matchmakingdata()->CopyFrom(playerDat->matchmakingdata());
     partyPlayerDat->mutable_banner()->CopyFrom(playerDat->banner());
 
-    std::unique_ptr<OutfitLoadouts> outfitLoadouts = PlayerDatabase::Get().GetField<OutfitLoadouts>(FieldKey::PLAYER_OUTFIT_LOADOUT, sock.GetPlayerId());
+    std::unique_ptr<OutfitLoadouts> outfitLoadouts = PlayerDatabase::Get().GetField<OutfitLoadouts>(FieldKey::PLAYER_OUTFIT_LOADOUT, packet.GetPlayerId());
     OutfitLoadout* selectedAttackerOutfit = nullptr;
     OutfitLoadout* selectedDefenderOutfit = nullptr;
     for (int i = 0; i < outfitLoadouts->loadouts_size(); i++) {
@@ -88,13 +90,13 @@ void CreatePartyProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebso
         }
     }
     if (selectedAttackerOutfit == nullptr || selectedDefenderOutfit == nullptr) {
-        spdlog::error("Could not find selected outfit loadouts for player {}", sock.GetPlayerId());
+        spdlog::error("Could not find selected outfit loadouts for player {}", packet.GetPlayerId());
         throw std::runtime_error("Could not find selected outfit loadouts");
     }
     partyPlayerDat->mutable_attackeroutfitloadout()->CopyFrom(*selectedAttackerOutfit);
     partyPlayerDat->mutable_defenderoutfitloadout()->CopyFrom(*selectedDefenderOutfit);
 
-    std::unique_ptr<Inventory> invstruct = PlayerDatabase::Get().GetField<Inventory>(FieldKey::PLAYER_INVENTORY, sock.GetPlayerId());
+    std::unique_ptr<Inventory> invstruct = PlayerDatabase::Get().GetField<Inventory>(FieldKey::PLAYER_INVENTORY, packet.GetPlayerId());
     const FullInventory& inv = invstruct->full();
     for (int i = 0; i < inv.instanced_size(); i++) {
         // TODO(ohm): make this only actually return the items needed for performance, but for MVP this should be fine
@@ -106,12 +108,12 @@ void CreatePartyProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebso
     sharedData->set_platformname("STEAM");
     sharedData->set_crossplayplatformkind("CROSS_PLAY_PLATFORM_PC");
 
-    std::string steamId = PlayerDatabase::Get().GetProviderIdByPlayerId(sock.GetPlayerId(), "STEAM");
+    std::string steamId = ProviderLinkDatabase::Get().GetProviderIdByPlayerId(packet.GetPlayerId(), AuthProvider::STEAM);
     if (steamId.empty()) {
         spdlog::error("no steamId, investigate me!!!!!!!");
     }
     sharedData->set_currentprovideraccountid(steamId);
 
     PartyDatabase::Get().SaveParty(createdPartyRes.party());
-    sock.SendPacket(PartyDatabase::SerializePartyToString(createdPartyRes), packet.GetRequestId(), packet.GetResponseType());
+    return PartyDatabase::SerializePartyToString(createdPartyRes);
 }

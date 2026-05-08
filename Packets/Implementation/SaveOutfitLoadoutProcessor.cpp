@@ -7,9 +7,9 @@ SaveOutfitLoadoutProcessor::SaveOutfitLoadoutProcessor(SpectreRpcType rpcType)
     : WebsocketPacketProcessor(rpcType) {
 }
 
-void SaveOutfitLoadoutProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) {
+std::optional<WebsocketPayload> SaveOutfitLoadoutProcessor::Process(SpectreWebsocketRequest& packet) {
     std::unique_ptr<OutfitLoadout> loadoutToSave = packet.GetPayloadAsMessage<OutfitLoadout>();
-    std::unique_ptr<OutfitLoadouts> loadouts = PlayerDatabase::Get().GetField<OutfitLoadouts>(FieldKey::PLAYER_OUTFIT_LOADOUT, sock.GetPlayerId());
+    std::unique_ptr<OutfitLoadouts> loadouts = PlayerDatabase::Get().GetField<OutfitLoadouts>(FieldKey::PLAYER_OUTFIT_LOADOUT, packet.GetPlayerId());
     if (!loadouts) loadouts = std::make_unique<OutfitLoadouts>();
 
     bool dataWritten = false;
@@ -17,7 +17,7 @@ void SaveOutfitLoadoutProcessor::Process(SpectreWebsocketRequest& packet, Spectr
         if (CaseInsensitiveEquals(loadouts->loadouts(i).loadoutid(), loadoutToSave->loadoutid())) {
 
             loadouts->mutable_loadouts(i)->CopyFrom(*loadoutToSave);
-            loadouts->mutable_loadouts(i)->set_playerid(sock.GetPlayerId());
+            loadouts->mutable_loadouts(i)->set_playerid(packet.GetPlayerId());
 
             dataWritten = true;
             break;
@@ -27,11 +27,11 @@ void SaveOutfitLoadoutProcessor::Process(SpectreWebsocketRequest& packet, Spectr
         spdlog::warn("didn't find the outfit loadout the game was trying to edit, added it as a new loadout\nLoadout id: {}", loadoutToSave->loadoutid());
         OutfitLoadout* newLoadout = loadouts->add_loadouts();
         newLoadout->CopyFrom(*loadoutToSave);
-        newLoadout->set_playerid(sock.GetPlayerId());
+        newLoadout->set_playerid(packet.GetPlayerId());
     }
-    PlayerDatabase::Get().SetField(FieldKey::PLAYER_OUTFIT_LOADOUT, loadouts.get(), sock.GetPlayerId());
-    std::shared_ptr<json> res = packet.GetBaseJsonResponse();
-    res->at("payload")["success"] = true;
-    res->at("payload")["savedLoadoutId"] = loadoutToSave->loadoutid();
-    sock.SendPacket(res);
+    PlayerDatabase::Get().SetField(FieldKey::PLAYER_OUTFIT_LOADOUT, loadouts.get(), packet.GetPlayerId());
+    nlohmann::json res;
+    res["success"] = true;
+    res["savedLoadoutId"] = loadoutToSave->loadoutid();
+    return res;
 }

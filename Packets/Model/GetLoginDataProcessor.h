@@ -5,5 +5,5 @@ class GetLoginDataProcessor : public WebsocketPacketProcessor {
   public:
     explicit GetLoginDataProcessor(const SpectreRpcType& rpcType);
 
-    void Process(SpectreWebsocketRequest& request, SpectreWebsocket& sock) override;
+    std::optional<WebsocketPayload> Process(SpectreWebsocketRequest& packet) override;
 };

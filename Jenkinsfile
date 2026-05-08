@@ -2,6 +2,14 @@ pipeline {
     agent none
 
     stages {
+        stage("Spell check") {
+            agent { label 'linux' }
+            steps {
+                checkout scm
+                sh 'codespell'
+            }
+        }
+
         stage('Build Matrix') {
             matrix {
                 axes {
@@ -16,6 +24,7 @@ pipeline {
                 }
 
                 agent { label "${OS}" }
+
                 options {
                     throttle(['RamIntensiveJob'])
                 }
@@ -57,7 +66,7 @@ pipeline {
                             ]) {
                                 script {
                                     if (isUnix()) {
-                                        sh "echo \"{\\\"steamApiKey\\\": \\\"$STEAM_KEY\\\"}\" > auth.json"
+                                        sh "echo \"{\\\"steamApiKey\\\": \\\"\$STEAM_KEY\\\"}\" > auth.json"
                                     } else {
                                         powershell '''
                                             $content = "{`"steamApiKey`": `"$env:STEAM_KEY`"}"
@@ -73,16 +82,12 @@ pipeline {
                         steps {
                             script {
                                 if (env.OS == 'windows') {
-                                    bat "if exist out rmdir /s /q out"
                                     bat """
-                                        call \"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x64
+                                        call "C:\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat" x64
                                         cmake --preset x64-${BUILD_TYPE}-win
                                     """
                                 } else {
-                                    sh """
-                                        rm -rf out
-                                        cmake --preset x64-${BUILD_TYPE}-linux
-                                    """
+                                    sh "cmake --preset x64-${BUILD_TYPE}-linux"
                                 }
                             }
                         }
@@ -93,7 +98,7 @@ pipeline {
                             script {
                                 if (env.OS == 'windows') {
                                     bat """
-                                        call \"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x64
+                                        call "C:\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat" x64
                                         cmake --build out/build/x64-${BUILD_TYPE}-win
                                     """
                                 } else {
@@ -116,44 +121,67 @@ pipeline {
                             }
                         }
                     }
-                }
-            }
+
+                    stage("Stash") {
+                        when {
+                            expression { BUILD_TYPE == "release" }
+                        }
+                        steps {
+                            script {
+                                if (env.OS == 'windows') {
+                                    stash name: 'winbuild', includes: 'package-release-win/**'
+                                } else {
+                                    stash name: 'linuxbuild', includes: 'package-release-linux/**'
+                                }
+                            }
+                        }
+                    }
+                } 
+            } 
         }
 
-        stage("code analysis") {
+        stage("Post-matrix parallel tasks") {
             parallel {
+                stage("Build docker server container") {
+                    agent { label 'docker-linux' }
+                    steps {
+                        checkout scm
+                        dir('out/build') {
+                            sh "rm -rf x64-release-linux"
+                            sh "rm -rf package-release-linux"
+                            unstash 'linuxbuild'
+                            sh "mv package-release-linux x64-release-linux"
+                        }
+                        sh "docker build -t pragmabackend:latest ."
+                        sh "docker tag pragmabackend:latest ohmivr/pragmabackend:latest"
+                        sh "docker push ohmivr/pragmabackend:latest"
+                        sh "docker save pragmabackend:latest -o pragmabackend-docker.tar"
+                        archiveArtifacts artifacts: 'pragmabackend-docker.tar', fingerprint: true
+                        sh "rm pragmabackend-docker.tar"
+                    }
+                }
+
                 stage("Code formatter") {
                     agent { label 'linux' }
                     steps {
                         script {
-                            stage("Checkout") {
-                                checkout scm
-                            }
-                            stage("Run formatter") {
-                                sh """
-                                    FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
-                                    clang-format -i \$FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp
-                                """
-                            }
-                            stage("Create diff") {
-                                sh """
-                                    if ! git diff --quiet; then
-                                        git diff > clang-format.patch
-                                        echo \"Patch created, apply the patch from the artifacts section to fix\"
-                                    else
-                                        echo \"No changes required\"
-                                    fi
-                                """
-                            }
-                            stage("Upload diff if exists") {
-                                if (fileExists('clang-format.patch')) {
-                                    archiveArtifacts artifacts: 'clang-format.patch', fingerprint: true
-                                }
-                            }
-                            stage("Fail if diff exists") {
-                                if (fileExists('clang-format.patch')) {
-                                    sh "exit 1"
-                                }
+                            checkout scm
+                            sh """
+                                FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
+                                clang-format -i \$FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp
+                            """
+                            sh """
+                                if ! git diff --quiet; then
+                                    git diff > clang-format.patch
+                                    echo "Patch created, apply the patch from the artifacts section to fix"
+                                else
+                                    echo "No changes required"
+                                fi
+                            """
+                            if (fileExists('clang-format.patch')) {
+                                archiveArtifacts artifacts: 'clang-format.patch', fingerprint: true
+                                sh "rm clang-format.patch"
+                                error("Formatting changes required")
                             }
                         }
                     }
@@ -161,59 +189,83 @@ pipeline {
 
                 stage("Code linter") {
                     agent { label 'linux' }
-                    options {
-                        throttle(['RamIntensiveJob'])
-                    }
+                    options { throttle(['RamIntensiveJob']) }
                     steps {
                         script {
-                            stage("Checkout") {
-                                checkout scm
-                                sh "git submodule sync --recursive"
-                                sh "git submodule update --init --recursive"
-                            }
-                            stage("Configure") {
-                                sh "cmake --preset x64-debug-linux"
-                            }
-                            stage("Build protobuf files") {
-                                sh "cmake --build out/build/x64-debug-linux --target generate_protos"
-                            }
-                            stage("Run linter") {
+                            checkout scm
+                            sh "git submodule sync --recursive"
+                            sh "git submodule update --init --recursive"
+                            sh "cmake --preset x64-debug-linux"
+                            sh "cmake --build out/build/x64-debug-linux --target generate_protos"
+
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                                 sh """
                                     FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
                                     run-clang-tidy \$FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp -fix -p out/build/x64-debug-linux -extra-arg=-Werror
                                 """
                             }
-                            stage("Create diff") {
-                                sh """
-                                    if ! git diff --quiet; then
-                                        git diff > clang-tidy.patch
-                                        echo \"Patch created, apply the patch from the artifacts section to fix\"
-                                    else
-                                        echo \"No changes required\"
-                                    fi
-                                """
-                            }
-                            stage("Upload diff if exists") {
-                                if (fileExists('clang-tidy.patch')) {
-                                    archiveArtifacts artifacts: 'clang-tidy.patch', fingerprint: true
-                                }
-                            }
-                            stage("Fail if diff exists") {
-                                if (fileExists('clang-tidy.patch')) {
-                                    sh "exit 1"
-                                }
+                            sh """
+                                if ! git diff --quiet; then
+                                    git diff > clang-tidy.patch
+                                    echo "Patch created, apply the patch from the artifacts section to fix"
+                                else
+                                    echo "No changes required"
+                                fi
+                            """
+                            if (fileExists('clang-tidy.patch')) {
+                                archiveArtifacts artifacts: 'clang-tidy.patch', fingerprint: true
+                                sh "rm clang-tidy.patch"
+                                error("Linter changes required")
                             }
                         }
                     }
                 }
+
+                stage("Unit tests - Linux") {
+                    agent { label 'linux' }
+                    steps {
+                        script {
+                            sh "mkdir -p testdir"
+                            sh "rm -rf testdir/package-release-linux"
+                            dir('testdir') {
+                                unstash 'linuxbuild'
+                            }
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                sh "testdir/package-release-linux/tests/tests"
+                            }
+                            sh "pkill -9 pragmabackend || true"
+                        }
+                    }
+                }
+
+                stage("Unit tests - Windows") {
+                    agent { label 'windows' }
+                    steps {
+                        script {
+                            bat "if not exist testdir mkdir testdir"
+                            dir('testdir') {
+                                unstash 'winbuild'
+                            }
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                bat "testdir\\package-release-win\\tests\\tests.exe"
+                            }
+                            bat "taskkill /f /im pragmabackend.exe || exit 0"
+                        }
+                    }
+                }
+            } 
+        }
+    } 
+
+    post {
+        always {
+            node('linux') {
+                step([
+                    $class: 'GitHubCommitStatusSetter',
+                    contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'jenkins/build-status'],
+                    reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'https://github.com/SpectreRevival/pragmabackend']
+                ])
             }
         }
-    }
-    post {
-	always {
-        node('linux'){
-            step([$class: 'GitHubCommitStatusSetter', contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'jenkins/build-status'], reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'https://github.com/SpectreRevival/pragmabackend']])
-        }
-	}
     }
 }

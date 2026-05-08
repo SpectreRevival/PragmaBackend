@@ -45,10 +45,10 @@ std::string GetPlayerDataProcessor::GetPlayerDataAsString(const PlayerData& play
     return finalPlayerDataComponent;
 }
 
-void GetPlayerDataProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) {
-    const std::unique_ptr<PlayerData> data = PlayerDatabase::Get().GetField<PlayerData>(FieldKey::PLAYER_DATA, sock.GetPlayerId());
+std::optional<WebsocketPayload> GetPlayerDataProcessor::Process(SpectreWebsocketRequest& packet) {
+    const std::unique_ptr<PlayerData> data = PlayerDatabase::Get().GetField<PlayerData>(FieldKey::PLAYER_DATA, packet.GetPlayerId());
     data->set_serverdata("{}");
     std::string fullPayload = "{\"data\":";
     fullPayload += GetPlayerDataAsString(*data) + "}";
-    sock.SendPacket(fullPayload, packet.GetRequestId(), packet.GetResponseType());
+    return fullPayload;
 }

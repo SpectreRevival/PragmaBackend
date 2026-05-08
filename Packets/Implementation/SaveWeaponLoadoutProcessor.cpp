@@ -8,13 +8,13 @@ SaveWeaponLoadoutProcessor::SaveWeaponLoadoutProcessor(SpectreRpcType rpcType)
     : WebsocketPacketProcessor(rpcType) {
 }
 
-void SaveWeaponLoadoutProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) {
+std::optional<WebsocketPayload> SaveWeaponLoadoutProcessor::Process(SpectreWebsocketRequest& packet) {
     std::unique_ptr<SaveWeaponLoadoutMessage> dataToSave = packet.GetPayloadAsMessage<SaveWeaponLoadoutMessage>();
     const WeaponLoadout& loadoutToSave = dataToSave->weaponloadoutdata();
 
     std::unique_ptr<WeaponLoadouts> loadouts = PlayerDatabase::Get().GetField<WeaponLoadouts>(
         FieldKey::PLAYER_WEAPON_LOADOUT,
-        sock.GetPlayerId());
+        packet.GetPlayerId());
 
     if (!loadouts) loadouts = std::make_unique<WeaponLoadouts>();
 
@@ -24,7 +24,7 @@ void SaveWeaponLoadoutProcessor::Process(SpectreWebsocketRequest& packet, Spectr
         if (CaseInsensitiveEquals(loadouts->weaponloadoutdata(i).loadoutid(), loadoutToSave.loadoutid())) {
 
             loadouts->mutable_weaponloadoutdata(i)->CopyFrom(loadoutToSave);
-            loadouts->mutable_weaponloadoutdata(i)->set_playerid(sock.GetPlayerId());
+            loadouts->mutable_weaponloadoutdata(i)->set_playerid(packet.GetPlayerId());
 
             dataWritten = true;
             break;
@@ -34,11 +34,11 @@ void SaveWeaponLoadoutProcessor::Process(SpectreWebsocketRequest& packet, Spectr
         spdlog::warn("didn't find the weapon loadout the game was trying to edit, added it as a new loadout\nLoadout id: {}", loadoutToSave.loadoutid());
         WeaponLoadout* newLoadout = loadouts->add_weaponloadoutdata();
         newLoadout->CopyFrom(loadoutToSave);
-        newLoadout->set_playerid(sock.GetPlayerId());
+        newLoadout->set_playerid(packet.GetPlayerId());
     }
-    PlayerDatabase::Get().SetField(FieldKey::PLAYER_WEAPON_LOADOUT, loadouts.get(), sock.GetPlayerId());
-    std::shared_ptr<json> res = packet.GetBaseJsonResponse();
-    res->at("payload")["success"] = true;
-    res->at("payload")["savedLoadoutId"] = loadoutToSave.loadoutid();
-    sock.SendPacket(res);
+    PlayerDatabase::Get().SetField(FieldKey::PLAYER_WEAPON_LOADOUT, loadouts.get(), packet.GetPlayerId());
+    nlohmann::json res{};
+    res["success"] = true;
+    res["savedLoadoutId"] = loadoutToSave.loadoutid();
+    return res;
 }

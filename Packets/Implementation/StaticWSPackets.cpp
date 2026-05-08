@@ -1,33 +1,35 @@
-#pragma once
 #include <RegexPayloadProcessorWS.h>
 #include <ResourcesUtilities.h>
 #include <StaticResponseProcessorWS.h>
+#include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 #include <string>
 
-static void RegisterStaticHandlerFromFile(std::string filename, SpectreRpcType rpcType) {
+namespace fs = std::filesystem;
+
+void RegisterStaticHandlerFromFile(std::string filename, SpectreRpcType rpcType) {
     std::ifstream resfile(filename);
     if (!resfile.is_open()) {
         throw std::runtime_error("failed to open response file");
     }
-    json res = json::parse(resfile);
+    nlohmann::json res = nlohmann::json::parse(resfile);
     resfile.close();
     spdlog::info("registered static WS {} from json file at {}", rpcType.GetName(), filename);
-    new StaticResponseProcessorWS(rpcType, std::make_shared<json>(std::move(res)));
+    new StaticResponseProcessorWS(rpcType, res);
 }
 
-static void RegisterRegexHandlerFromFiles(SpectreRpcType rpcType, std::initializer_list<std::pair<Regex, std::string>> map) {
-    std::unordered_map<Regex, std::shared_ptr<json>> map2;
+void RegisterRegexHandlerFromFiles(SpectreRpcType rpcType, std::initializer_list<std::pair<Regex, std::string>> map) {
+    std::unordered_map<Regex, std::shared_ptr<nlohmann::json>> map2;
     for (const auto& [regex, filename] : map) {
         std::ifstream resfile(filename);
         if (!resfile.is_open()) {
             throw std::runtime_error("failed to open res file");
         }
-        json res = json::parse(resfile);
+        nlohmann::json res = nlohmann::json::parse(resfile);
         resfile.close();
-        map2.insert({regex, std::make_shared<json>(std::move(res))});
+        map2.insert({regex, std::make_shared<nlohmann::json>(std::move(res))});
     }
     spdlog::info("registered static WS {} using regex handler", rpcType.GetName());
     new RegexPayloadProcessorWS(rpcType, map2);

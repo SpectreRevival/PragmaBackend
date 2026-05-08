@@ -1,12 +1,9 @@
 #pragma once
-#include "Database.h"
+#include "ProtobufDatabase.h"
 
 #include <CreatePartyRequest.pb.h>
 
-class PartyDatabase : public Database {
-  private:
-    static PartyDatabase inst;
-
+class PartyDatabase : public ProtobufDatabase {
   public:
     static PartyDatabase& Get();
     explicit PartyDatabase(const fs::path& path);

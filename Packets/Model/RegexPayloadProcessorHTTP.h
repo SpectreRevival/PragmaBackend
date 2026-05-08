@@ -6,11 +6,11 @@
 
 class RegexPayloadProcessorHTTP : public HTTPPacketProcessor {
   private:
-    std::unordered_map<Regex, std::shared_ptr<json>> resMap;
+    std::unordered_map<Regex, std::shared_ptr<nlohmann::json>> resMap;
 
   public:
-    RegexPayloadProcessorHTTP(const std::string& route, const std::unordered_map<Regex, std::shared_ptr<json>>& resMap)
-        : HTTPPacketProcessor(route), resMap(resMap){};
+    RegexPayloadProcessorHTTP(HTTPRequestIdentifier id, const std::unordered_map<Regex, std::shared_ptr<nlohmann::json>>& resMap)
+        : HTTPPacketProcessor(id), resMap(resMap){};
 
-    void Process(const http::request<http::string_body>& req, tcp::socket& sock) override;
+    std::optional<drogon::HttpResponsePtr> Process(const drogon::HttpRequestPtr& req) override;
 };

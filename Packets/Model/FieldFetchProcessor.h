@@ -20,15 +20,15 @@ class FieldFetchProcessor : public WebsocketPacketProcessor {
         : FieldFetchProcessor(rpcType, key, PlayerDatabase::Get()) {
     }
 
-    void Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) override {
+    std::optional<WebsocketPayload> Process(SpectreWebsocketRequest& packet) override {
         sql::Statement query = dbRef.FormatStatement("SELECT {col} FROM {table} WHERE PlayerId=? LIMIT 1", field);
-        query.bind(1, sock.GetPlayerId());
+        query.bind(1, packet.GetPlayerId());
         std::unique_ptr<T> data = dbRef.GetField<T>(query, field);
         if (data == nullptr) {
             spdlog::error("No field value to return");
             throw;
         }
-        sock.SendPacket(*data, packet.GetResponseType(), packet.GetRequestId());
+        return *data;
     }
     static_assert(std::is_base_of<pbuf::Message, T>::value, "Type provided to FieldFetchProcessor must inherit from protobuf::Message");
 };

@@ -1,8 +1,10 @@
 #include <StaticResponseProcessorWS.h>
 #include <nlohmann/json.hpp>
 
-void StaticResponseProcessorWS::Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) {
-    std::shared_ptr<json> res = packet.GetBaseJsonResponse();
-    (*res)["payload"] = *staticRes;
-    sock.SendPacket(res);
+StaticResponseProcessorWS::StaticResponseProcessorWS(const SpectreRpcType rpcType, const nlohmann::json& res)
+    : WebsocketPacketProcessor(rpcType), staticRes(res.dump()) {
+}
+
+std::optional<WebsocketPayload> StaticResponseProcessorWS::Process(SpectreWebsocketRequest& /*packet*/) {
+    return staticRes;
 }

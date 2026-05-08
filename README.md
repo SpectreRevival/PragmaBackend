@@ -117,7 +117,7 @@ PRs welcome. If you contribute:
 * * if your absolute path is `E:\dev\spectre\srv\pragmabackend` then your toolchain file path is `E:\dev\spectre\srv\pragmabackend\vcpkg\scripts\buildsystems\vcpkg.cmake`
  
 **failed to open InventoryStore file**
-* you didnt follow the instructions properly so it couldnt build fully.
+* you didn't follow the instructions properly so it couldn't build fully.
 
 **Port already in use**
 
@@ -125,3 +125,6 @@ PRs welcome. If you contribute:
 
 **failed to read PlayerConfigData in SavePlayerDataProcessor**
 * Press WIN+R -> type in `%localappdata%` -> press enter -> delete the `Spectre` folder.
+
+### Using a published release
+You may download a public build of the backend from the (latest release)[https://github.com/SpectreRevival/pragmabackend/releases/latest]. This will contain a build for windows, linux and a docker container image. For windows or linux, simply extract the .zip and run the executable named pragmabackend inside. For the docker container, run `docker image load -i pragmabackend-docker.tar` and then `docker run -d -p 80:80 -p 8081:8081 -p 8082:8082 pragmabackend:latest`

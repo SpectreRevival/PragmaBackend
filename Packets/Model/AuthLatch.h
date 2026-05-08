@@ -14,6 +14,7 @@ class AuthLatch {
     static AuthLatch& Get();
     void Put(const std::string& ip, const std::string& providerId, int seconds);
     std::string TakeIfFresh(const std::string& ip);
+    void Clear();
 
   private:
     std::mutex mtx;

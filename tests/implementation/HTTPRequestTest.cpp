@@ -1,3 +1,5 @@
+#include "ResourcesUtilities.h"
+
 #include <HTTPRequestTest.h>
 #include <JsonTestUtil.h>
 #include <TestHTTPClient.h>
@@ -13,7 +15,23 @@ void RunHTTPTest(const fs::path& testPath, json& outResponse) {
     return RunHTTPTest(testJson, outResponse);
 }
 
+const std::vector<std::string>& GetSkipRoutes() {
+    static std::vector<std::string> skipRoutes = []() {
+        std::vector<std::string> skipRoutes;
+        std::ifstream skipRoutesFile(ResourcesUtilities::GetResourcesFolder() / "testrequests" / "httpSkipTests.txt");
+        std::string line;
+        while (std::getline(skipRoutesFile, line)) {
+            skipRoutes.push_back(line);
+        }
+        return skipRoutes;
+    }();
+    return skipRoutes;
+}
+
 void RunHTTPTest(json testJson, json& outResponse) {
+    if (std::ranges::find(GetSkipRoutes(), testJson.at("path").get<std::string>()) != GetSkipRoutes().end()) {
+        GTEST_SKIP() << "Route " << testJson.at("path") << "is in list of skip routes";
+    }
     std::cout << "Test info: " << '\n';
     std::cout << "Path: " << testJson["path"].dump() << '\n';
     std::cout << "method: " << testJson["method"].dump() << '\n';
@@ -29,7 +47,7 @@ void RunHTTPTest(json testJson, json& outResponse) {
         GTEST_FATAL_FAILURE_("Unrecognized http verb");
     }
     if (res.body().empty()) {
-        GTEST_SKIP() << "Got an empty response";
+        GTEST_FAIL() << "Got an empty response";
     }
     outResponse = json::parse(res.body());
     json expectedResponse = json::parse(testJson["response"].get<std::string>());

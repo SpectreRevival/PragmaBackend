@@ -14,6 +14,7 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "VCPKG_TARGET_TRIPLET": "x64-windows",
+        "VCPKG_INSTALL_OPTIONS": "--x-buildtrees-root=C:/b;--x-packages-root=C:/p;--x-downloads-root=C:/d",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
 	"CMAKE_C_COMPILER": "cl",
 	"CMAKE_CXX_COMPILER": "cl"
@@ -37,6 +38,7 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "VCPKG_TARGET_TRIPLET": "x64-windows",
+        "VCPKG_INSTALL_OPTIONS": "--x-buildtrees-root=C:/b;--x-packages-root=C:/p;--x-downloads-root=C:/d",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
 	"CMAKE_C_COMPILER": "cl",
 	"CMAKE_CXX_COMPILER": "cl"

@@ -2,15 +2,12 @@
 
 #include <PacketProcessor.h>
 
-namespace http = boost::beast::http;
-
 class StaticResponseProcessorHTTP : public HTTPPacketProcessor {
   private:
-    std::shared_ptr<json> staticRes;
+    std::string staticRes;
 
   public:
-    StaticResponseProcessorHTTP(const std::string& route, const std::shared_ptr<json>& res)
-        : HTTPPacketProcessor(route), staticRes(res){};
+    StaticResponseProcessorHTTP(HTTPRequestIdentifier id, const nlohmann::json& res);
 
-    void Process(const http::request<http::string_body>& req, tcp::socket& sock) override;
+    std::optional<drogon::HttpResponsePtr> Process(const drogon::HttpRequestPtr& req) override;
 };

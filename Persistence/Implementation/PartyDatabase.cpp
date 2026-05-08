@@ -1,3 +1,5 @@
+#include "PersistenceUtilities.h"
+
 #include <PartyDatabase.h>
 #include <google/protobuf/util/json_util.h>
 #include <nlohmann/json.hpp>
@@ -26,7 +28,7 @@ static void StripEmptyModeBranches(ordered_json& root) {
 }
 
 PartyDatabase::PartyDatabase(const fs::path& path)
-    : Database(path, "parties", "PartyID", "TEXT") {
+    : ProtobufDatabase(path, "parties", "PartyID", "TEXT") {
     sql::Statement colQuery(GetRawRef(), "PRAGMA table_info(" + GetTableName() + ");");
 
     bool hasPartyCode = false;
@@ -49,14 +51,16 @@ PartyDatabase::PartyDatabase(const fs::path& path)
         GetRaw()->exec("ALTER TABLE " + GetTableName() + " ADD COLUMN PartyVersion TEXT;");
     }
 
-    AddPrototype<BroadcastPartyExtraInfo>(FieldKey::PARTY_EXTRA_BROADCAST_INFO);
-    AddPrototype<BroadcastPrivatePartyExtraInfo>(FieldKey::PARTY_PRIVATE_EXTRA_BROADCAST_INFO);
-    AddPrototype<PartyMembers>(FieldKey::PARTY_MEMBERS);
+    AddPrototype(FieldKey::PARTY_EXTRA_BROADCAST_INFO, ProtobufDatabaseFieldData(FieldKey::PARTY_EXTRA_BROADCAST_INFO, "extraBroadcastInfo"));
+    AddPrototype(FieldKey::PARTY_PRIVATE_EXTRA_BROADCAST_INFO, ProtobufDatabaseFieldData(FieldKey::PARTY_PRIVATE_EXTRA_BROADCAST_INFO, "privateExtraBroadcastInfo"));
+    AddPrototype(FieldKey::PARTY_MEMBERS, ProtobufDatabaseFieldData(FieldKey::PARTY_MEMBERS, "partyMembers"));
 }
 
-PartyDatabase PartyDatabase::inst("playerdata.sqlite");
-
 PartyDatabase& PartyDatabase::Get() {
+    static PartyDatabase inst = []() {
+        PartyDatabase db{PersistenceUtilities::GetSavePath() / "playerdata.sqlite"};
+        return db;
+    }();
     return inst;
 }
 

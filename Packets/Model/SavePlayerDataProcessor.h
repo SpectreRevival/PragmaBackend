@@ -5,5 +5,5 @@ class SavePlayerDataProcessor : public WebsocketPacketProcessor {
   public:
     explicit SavePlayerDataProcessor(SpectreRpcType rpcType);
 
-    void Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) override;
+    std::optional<WebsocketPayload> Process(SpectreWebsocketRequest& packet) override;
 };

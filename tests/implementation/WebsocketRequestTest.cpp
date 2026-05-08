@@ -1,9 +1,12 @@
+#include "ResourcesUtilities.h"
 #include "boost/asio/buffers_iterator.hpp"
 
 #include <JsonTestUtil.h>
 #include <TestWebsocketClient.h>
 #include <WebsocketRequestTest.h>
+#include <algorithm>
 #include <fstream>
+#include <vector>
 
 void RunWebsocketTest(const fs::path& testJsonPath, json& outResponse) {
     std::ifstream testFile(testJsonPath);
@@ -14,10 +17,26 @@ void RunWebsocketTest(const fs::path& testJsonPath, json& outResponse) {
     RunWebsocketTest(testJson, outResponse);
 }
 
+std::vector<SpectreRpcType>& GetSkipRpcTypes() {
+    static std::vector<SpectreRpcType> skipRpcTypes = []() {
+        std::vector<SpectreRpcType> rpcTypes;
+        std::ifstream testSkipFile(ResourcesUtilities::GetResourcesFolder() / "testrequests" / "wsSkipTests.txt");
+        std::string line;
+        while (std::getline(testSkipFile, line)) {
+            rpcTypes.emplace_back(line);
+        }
+        return rpcTypes;
+    }();
+    return skipRpcTypes;
+}
+
 void RunWebsocketTest(json testJson, json& outResponse) // NOLINT
 {
     TestWebsocketClient wsClient(8082);
     SpectreRpcType reqType = SpectreRpcType(testJson.at("rpcType").get<std::string>());
+    if (std::ranges::find(GetSkipRpcTypes(), reqType) != GetSkipRpcTypes().end()) {
+        GTEST_SKIP() << "Skipping since in the ignore list";
+    }
     std::cout << "Test info: " << '\n';
     std::cout << "RPC type: " << reqType.GetName() << '\n';
     std::cout << "Request payload: " << testJson.at("requestBody").dump() << '\n';
@@ -25,9 +44,7 @@ void RunWebsocketTest(json testJson, json& outResponse) // NOLINT
     json& reqBody = testJson.at("requestBody");
     boost::beast::flat_buffer res = wsClient.SendPacket(reqBody, reqType);
     std::string resStr(boost::asio::buffers_begin(res.data()), boost::asio::buffers_end(res.data()));
-    if (resStr.empty()) {
-        GTEST_SKIP() << "Skipping since no response given";
-    }
+    ASSERT_FALSE(resStr.empty()) << "Expected a response to be given";
     ASSERT_NO_THROW(outResponse = json::parse(resStr));
     ASSERT_TRUE(outResponse.contains("sequenceNumber"));
     ASSERT_TRUE(outResponse.at("sequenceNumber") == 0);

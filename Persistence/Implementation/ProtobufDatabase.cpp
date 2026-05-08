@@ -1,26 +1,14 @@
-#include "Database.h"
+#include "ProtobufDatabase.h"
 
 #include <spdlog/spdlog.h>
 #include <utility>
 
-std::unordered_map<FieldKey, const std::string> Database::classNames;
-std::unordered_map<FieldKey, std::unique_ptr<const pbuf::Message>> Database::defaultFieldValues;
-
-Database::Database(const fs::path& dbPath, std::string tableName, std::string keyFieldName, const std::string& /*keyFieldType*/)
-    : filename(dbPath), dbRaw(dbPath.string(), sql::OPEN_READWRITE | sql::OPEN_CREATE),
-      tableName(std::move(tableName)), keyFieldName(std::move(keyFieldName)) {
-    dbRaw.exec("CREATE TABLE IF NOT EXISTS " + GetTableName() + " (" + GetKeyFieldName() + " " + GetKeyFieldType() + " PRIMARY KEY);");
+ProtobufDatabase::ProtobufDatabase(const fs::path& dbPath, const std::string& tableName, std::string keyFieldName, const std::string& /*keyFieldType*/)
+    : BasicDatabase(dbPath, tableName), keyFieldName(std::move(keyFieldName)) {
+    GetRaw()->exec("CREATE TABLE IF NOT EXISTS " + GetTableName() + " (" + GetKeyFieldName() + " " + GetKeyFieldType() + " PRIMARY KEY);");
 }
 
-sql::Database* Database::GetRaw() {
-    return &dbRaw;
-}
-
-sql::Database& Database::GetRawRef() {
-    return dbRaw;
-}
-
-sql::Statement Database::FormatStatement(std::string command, FieldKey key) {
+sql::Statement ProtobufDatabase::FormatStatement(std::string command, FieldKey key) {
     size_t tablePos = command.find("{table}");
     while (tablePos != std::string::npos) {
         command.replace(tablePos, sizeof("{table}") - 1, GetTableName());
@@ -31,7 +19,7 @@ sql::Statement Database::FormatStatement(std::string command, FieldKey key) {
         command.replace(colPos, sizeof("{col}") - 1, GetFieldName(key));
         colPos = command.find("{col}");
     }
-    return sql::Statement(dbRaw, command);
+    return sql::Statement(*GetRaw(), command);
 }
 
 /** Makes the following assumptions:
@@ -39,7 +27,7 @@ sql::Statement Database::FormatStatement(std::string command, FieldKey key) {
 * - statement has 1 questionmark, and it's index(1-indexed) is passed for dataBindIndex
 Eg valid: INSERT INTO players (PlayerName) VALUES (?) WHERE HI=? B=2
 */
-void Database::SetField(sql::Statement& statement, FieldKey key, const pbuf::Message* object, const uint32_t dataBindIndex) {
+void ProtobufDatabase::SetField(sql::Statement& statement, FieldKey key, const pbuf::Message* object, const uint32_t dataBindIndex) {
     if (dataBindIndex == 0) {
         spdlog::error("passed 0 for data bind index which is not valid");
         throw;
@@ -51,12 +39,12 @@ void Database::SetField(sql::Statement& statement, FieldKey key, const pbuf::Mes
         statement.bind(dataBindIndex, bytes.data(), bytes.size());
         statement.exec();
     } catch (const std::exception& e) {
-        spdlog::error("Failed to set field with FieldKey {}: {}", classNames.at(key), e.what());
+        spdlog::error("Failed to set field with FieldKey {}: {}", getFieldData().at(key).GetFieldName(), e.what());
         throw;
     }
 }
 
-void Database::SetField(FieldKey key, const pbuf::Message* object, const std::string& dbKeyId) {
+void ProtobufDatabase::SetField(FieldKey key, const pbuf::Message* object, const std::string& dbKeyId) {
     sql::Statement setStatement = FormatStatement(
         "INSERT INTO {table} (" + GetKeyFieldName() + ", {col}) VALUES(?,?) ON CONFLICT(" + GetKeyFieldName() + ") DO UPDATE SET {col} = excluded.{col};",
         key);
@@ -64,7 +52,7 @@ void Database::SetField(FieldKey key, const pbuf::Message* object, const std::st
     SetField(setStatement, key, object, 2);
 }
 
-bool Database::IsFieldPopulated(FieldKey key, const std::string& dbKey) {
+bool ProtobufDatabase::IsFieldPopulated(FieldKey key, const std::string& dbKey) {
     sql::Statement query = FormatStatement(
         "SELECT {col} FROM {table} WHERE " + GetKeyFieldName() + " = ? COLLATE NOCASE",
         key);
@@ -72,18 +60,14 @@ bool Database::IsFieldPopulated(FieldKey key, const std::string& dbKey) {
     return query.executeStep();
 }
 
-const std::string& Database::GetFieldName(FieldKey key) {
-    return classNames.at(key);
+const std::string& ProtobufDatabase::GetFieldName(FieldKey key) {
+    return getFieldData().at(key).GetFieldName();
 }
 
-const std::string& Database::GetTableName() {
-    return tableName;
-}
-
-const std::string& Database::GetKeyFieldName() {
+const std::string& ProtobufDatabase::GetKeyFieldName() {
     return keyFieldName;
 }
 
-const std::string& Database::GetKeyFieldType() {
+const std::string& ProtobufDatabase::GetKeyFieldType() {
     return keyFieldType;
 }

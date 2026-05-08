@@ -5,5 +5,5 @@ class SaveOutfitLoadoutProcessor : public WebsocketPacketProcessor {
   public:
     explicit SaveOutfitLoadoutProcessor(SpectreRpcType rpcType);
 
-    void Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) override;
+    std::optional<WebsocketPayload> Process(SpectreWebsocketRequest& packet) override;
 };

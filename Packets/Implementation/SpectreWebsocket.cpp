@@ -1,9 +1,18 @@
+#include "PlayerDatabase.h"
+#include "SavedNotificationData.pb.h"
+
+#include <PacketProcessor.h>
 #include <SpectreWebsocket.h>
+#include <SpectreWebsocketRequest.h>
 #include <google/protobuf/util/json_util.h>
 #include <jwt-cpp/jwt.h>
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
+#include <utility>
+
+std::unordered_map<std::string, WebSocketConnectionPtr> SpectreWebsocketController::connectionsByPlayerId{};
+std::mutex SpectreWebsocketController::connectionsMapMutex{};
 
 static pbuf::util::JsonPrintOptions opts = []() {
     static pbuf::util::JsonPrintOptions options;
@@ -11,11 +20,10 @@ static pbuf::util::JsonPrintOptions opts = []() {
     return options;
 }();
 
-static std::string ExtractBearer(const http::request<http::string_body>& req) {
-    auto auth = req.base().at(http::field::authorization);
-    if (auth.empty()) return {};
+static std::string ExtractBearer(const std::string& authField) {
+    if (authField.empty()) return "";
     static constexpr std::string_view prefix = "Bearer ";
-    const std::string s = std::string(auth);
+    const std::string s = std::string(authField);
     if (!s.starts_with(prefix)) return {};
     return s.substr(prefix.size());
 }
@@ -41,88 +49,157 @@ static std::string DecodePlayerIdNoverify(const std::string& token) {
     return {};
 }
 
-SpectreWebsocket::SpectreWebsocket(ws& sock, const http::request<http::string_body>& req)
-    : socket(sock), curSequenceNumber(0) {
-    socket.auto_fragment(false); // ideally we dont want to have to use this but we should be fine for now
-    const auto bearer = ExtractBearer(req);
-    const auto pid = bearer.empty() ? std::string() : DecodePlayerIdNoverify(bearer);
+void SpectreWebsocket::NotificationThread(const std::stop_token& st) {
+    while (!st.stop_requested()) {
+        std::unique_lock lock(notificationQueueLock);
+        notificationQueueCondition.wait(lock, [&] {
+            return st.stop_requested() || (!notificationsToDeliver.empty() && !con.expired() && con.lock()->connected());
+        });
+        std::shared_ptr<WebSocketConnection> connection = con.lock();
+        if (st.stop_requested()) break;
 
-    if (!pid.empty()) {
-        playerId = pid;
-    } else {
-        spdlog::error("no playerid ???? investigate me!");
-        playerId = "1";
+        Notification notification = notificationsToDeliver.front();
+        notificationsToDeliver.pop_front();
+
+        connection->send(FormulateFinalNotification(notification));
+
+        SavedNotificationData savedData;
+        for (const Notification& notif : notificationsToDeliver) {
+            auto* newNotif = savedData.add_notificationstodeliver();
+            newNotif->set_notificationdata(notif.GetNotificationData());
+            newNotif->set_notificationid(notif.GetNotificationId());
+            newNotif->set_rpctype(notif.GetNotificationType().GetName());
+        }
+
+        PlayerDatabase::Get().SetField(FieldKey::NOTIFICATION_DATA, &savedData, playerId);
     }
-};
-
-const ws& SpectreWebsocket::GetRawSocket() const {
-    return socket;
 }
 
-void SpectreWebsocket::SendPacket(const std::shared_ptr<json>& res) {
+void SpectreWebsocketController::handleNewMessage(const drogon::WebSocketConnectionPtr& wsCon, std::string&& message, const drogon::WebSocketMessageType& messageType) {
+    if (messageType != WebSocketMessageType::Binary && messageType != WebSocketMessageType::Text) {
+        return;
+    }
+    std::shared_ptr<SpectreWebsocket> ctx = wsCon->getContext<SpectreWebsocket>();
+    std::string playerId = ctx->GetPlayerId();
+    SpectreWebsocketRequest request(message, playerId);
+    WebsocketPacketProcessor* processor = WebsocketPacketProcessor::GetProcessorForRpc(request.GetRequestType());
+    if (processor == nullptr) {
+        spdlog::warn("Failed to find websocket message for rpc type {}", request.GetRequestType().GetName());
+        return;
+    }
+    std::optional<WebsocketPayload> response = processor->Process(request);
+    if (!response.has_value()) {
+        return;
+    }
+    std::string finalResponse = ctx->FormulateFinalResponse(response.value().GetPayload(), request.GetRequestId(), request.GetResponseType());
+    wsCon->send(finalResponse);
+    for (const Notification& notification : response.value().GetPostSendNotifications()) {
+        ScheduleNotificationForPlayer(ctx->GetPlayerId(), notification);
+    }
+}
+
+std::string SpectreWebsocket::FormulateFinalResponse(const std::shared_ptr<json>& res) {
     json packet;
-    packet["sequenceNumber"] = curSequenceNumber;
+    packet["sequenceNumber"] = curSequenceNumber.fetch_add(1);
     packet["response"] = *res;
-    curSequenceNumber++;
-    socket.text(true);
     // dont pass temporary because beast will fragment it
     std::string msg = packet.dump();
-    socket.write(boost::asio::buffer(msg));
+    return msg;
 }
 
-void SpectreWebsocket::SendPacket(const pbuf::Message& payload, const std::string& resType, int requestId) {
+std::string SpectreWebsocket::FormulateFinalResponse(const pbuf::Message& payload, const std::string& resType, int requestId) {
     // you shan't comment on this cursedness
-    std::string finalRes = "{\"sequenceNumber\":" + std::to_string(curSequenceNumber) + R"(,"response":{"requestId":)" + std::to_string(requestId) + R"(,"type":")" + resType + R"(","payload":)";
+    std::string finalRes = "{\"sequenceNumber\":" + std::to_string(curSequenceNumber.fetch_add(1)) + R"(,"response":{"requestId":)" + std::to_string(requestId) + R"(,"type":")" + resType + R"(","payload":)";
     std::string resComponent;
     if (!pbuf::util::MessageToJsonString(payload, &resComponent, opts).ok()) {
         spdlog::error("Failed to serialize pbuf message to string in SendPacket");
         throw;
     }
     finalRes += resComponent + "}}";
-    curSequenceNumber++;
-    socket.text(true);
-    socket.write(boost::asio::buffer(finalRes));
+    return finalRes;
 }
 
-void SpectreWebsocket::SendPacket(const std::string& resPayload, int requestId, const std::string& resType) {
-    std::string finalRes = "{\"sequenceNumber\":" + std::to_string(curSequenceNumber) + R"(,"response":{"requestId":)" + std::to_string(requestId) + R"(,"type":")" + resType + R"(","payload":)";
+std::string SpectreWebsocket::FormulateFinalResponse(const std::string& resPayload, int requestId, const std::string& resType) {
+    std::string finalRes = "{\"sequenceNumber\":" + std::to_string(curSequenceNumber.fetch_add(1)) + R"(,"response":{"requestId":)" + std::to_string(requestId) + R"(,"type":")" + resType + R"(","payload":)";
     finalRes += resPayload + "}}";
-    curSequenceNumber++;
-    socket.text(true);
-    socket.write(boost::asio::buffer(finalRes));
+    return finalRes;
 }
 
-void SpectreWebsocket::SendNotification(const std::shared_ptr<json>& notifPayload, const SpectreRpcType& notificationType) {
-    json packet;
-    packet["sequenceNumber"] = curSequenceNumber;
-    packet["notification"]["type"] = notificationType.GetName();
-    packet["notification"]["payload"] = *notifPayload;
-    curSequenceNumber++;
-    socket.text(true);
-    std::string msg = packet.dump();
-    socket.write(boost::asio::buffer(msg));
-}
-
-void SpectreWebsocket::SendNotification(const std::string& notifPayload, const SpectreRpcType& notificationType) {
-    std::string finalPayload = "{\"sequenceNumber\":" + std::to_string(curSequenceNumber) + R"(,"notification":{"type":")" + notificationType.GetName() + R"(","payload":)" + notifPayload + "}}";
-    curSequenceNumber++;
-    socket.text(true);
-    socket.write(boost::asio::buffer(finalPayload));
-}
-
-void SpectreWebsocket::SendNotification(const pbuf::Message& notif, const SpectreRpcType& notificationType) {
-    std::string finalRes = "{\"sequenceNumber\":" + std::to_string(curSequenceNumber) + R"(,"notification":"type":")" + notificationType.GetName() + R"(","payload":)";
-    std::string payloadComponent;
-    if (!pbuf::util::MessageToJsonString(notif, &payloadComponent, opts).ok()) {
-        spdlog::error("Failed to serialize pbuf message to string in SendPacket");
-        throw;
-    }
-    finalRes += payloadComponent + "}}";
-    curSequenceNumber++;
-    socket.text(true);
-    socket.write(boost::asio::buffer(finalRes));
+std::string SpectreWebsocket::FormulateFinalNotification(Notification& notification) {
+    return "{\"sequenceNumber\":" + std::to_string(curSequenceNumber.fetch_add(1)) + R"(,"notification":{"type":")" + notification.GetNotificationType().GetName() + R"(","payload":)" + notification.GetNotificationData() + "}}";
 }
 
 const std::string& SpectreWebsocket::GetPlayerId() {
     return playerId;
+}
+
+std::optional<WebSocketConnectionPtr> SpectreWebsocketController::GetConnectionForPlayer(const std::string& playerId) {
+    std::unique_lock lock(connectionsMapMutex);
+    auto it = connectionsByPlayerId.find(playerId);
+    if (it == connectionsByPlayerId.end()) {
+        return std::nullopt;
+    }
+    if (!it->second) {
+        return std::nullopt;
+    }
+    return it->second;
+}
+
+void SpectreWebsocket::ScheduleNotification(const Notification& notif) {
+    {
+        std::lock_guard lock(notificationQueueLock);
+        notificationsToDeliver.push_back(notif);
+    }
+    notificationQueueCondition.notify_one();
+}
+
+void SpectreWebsocketController::ScheduleNotificationForPlayer(const std::string& playerId, const Notification& notif) {
+    std::optional<WebSocketConnectionPtr> connection = GetConnectionForPlayer(playerId);
+    if (!connection.has_value()) {
+        // player is not logged in, save the notification to disk instead
+        std::unique_ptr<SavedNotificationData> notifData = PlayerDatabase::Get().GetField<SavedNotificationData>(FieldKey::NOTIFICATION_DATA, playerId);
+        SavedNotification* newNotif = notifData->add_notificationstodeliver();
+        newNotif->set_notificationdata(notif.GetNotificationData());
+        newNotif->set_notificationid(notif.GetNotificationId());
+        newNotif->set_rpctype(notif.GetNotificationType().GetName());
+        PlayerDatabase::Get().SetField(FieldKey::NOTIFICATION_DATA, notifData.get(), playerId);
+    } else {
+        connection.value()->getContext<SpectreWebsocket>()->ScheduleNotification(notif);
+    }
+}
+
+SpectreWebsocket::SpectreWebsocket(const drogon::HttpRequestPtr& req, const drogon::WebSocketConnectionPtr& connection)
+    : con(connection), curSequenceNumber(0) {
+
+    const auto bearer = ExtractBearer(req->getHeader("Authorization"));
+    const auto pid = bearer.empty() ? std::string() : DecodePlayerIdNoverify(bearer);
+
+    if (!pid.empty()) {
+        playerId = pid;
+    } else {
+        spdlog::error("no playerid ???? investigate me!, thinks will be SEVERELY wrong for connection with {}", req->peerAddr().toIpPort());
+        playerId = "1";
+    }
+    std::unique_ptr<SavedNotificationData> notificationsFromDisk = PlayerDatabase::Get().GetField<SavedNotificationData>(FieldKey::NOTIFICATION_DATA, playerId);
+    for (int i = 0; i < notificationsFromDisk->notificationstodeliver_size(); i++) {
+        const SavedNotification& currentNotif = notificationsFromDisk->notificationstodeliver(i);
+        notificationsToDeliver.emplace_back(SpectreRpcType(currentNotif.rpctype()), currentNotif.notificationid(), currentNotif.notificationdata());
+    }
+    notificationWorkerThread = std::jthread([this](const std::stop_token& st) {
+        NotificationThread(st);
+    });
+    SpectreWebsocketController::AddConnection(playerId, connection);
+}
+
+void SpectreWebsocketController::AddConnection(const std::string& playerId, WebSocketConnectionPtr con) {
+    std::unique_lock connectionsMapLock(connectionsMapMutex);
+    connectionsByPlayerId.insert_or_assign(playerId, con);
+}
+
+void SpectreWebsocketController::handleNewConnection(const drogon::HttpRequestPtr& req, const drogon::WebSocketConnectionPtr& con) {
+    std::shared_ptr<SpectreWebsocket> wsCtx = std::make_shared<SpectreWebsocket>(req, con);
+    con->setContext(wsCtx);
+}
+
+void SpectreWebsocketController::handleConnectionClosed(const WebSocketConnectionPtr& conPtr) {
 }

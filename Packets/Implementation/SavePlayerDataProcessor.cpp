@@ -9,19 +9,19 @@ SavePlayerDataProcessor::SavePlayerDataProcessor(SpectreRpcType rpcType)
     : WebsocketPacketProcessor(rpcType) {
 }
 
-void SavePlayerDataProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) {
-    const char* strbegin = static_cast<const char*>(packet.GetRawBuffer()->cdata().data());
-    std::string reqFormatted = R"({"playerId": ")" + sock.GetPlayerId() + R"(","data":)";
+std::optional<WebsocketPayload> SavePlayerDataProcessor::Process(SpectreWebsocketRequest& packet) {
+    const char* strbegin = packet.GetBody().c_str();
+    std::string reqFormatted = R"({"playerId": ")" + packet.GetPlayerId() + R"(","data":)";
     int index = 0;
     char curChar = 0;
-    for (; index < packet.GetRawBuffer()->size(); index++) {
+    for (; index < packet.GetBody().size(); index++) {
         curChar = strbegin[index];
         if (curChar == '\"' && strbegin[index + 1] == '{') {
             index++; // skip the " character at the start of data str
             break;
         }
     }
-    for (; index < packet.GetRawBuffer()->size(); index++) {
+    for (; index < packet.GetBody().size(); index++) {
         curChar = strbegin[index];
         if (curChar == '\\') {
             if (strbegin[index + 1] == '\"') {
@@ -40,7 +40,7 @@ void SavePlayerDataProcessor::Process(SpectreWebsocketRequest& packet, SpectreWe
             reqFormatted += curChar;
         }
     }
-    for (; index < packet.GetRawBuffer()->size() - 1; index++) {
+    for (; index < packet.GetBody().size() - 1; index++) {
         curChar = strbegin[index];
         reqFormatted += curChar;
     }
@@ -53,14 +53,14 @@ void SavePlayerDataProcessor::Process(SpectreWebsocketRequest& packet, SpectreWe
     // mt does this thing where they leave all the other fields blank if they just want to update the data str
     if (playerData.attackeroutfitloadoutid().empty()) {
         // Only copy the extra data field
-        std::unique_ptr<PlayerData> existingData = PlayerDatabase::Get().GetField<PlayerData>(FieldKey::PLAYER_DATA, sock.GetPlayerId());
+        std::unique_ptr<PlayerData> existingData = PlayerDatabase::Get().GetField<PlayerData>(FieldKey::PLAYER_DATA, packet.GetPlayerId());
         existingData->mutable_data()->CopyFrom(playerData.data());
-        PlayerDatabase::Get().SetField(FieldKey::PLAYER_DATA, existingData.get(), sock.GetPlayerId());
+        PlayerDatabase::Get().SetField(FieldKey::PLAYER_DATA, existingData.get(), packet.GetPlayerId());
     } else {
-        spdlog::warn("attacker outfit loadout id set in SetPlayerData request from {}, this is not seen behavior, likely to cause bugs", sock.GetPlayerId());
-        PlayerDatabase::Get().SetField(FieldKey::PLAYER_DATA, &playerData, sock.GetPlayerId());
+        spdlog::warn("attacker outfit loadout id set in SetPlayerData request from {}, this is not seen behavior, likely to cause bugs", packet.GetPlayerId());
+        PlayerDatabase::Get().SetField(FieldKey::PLAYER_DATA, &playerData, packet.GetPlayerId());
     }
-    std::shared_ptr<json> res = packet.GetBaseJsonResponse();
-    res->at("payload")["success"] = true;
-    sock.SendPacket(res);
+    nlohmann::json res{};
+    res["success"] = true;
+    return res;
 }

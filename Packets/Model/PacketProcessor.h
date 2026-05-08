@@ -1,32 +1,29 @@
 #pragma once
+#include <HTTPRequestIdentifier.h>
 #include <SpectreRpcType.h>
 #include <SpectreWebsocketRequest.h>
-#include <boost/asio.hpp>
-#include <boost/beast/http.hpp>
+#include <WebsocketPayload.h>
+#include <drogon/HttpResponse.h>
 #include <string>
+#include <utility>
+
+using namespace drogon;
 
 class HTTPPacketProcessor {
   private:
-    std::string route;
-    inline static std::unordered_map<std::string, HTTPPacketProcessor*> httpRoutes = {};
-
+    HTTPRequestIdentifier routeId;
   public:
-    explicit HTTPPacketProcessor(std::string route)
-        : route(std::move(route)) {
-        httpRoutes[this->route] = this;
-    };
+    virtual ~HTTPPacketProcessor() = default;
+    explicit HTTPPacketProcessor(HTTPRequestIdentifier routeId);
+    explicit HTTPPacketProcessor(HTTPRequestIdentifier routeId, uint16_t port);
     HTTPPacketProcessor(HTTPPacketProcessor& other) = delete;
     HTTPPacketProcessor(HTTPPacketProcessor&& other) = delete;
-    virtual void Process(const http::request<http::string_body>& req, tcp::socket& sock) = 0;
-    virtual ~HTTPPacketProcessor() {
-        httpRoutes.erase(route);
-    }
+    virtual std::optional<drogon::HttpResponsePtr> Process(const drogon::HttpRequestPtr& req) = 0;
     [[nodiscard]] const std::string& GetRoute() const {
-        return route;
+        return routeId.GetRoute();
     }
-    static HTTPPacketProcessor* GetProcessorForRoute(const std::string& route) {
-        auto it = httpRoutes.find(route);
-        return it == httpRoutes.end() ? nullptr : it->second;
+    [[nodiscard]] drogon::HttpMethod GetMethod() const {
+        return routeId.GetRequestType();
     }
 };
 
@@ -40,7 +37,7 @@ class WebsocketPacketProcessor {
         : rpcType(rpcType) {
         websocketRoutes[rpcType] = this;
     }
-    virtual void Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) = 0;
+    virtual std::optional<WebsocketPayload> Process(SpectreWebsocketRequest& packet) = 0;
     virtual ~WebsocketPacketProcessor() = default;
     [[nodiscard]] const SpectreRpcType& GetType() const {
         return rpcType;

@@ -3,7 +3,7 @@
 
 class SubmitProviderIdHandler : public HTTPPacketProcessor {
   public:
-    explicit SubmitProviderIdHandler(const std::string& route);
+    explicit SubmitProviderIdHandler(HTTPRequestIdentifier id);
 
-    void Process(const http::request<http::string_body>& req, tcp::socket& sock) override;
+    std::optional<drogon::HttpResponsePtr> Process(const drogon::HttpRequestPtr& req) override;
 };

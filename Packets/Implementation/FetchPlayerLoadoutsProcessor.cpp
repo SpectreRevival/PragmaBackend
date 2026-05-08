@@ -7,7 +7,7 @@ FetchPlayerLoadoutsProcessor::FetchPlayerLoadoutsProcessor(const SpectreRpcType&
     : WebsocketPacketProcessor(rpcType) {
 }
 
-void FetchPlayerLoadoutsProcessor::Process(SpectreWebsocketRequest& packet, SpectreWebsocket& sock) {
+std::optional<WebsocketPayload> FetchPlayerLoadoutsProcessor::Process(SpectreWebsocketRequest& packet) {
     const std::unique_ptr<FetchLoadoutsRequest> req = packet.GetPayloadAsMessage<FetchLoadoutsRequest>();
     const std::unique_ptr<WeaponLoadouts> loadouts = PlayerDatabase::Get().GetField<WeaponLoadouts>(FieldKey::PLAYER_WEAPON_LOADOUT, req->playerid());
     FetchLoadoutsResponse res;
@@ -16,5 +16,5 @@ void FetchPlayerLoadoutsProcessor::Process(SpectreWebsocketRequest& packet, Spec
         cur->set_playerid(req->playerid());
         cur->set_loadoutid(loadouts->weaponloadoutdata(i).loadoutid());
     }
-    sock.SendPacket(res, packet.GetResponseType(), packet.GetRequestId());
+    return res;
 }
