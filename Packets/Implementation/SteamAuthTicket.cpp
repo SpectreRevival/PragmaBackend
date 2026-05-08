@@ -1,36 +1,34 @@
 #include <SteamAuthTicket.h>
 #include <cstdint>
 
-namespace {
-    constexpr size_t kGcTokenLengthFieldSize = 4;
-    constexpr size_t kGcTokenSize = 20;
-    constexpr size_t kSteamIdOffset = 12;
-    constexpr uint32_t kExpectedGcTokenSize = 20;
+constexpr size_t kGcTokenLengthFieldSize = 4;
+constexpr size_t kGcTokenSize = 20;
+constexpr size_t kSteamIdOffset = 12;
+constexpr uint32_t kExpectedGcTokenSize = 20;
 
-    int HexNibble(char c) {
-        if (c >= '0' && c <= '9') return c - '0';
-        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-        return -1;
-    }
+static int HexNibble(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    return -1;
+}
 
-    uint32_t ReadU32Le(const uint8_t* buf) {
-        return static_cast<uint32_t>(buf[0]) |
-               (static_cast<uint32_t>(buf[1]) << 8) |
-               (static_cast<uint32_t>(buf[2]) << 16) |
-               (static_cast<uint32_t>(buf[3]) << 24);
-    }
+static uint32_t ReadU32Le(const uint8_t* buf) {
+    return static_cast<uint32_t>(buf[0]) |
+           (static_cast<uint32_t>(buf[1]) << 8) |
+           (static_cast<uint32_t>(buf[2]) << 16) |
+           (static_cast<uint32_t>(buf[3]) << 24);
+}
 
-    uint64_t ReadU64Le(const uint8_t* buf) {
-        return static_cast<uint64_t>(buf[0]) |
-               (static_cast<uint64_t>(buf[1]) << 8) |
-               (static_cast<uint64_t>(buf[2]) << 16) |
-               (static_cast<uint64_t>(buf[3]) << 24) |
-               (static_cast<uint64_t>(buf[4]) << 32) |
-               (static_cast<uint64_t>(buf[5]) << 40) |
-               (static_cast<uint64_t>(buf[6]) << 48) |
-               (static_cast<uint64_t>(buf[7]) << 56);
-    }
+static uint64_t ReadU64Le(const uint8_t* buf) {
+    return static_cast<uint64_t>(buf[0]) |
+           (static_cast<uint64_t>(buf[1]) << 8) |
+           (static_cast<uint64_t>(buf[2]) << 16) |
+           (static_cast<uint64_t>(buf[3]) << 24) |
+           (static_cast<uint64_t>(buf[4]) << 32) |
+           (static_cast<uint64_t>(buf[5]) << 40) |
+           (static_cast<uint64_t>(buf[6]) << 48) |
+           (static_cast<uint64_t>(buf[7]) << 56);
 }
 
 std::string SteamAuthTicket::ExtractSteamId64(const std::string& providerToken) {
