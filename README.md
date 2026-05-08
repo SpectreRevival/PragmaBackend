@@ -34,23 +34,12 @@ git clone https://github.com/astroval0/pragmabackend
 cd pragmabackend
 git submodule update --init --recursive
 
-## Configuration (`auth.json`)
-
-Create an `auth.json` in the **repo root**:
-
-```json
-{
-  "steamApiKey": "<YOUR STEAM WEB API KEY HERE https://steamcommunity.com/dev/apikey >"
-}
-```
-
 ### Vivox-Voice branch
 
 If you're on the `vivox reimplementation` branch and you actually want to use voice / text, extend `auth.json` with:
 
 ```json
 {
-  "steamApiKey": "<...>",
   "vivox": {
     "server": "",
     "domain": "",
