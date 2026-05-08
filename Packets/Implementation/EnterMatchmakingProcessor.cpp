@@ -12,17 +12,17 @@ std::optional<WebsocketPayload> EnterMatchmakingProcessor::Process(SpectreWebsoc
     const std::unique_ptr<EnterMatchmakingRequest> req = packet.GetPayloadAsMessage<EnterMatchmakingRequest>();
     const PartyResponse res = PartyDatabase::Get().GetPartyRes(req->partyid());
 
-    const GameConnectionDetails details = GameConnectionDetails::FromEnvironment();
+    const GameConnectionDetails details = BuildGameConnectionDetailsFromEnv();
     return WebsocketPayload(
         PartyDatabase::SerializePartyToString(res),
         {
             Notification(
                 SpectreRpcType("GameInstanceRpc.AddedToGameV1Notification"),
-                details.gameInstanceId + "-added",
-                details.ToAddedToGameNotificationPayload().dump()),
+                details.gameinstanceid() + "-added",
+                SerializeAddedToGameNotification(details)),
             Notification(
                 SpectreRpcType("GameInstanceRpc.HostConnectionDetailsV1Notification"),
-                details.gameInstanceId + "-host",
-                details.ToHostConnectionDetailsNotificationPayload().dump()),
+                details.gameinstanceid() + "-host",
+                SerializeHostConnectionDetailsNotification(details)),
         });
 }

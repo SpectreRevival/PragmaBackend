@@ -1,18 +1,10 @@
 #pragma once
 
-#include <nlohmann/json.hpp>
+#include <GameConnectionDetails.pb.h>
 #include <string>
 
-class GameConnectionDetails {
-  public:
-    std::string gameInstanceId;
-    std::string hostname;
-    int port = 7777;
-    std::string matchData;
-    std::string connectionToken;
+GameConnectionDetails BuildGameConnectionDetailsFromEnv();
 
-    static GameConnectionDetails FromEnvironment();
-    nlohmann::json ToHostConnectionDetailsPayload() const;
-    nlohmann::json ToHostConnectionDetailsNotificationPayload() const;
-    nlohmann::json ToAddedToGameNotificationPayload() const;
-};
+std::string SerializeHostConnectionDetailsResponse(const GameConnectionDetails& details);
+std::string SerializeHostConnectionDetailsNotification(const GameConnectionDetails& details);
+std::string SerializeAddedToGameNotification(const GameConnectionDetails& details);

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+message GameConnectionDetails {
+  string gameInstanceId = 1;
+  ExtConnectionDetails extConnectionDetails = 2;
+  string hostname = 3;
+  int32 port = 4;
+  string connectionToken = 5;
+}
+
+message ExtConnectionDetails {
+  string matchData = 1;
+}
+
+message GetHostConnectionDetailsV1Response {
+  GameConnectionDetails hostConnectionDetails = 1;
+}
+
+message HostConnectionDetailsV1Notification {
+  GameConnectionDetails connectionDetails = 1;
+}
+
+message AddedToGameV1Notification {
+  string gameInstanceId = 1;
+  AddedToGameExt ext = 2;
+}
+
+message AddedToGameExt {
+  bool matchLeader = 1;
+}

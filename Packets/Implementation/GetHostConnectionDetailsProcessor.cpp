@@ -7,5 +7,5 @@ GetHostConnectionDetailsProcessor::GetHostConnectionDetailsProcessor(const Spect
 
 std::optional<WebsocketPayload> GetHostConnectionDetailsProcessor::Process(SpectreWebsocketRequest& packet) {
     (void)packet;
-    return GameConnectionDetails::FromEnvironment().ToHostConnectionDetailsPayload();
+    return SerializeHostConnectionDetailsResponse(BuildGameConnectionDetailsFromEnv());
 }
