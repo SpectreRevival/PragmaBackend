@@ -3,6 +3,8 @@
 #include <PartyDatabase.h>
 #include <google/protobuf/util/json_util.h>
 #include <nlohmann/json.hpp>
+#include <stdexcept>
+#include <vector>
 
 using ordered_json = nlohmann::ordered_json;
 
@@ -57,14 +59,81 @@ PartyDatabase::PartyDatabase(const fs::path& path)
 }
 
 PartyDatabase& PartyDatabase::Get() {
-    static PartyDatabase inst = []() {
-        PartyDatabase db{PersistenceUtilities::GetSavePath() / "playerdata.sqlite"};
-        return db;
-    }();
+    static PartyDatabase inst{PersistenceUtilities::GetSavePath() / "playerdata.sqlite"};
     return inst;
 }
 
+void PartyDatabase::DeleteParty(const std::string& partyId) {
+    std::lock_guard lock(dbMutex);
+    sql::Statement deleteParty(
+        GetRawRef(),
+        "DELETE FROM " + GetTableName() + " WHERE " + GetKeyFieldName() + " = ?;");
+    deleteParty.bind(1, partyId);
+    deleteParty.exec();
+}
+
+void PartyDatabase::ClearAllParties() {
+    std::lock_guard lock(dbMutex);
+    GetRaw()->exec("DELETE FROM " + GetTableName() + ";");
+}
+
+void PartyDatabase::RemovePlayerFromParties(const std::string& playerId) {
+    if (playerId.empty()) {
+        return;
+    }
+
+    std::lock_guard lock(dbMutex);
+    std::vector<std::string> partyIds;
+    sql::Statement getPartyIds(
+        GetRawRef(),
+        "SELECT " + GetKeyFieldName() + " FROM " + GetTableName() + ";");
+    while (getPartyIds.executeStep()) {
+        partyIds.push_back(getPartyIds.getColumn(0).getString());
+    }
+
+    for (const std::string& partyId : partyIds) {
+        Party party;
+        if (!TryGetParty(partyId, party)) {
+            spdlog::warn("dropping stale party {} during disconnect cleanup", partyId);
+            DeleteParty(partyId);
+            continue;
+        }
+
+        bool removedPlayer = false;
+        for (int i = party.partymembers_size() - 1; i >= 0; i--) {
+            if (party.partymembers(i).playerid() == playerId) {
+                party.mutable_partymembers()->DeleteSubrange(i, 1);
+                removedPlayer = true;
+            }
+        }
+
+        if (!removedPlayer) {
+            continue;
+        }
+
+        if (party.partymembers_size() == 0) {
+            DeleteParty(partyId);
+            continue;
+        }
+
+        bool hasLeader = false;
+        for (int i = 0; i < party.partymembers_size(); i++) {
+            if (party.partymembers(i).isleader()) {
+                hasLeader = true;
+                break;
+            }
+        }
+
+        if (!hasLeader) {
+            party.mutable_partymembers(0)->set_isleader(true);
+        }
+
+        SaveParty(party);
+    }
+}
+
 void PartyDatabase::SaveParty(const Party& party) {
+    std::lock_guard lock(dbMutex);
     PartyMembers members;
     for (int i = 0; i < party.partymembers_size(); i++) {
         members.add_members()->CopyFrom(party.partymembers(i));
@@ -97,13 +166,11 @@ void PartyDatabase::SaveParty(const Party& party) {
     }
 }
 
-Party PartyDatabase::GetParty(const std::string& partyId) {
-    Party party;
-
+bool PartyDatabase::TryGetParty(const std::string& partyId, Party& party) {
     std::unique_ptr<PartyMembers> members = GetField<PartyMembers>(FieldKey::PARTY_MEMBERS, partyId);
     if (!members) {
         spdlog::error("failed to find members list for party {}", partyId);
-        throw;
+        return false;
     }
 
     for (int i = 0; i < members->members_size(); i++) {
@@ -129,7 +196,7 @@ Party PartyDatabase::GetParty(const std::string& partyId) {
     getPartyMeta.bind(1, partyId);
     if (!getPartyMeta.executeStep()) {
         spdlog::error("failed to find party metadata for party: {}", partyId);
-        throw;
+        return false;
     }
     party.set_invitecode(getPartyMeta.getColumn("PartyCode").getString());
     party.add_preferredgameserverzones("uscentral-1");
@@ -139,10 +206,20 @@ Party PartyDatabase::GetParty(const std::string& partyId) {
     } else {
         party.set_version("1");
     }
+    return true;
+}
+
+Party PartyDatabase::GetParty(const std::string& partyId) {
+    std::lock_guard lock(dbMutex);
+    Party party;
+    if (!TryGetParty(partyId, party)) {
+        throw std::runtime_error("failed to load party " + partyId);
+    }
     return party;
 }
 
 PartyResponse PartyDatabase::GetPartyRes(const std::string& partyId) {
+    std::lock_guard lock(dbMutex);
     PartyResponse res;
     Party party = GetParty(partyId);
     res.mutable_party()->CopyFrom(party);
@@ -150,6 +227,7 @@ PartyResponse PartyDatabase::GetPartyRes(const std::string& partyId) {
 }
 
 Party PartyDatabase::GetPartyByInviteCode(const std::string& inviteCode) {
+    std::lock_guard lock(dbMutex);
     Party party;
     sql::Statement getPartyMeta(
         GetRawRef(),
@@ -158,13 +236,13 @@ Party PartyDatabase::GetPartyByInviteCode(const std::string& inviteCode) {
     if (!getPartyMeta.executeStep()) {
         spdlog::error("failed to find party id for party from invite code: {}\n are you sure that this invite code hasn't expired?",
                       inviteCode);
-        throw;
+        throw std::runtime_error("failed to find party id for invite code " + inviteCode);
     }
     std::string partyId = getPartyMeta.getColumn("PartyID").getString();
     std::unique_ptr<PartyMembers> members = GetField<PartyMembers>(FieldKey::PARTY_MEMBERS, partyId);
     if (!members) {
         spdlog::error("failed to find members list for party {}", partyId);
-        throw;
+        throw std::runtime_error("failed to find members list for party " + partyId);
     }
 
     for (int i = 0; i < members->members_size(); i++) {
@@ -177,8 +255,8 @@ Party PartyDatabase::GetPartyByInviteCode(const std::string& inviteCode) {
         party.mutable_extbroadcastparty()->CopyFrom(*broadcastExtra);
     }
 
-    std::unique_ptr<BroadcastPartyExtraInfo> privateExtra =
-        GetField<BroadcastPartyExtraInfo>(FieldKey::PARTY_PRIVATE_EXTRA_BROADCAST_INFO, partyId);
+    std::unique_ptr<BroadcastPrivatePartyExtraInfo> privateExtra =
+        GetField<BroadcastPrivatePartyExtraInfo>(FieldKey::PARTY_PRIVATE_EXTRA_BROADCAST_INFO, partyId);
     if (privateExtra) {
         party.mutable_extprivateplayer()->CopyFrom(*privateExtra);
     }
@@ -198,6 +276,7 @@ Party PartyDatabase::GetPartyByInviteCode(const std::string& inviteCode) {
 }
 
 PartyResponse PartyDatabase::GetPartyResByInviteCode(const std::string& inviteCode) {
+    std::lock_guard lock(dbMutex);
     PartyResponse res;
     Party party = GetPartyByInviteCode(inviteCode);
     res.mutable_party()->CopyFrom(party);

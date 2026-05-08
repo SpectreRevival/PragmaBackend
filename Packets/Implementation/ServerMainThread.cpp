@@ -4,7 +4,6 @@
 
 #include "GetFriendsListAndRegisterOnlineHandler.h"
 #include "ResourcesUtilities.h"
-#include "SubmitProviderIdHandler.h"
 #include "UpdatePresenceForPlayerHandler.h"
 
 #include <AuthenticateHandler.h>
@@ -14,6 +13,7 @@
 #include <FieldFetchProcessor.h>
 #include <FieldKey.h>
 #include <GetBulkProfileDataProcessor.h>
+#include <GetHostConnectionDetailsProcessor.h>
 #include <GetLoginDataProcessor.h>
 #include <GetPlayerDataProcessor.h>
 #include <HeartbeatProcessor.h>
@@ -22,6 +22,7 @@
 #include <LegacyPlayerData.pb.h>
 #include <OutfitLoadout.pb.h>
 #include <PacketProcessor.h>
+#include <PartyDatabase.h>
 #include <PersistenceUtilities.h>
 #include <PlayerDatabase.h>
 #include <SaveOutfitLoadoutProcessor.h>
@@ -109,12 +110,12 @@ void InitializeHandlers() {
         loggerSetup = true;
         SetupLogger();
     }
+    PartyDatabase::Get().ClearAllParties();
     RegisterStaticHTTPHandlers();
     RegisterStaticWSHandlers();
 
     // feel like this needs cleaning up T_T
 
-    new SubmitProviderIdHandler(HTTPRequestIdentifier("/v1/submitproviderid", Post));
     new AuthenticateHandler(HTTPRequestIdentifier("/v1/account/authenticateorcreatev2", Post));
     new HeartbeatProcessor(SpectreRpcType("PlayerSessionRpc.HeartbeatV1Request"));
     new FieldFetchProcessor<Inventory>(
@@ -153,6 +154,8 @@ void InitializeHandlers() {
         SpectreRpcType("PartyRpc.UpdatePartyPlayerV1Request"));
     new EnterMatchmakingProcessor(
         SpectreRpcType("PartyRpc.EnterMatchmakingV1Request"));
+    new GetHostConnectionDetailsProcessor(
+        SpectreRpcType("GameInstanceRpc.GetHostConnectionDetailsV1Request"));
     new IsInPartyHandler(
         SpectreRpcType("MultiplayerRpc.InitializePartyV1Request"));
     new IsInPartyHandler(
