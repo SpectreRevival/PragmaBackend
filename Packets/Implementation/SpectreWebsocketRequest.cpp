@@ -8,7 +8,7 @@ SpectreWebsocketRequest::SpectreWebsocketRequest(std::string& reqBody, std::stri
     nlohmann::json reqjson = nlohmann::json::parse(reqBody);
     reqJson = std::make_shared<nlohmann::json>(reqjson);
     try {
-    requestType = SpectreRpcType(std::string(reqJson->at("type")));
+        requestType = SpectreRpcType(std::string(reqJson->at("type")));
     } catch (std::exception& e) {
         spdlog::warn("log type not found for " + reqJson->at("type").get<std::string>());
     }

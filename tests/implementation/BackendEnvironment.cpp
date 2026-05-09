@@ -3,8 +3,8 @@
 #include <BackendEnvironment.h>
 #include <ResourcesUtilities.h>
 #include <filesystem>
-#include <thread>
 #include <process.hpp>
+#include <thread>
 
 namespace fs = std::filesystem;
 
@@ -18,11 +18,11 @@ void BackendEnvironment::SetUp() {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     std::filesystem::remove(PersistenceUtilities::GetSavePath() / "playerdata.sqlite");
-    
+
     std::filesystem::path backendDir = ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path();
     std::filesystem::path lockPath = backendDir / "server.lock";
     std::filesystem::remove(lockPath);
-    
+
     std::filesystem::path exePath = backendDir / "pragmabackend";
 #if defined(_WIN32)
     exePath.replace_extension(".exe");
@@ -33,13 +33,12 @@ void BackendEnvironment::SetUp() {
     }
 
     std::string cmdLine = exePath.string() + " 8081 8082 8083";
-    
+
     backendProcess = std::make_unique<TinyProcessLib::Process>(
         cmdLine,
         backendDir.string(),
-        [](const char* bytes, size_t n) { /* stdout */},
-        [](const char* bytes, size_t n) { /* stderr */}
-    );
+        [](const char* bytes, size_t n) { /* stdout */ },
+        [](const char* bytes, size_t n) { /* stderr */ });
 
     const auto maxWaitTime = std::chrono::seconds(60);
     const auto startTime = std::chrono::steady_clock::now();
@@ -49,8 +48,8 @@ void BackendEnvironment::SetUp() {
         if (elapsed > maxWaitTime) {
             throw std::runtime_error(
                 "Backend process failed to start within timeout. "
-                "Expected lock file at: " + lockPath.string()
-            );
+                "Expected lock file at: " +
+                lockPath.string());
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
@@ -63,7 +62,7 @@ void BackendEnvironment::TearDown() {
 #elif defined(__linux__)
         std::system("pkill -9 pragmabackend 2>/dev/null"); // NOLINT
 #endif
-        
+
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         backendProcess.reset();
     }

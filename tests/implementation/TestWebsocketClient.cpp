@@ -71,4 +71,3 @@ TestWebsocketClient::~TestWebsocketClient() {
         ioThread.join(); // wait for background thread
     }
 }
- 

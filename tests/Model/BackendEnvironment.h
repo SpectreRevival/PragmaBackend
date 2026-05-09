@@ -4,7 +4,7 @@
 #include <process.hpp>
 
 class BackendEnvironment : public ::testing::Environment {
-private:
+  private:
     std::unique_ptr<TinyProcessLib::Process> backendProcess;
 
   public:

@@ -2,7 +2,6 @@
 
 #include <BanDatabase.h>
 
-
 BanDatabase& BanDatabase::Get() {
     static BanDatabase inst = []() {
         BanDatabase db{PersistenceUtilities::GetSavePath() / "playerdata.sqlite"};
