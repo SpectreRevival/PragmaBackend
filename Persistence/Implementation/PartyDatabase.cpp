@@ -64,7 +64,7 @@ PartyDatabase& PartyDatabase::Get() {
 }
 
 void PartyDatabase::DeleteParty(const std::string& partyId) {
-    std::lock_guard lock(dbMutex);
+    std::scoped_lock lock(dbMutex);
     sql::Statement deleteParty(
         GetRawRef(),
         "DELETE FROM " + GetTableName() + " WHERE " + GetKeyFieldName() + " = ?;");
@@ -73,7 +73,7 @@ void PartyDatabase::DeleteParty(const std::string& partyId) {
 }
 
 void PartyDatabase::ClearAllParties() {
-    std::lock_guard lock(dbMutex);
+    std::scoped_lock lock(dbMutex);
     GetRaw()->exec("DELETE FROM " + GetTableName() + ";");
 }
 
@@ -82,7 +82,7 @@ void PartyDatabase::RemovePlayerFromParties(const std::string& playerId) {
         return;
     }
 
-    std::lock_guard lock(dbMutex);
+    std::scoped_lock lock(dbMutex);
     std::vector<std::string> partyIds;
     sql::Statement getPartyIds(
         GetRawRef(),
@@ -134,7 +134,7 @@ void PartyDatabase::RemovePlayerFromParties(const std::string& playerId) {
 }
 
 void PartyDatabase::SaveParty(const Party& party) {
-    std::lock_guard lock(dbMutex);
+    std::scoped_lock lock(dbMutex);
     PartyMembers members;
     for (int i = 0; i < party.partymembers_size(); i++) {
         members.add_members()->CopyFrom(party.partymembers(i));
@@ -212,7 +212,7 @@ std::optional<Party> PartyDatabase::TryGetParty(const std::string& partyId) {
 }
 
 Party PartyDatabase::GetParty(const std::string& partyId) {
-    std::lock_guard lock(dbMutex);
+    std::scoped_lock lock(dbMutex);
     std::optional<Party> partyOpt = TryGetParty(partyId);
     if (!partyOpt) {
         throw std::runtime_error("failed to load party " + partyId);
@@ -221,7 +221,7 @@ Party PartyDatabase::GetParty(const std::string& partyId) {
 }
 
 PartyResponse PartyDatabase::GetPartyRes(const std::string& partyId) {
-    std::lock_guard lock(dbMutex);
+    std::scoped_lock lock(dbMutex);
     PartyResponse res;
     Party party = GetParty(partyId);
     res.mutable_party()->CopyFrom(party);
@@ -229,7 +229,7 @@ PartyResponse PartyDatabase::GetPartyRes(const std::string& partyId) {
 }
 
 Party PartyDatabase::GetPartyByInviteCode(const std::string& inviteCode) {
-    std::lock_guard lock(dbMutex);
+    std::scoped_lock lock(dbMutex);
     Party party;
     sql::Statement getPartyMeta(
         GetRawRef(),
@@ -278,7 +278,7 @@ Party PartyDatabase::GetPartyByInviteCode(const std::string& inviteCode) {
 }
 
 PartyResponse PartyDatabase::GetPartyResByInviteCode(const std::string& inviteCode) {
-    std::lock_guard lock(dbMutex);
+    std::scoped_lock lock(dbMutex);
     PartyResponse res;
     Party party = GetPartyByInviteCode(inviteCode);
     res.mutable_party()->CopyFrom(party);

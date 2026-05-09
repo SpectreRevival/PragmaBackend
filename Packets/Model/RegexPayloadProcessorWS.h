@@ -12,7 +12,7 @@ class RegexPayloadProcessorWS : public WebsocketPacketProcessor {
 
   public:
     RegexPayloadProcessorWS(const SpectreRpcType& rpcType, const std::unordered_map<Regex, std::shared_ptr<nlohmann::json>>& resMap)
-        : WebsocketPacketProcessor(rpcType), resMap(resMap){};
+        : WebsocketPacketProcessor(rpcType), resMap(resMap) {};
 
     std::optional<WebsocketPayload> Process(SpectreWebsocketRequest& packet) override;
 };

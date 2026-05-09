@@ -9,7 +9,7 @@
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
-bool GetResponseToReqId(int reqId, json& session, json& res) {
+static bool GetResponseToReqId(int reqId, json& session, json& res) {
     std::string reqIdStr = std::to_string(reqId);
     for (auto message : session["_webSocketMessages"]) {
         if (message["type"] == "send") {
@@ -24,9 +24,9 @@ bool GetResponseToReqId(int reqId, json& session, json& res) {
     return false;
 }
 
-fs::path outTestDir;
+static fs::path outTestDir;
 
-void ProcessWebsocketSession(json& session) {
+static void ProcessWebsocketSession(json& session) {
     std::random_device rnd;
     std::mt19937 rand(rnd());
     uuids::uuid_random_generator gen(rand);
@@ -56,7 +56,7 @@ void ProcessWebsocketSession(json& session) {
     }
 }
 
-std::string ExtractURLPath(const std::string& url) {
+static std::string ExtractURLPath(const std::string& url) {
     static const std::regex re(R"(https?://[^/]+(/[^?#]*)?)");
     std::smatch match;
     if (std::regex_search(url, match, re)) {
@@ -65,7 +65,7 @@ std::string ExtractURLPath(const std::string& url) {
     return {};
 }
 
-void ProcessHTTPSession(json& session) {
+static void ProcessHTTPSession(json& session) {
     std::random_device rnd;
     std::mt19937 rand(rnd());
     uuids::uuid_random_generator gen(rand);

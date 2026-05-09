@@ -9,7 +9,7 @@
 
 namespace fs = std::filesystem;
 
-void RegisterStaticHandlerFromFile(std::string filename, SpectreRpcType rpcType) {
+static void RegisterStaticHandlerFromFile(std::string filename, SpectreRpcType rpcType) {
     std::ifstream resfile(filename);
     if (!resfile.is_open()) {
         throw std::runtime_error("failed to open response file");
@@ -20,7 +20,7 @@ void RegisterStaticHandlerFromFile(std::string filename, SpectreRpcType rpcType)
     new StaticResponseProcessorWS(rpcType, res);
 }
 
-void RegisterRegexHandlerFromFiles(SpectreRpcType rpcType, std::initializer_list<std::pair<Regex, std::string>> map) {
+static void RegisterRegexHandlerFromFiles(SpectreRpcType rpcType, std::initializer_list<std::pair<Regex, std::string>> map) {
     std::unordered_map<Regex, std::shared_ptr<nlohmann::json>> map2;
     for (const auto& [regex, filename] : map) {
         std::ifstream resfile(filename);
@@ -37,7 +37,7 @@ void RegisterRegexHandlerFromFiles(SpectreRpcType rpcType, std::initializer_list
 
 #pragma warning(push)
 #pragma warning(disable : 4101)
-void RegisterStaticWSHandlers() {
+static void RegisterStaticWSHandlers() {
     for (const auto& file : fs::recursive_directory_iterator(ResourcesUtilities::GetResourcesFolder() / "payloads" / "static" / "ws" / "game")) {
         if (!fs::is_regular_file(file)) continue;
         std::string rpcType = file.path().filename().stem().string();

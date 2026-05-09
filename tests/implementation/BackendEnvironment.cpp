@@ -9,7 +9,7 @@
 namespace fs = std::filesystem;
 
 void BackendEnvironment::SetUp() {
-#if defined(_WIN32)
+#ifdef _WIN32
     std::system("taskkill /f /im pragmabackend.exe 2>nul"); // NOLINT
 #elif defined(__linux__)
     std::system("pkill -9 pragmabackend 2>/dev/null"); // NOLINT
@@ -24,7 +24,7 @@ void BackendEnvironment::SetUp() {
     std::filesystem::remove(lockPath);
 
     std::filesystem::path exePath = backendDir / "pragmabackend";
-#if defined(_WIN32)
+#ifdef _WIN32
     exePath.replace_extension(".exe");
 #endif
 
@@ -57,7 +57,7 @@ void BackendEnvironment::SetUp() {
 
 void BackendEnvironment::TearDown() {
     if (backendProcess) {
-#if defined(_WIN32)
+#ifdef _WIN32
         std::system("taskkill /f /im pragmabackend.exe 2>nul"); // NOLINT
 #elif defined(__linux__)
         std::system("pkill -9 pragmabackend 2>/dev/null"); // NOLINT

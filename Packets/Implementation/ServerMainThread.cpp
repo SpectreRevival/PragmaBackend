@@ -97,12 +97,12 @@ static void ShutdownServer() {
 
 // the main accept loop
 // binds to 127.0.0.1:443, accepts a connection, spins a thread, repeat
-std::atomic_bool serverOnline = false;
-std::atomic_bool handlersInitialized = false;
-std::atomic_bool loggerSetup = false;
-std::ofstream lockFile;
+static std::atomic_bool serverOnline = false;
+static std::atomic_bool handlersInitialized = false;
+static std::atomic_bool loggerSetup = false;
+static std::ofstream lockFile;
 
-void InitializeHandlers() {
+static void InitializeHandlers() {
     (void)signal(2, HandleInterrupt);
     (void)signal(9, HandleInterrupt);
     (void)signal(15, HandleInterrupt);
@@ -179,7 +179,7 @@ void InitializeHandlers() {
     drogon::app().setThreadNum(4);
 }
 
-int MainThread(int argc, char** argv, std::stop_token st) {
+static int MainThread(int argc, char** argv, const std::stop_token& st) {
     if (argc == 4) {
         gamePort = std::stoi(std::string(argv[1]));
         socialPort = std::stoi(std::string(argv[2]));
