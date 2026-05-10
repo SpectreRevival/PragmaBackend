@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 #include <string>
+#include <StaticWSPackets.h>
 
 namespace fs = std::filesystem;
 

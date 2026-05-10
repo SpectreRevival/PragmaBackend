@@ -1,11 +1,11 @@
 #pragma once
 #include <Notification.h>
 #include <SpectreRpcType.h>
-#include <drogon/WebSocketController.h>
-#include <drogon/drogon.h>
 #include <atomic>
 #include <condition_variable>
 #include <deque>
+#include <drogon/WebSocketController.h>
+#include <drogon/drogon.h>
 #include <functional>
 #include <google/protobuf/message.h>
 #include <mutex>
@@ -27,7 +27,7 @@ class SpectreWebsocket {
     void NotificationThread(const std::stop_token& st);
 
   public:
-    SpectreWebsocket(const drogon::WebSocketConnectionPtr& con, std::string playerId);
+    SpectreWebsocket(const drogon::WebSocketConnectionPtr& con, std::string pid);
 
     std::string FormulateFinalResponse(const std::shared_ptr<json>& res);
 

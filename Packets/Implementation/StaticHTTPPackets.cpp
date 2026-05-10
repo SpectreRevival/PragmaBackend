@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <spdlog/spdlog.h>
+#include <StaticHTTPPackets.h>
 
 namespace fs = std::filesystem;
 

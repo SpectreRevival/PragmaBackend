@@ -8,9 +8,12 @@
 
 static std::vector<fs::path> gWsPaths = [] {
     std::vector<fs::path> paths;
-    for (auto& item : std::filesystem::directory_iterator(ResourcesUtilities::GetResourcesFolder() / "testrequests" / "ws")) {
-        if (item.is_regular_file() && item.path().extension() == ".json") {
-            paths.push_back(item.path());
+    fs::path wsPath = ResourcesUtilities::GetResourcesFolder() / "testrequests" / "ws";
+    if (fs::exists(wsPath) && fs::is_directory(wsPath)) {
+        for (auto& item : std::filesystem::directory_iterator(wsPath)) {
+            if (item.is_regular_file() && item.path().extension() == ".json") {
+                paths.push_back(item.path());
+            }
         }
     }
     return paths;
@@ -18,9 +21,12 @@ static std::vector<fs::path> gWsPaths = [] {
 
 static std::vector<fs::path> gHttpPaths = [] {
     std::vector<fs::path> paths;
-    for (auto& item : std::filesystem::directory_iterator(ResourcesUtilities::GetResourcesFolder() / "testrequests" / "http")) {
-        if (item.is_regular_file() && item.path().extension() == ".json") {
-            paths.push_back(item.path());
+    fs::path httpPath = ResourcesUtilities::GetResourcesFolder() / "testrequests" / "http";
+    if (fs::exists(httpPath) && fs::is_directory(httpPath)) {
+        for (auto& item : std::filesystem::directory_iterator(httpPath)) {
+            if (item.is_regular_file() && item.path().extension() == ".json") {
+                paths.push_back(item.path());
+            }
         }
     }
     return paths;
@@ -28,13 +34,17 @@ static std::vector<fs::path> gHttpPaths = [] {
 
 static std::vector<fs::path> gSequencedDirs = [] {
     std::vector<fs::path> sequencedDirs;
-    for (auto& item : std::filesystem::directory_iterator(ResourcesUtilities::GetResourcesFolder() / "testrequests" / "sequenced")) {
-        if (item.is_directory()) {
-            sequencedDirs.emplace_back(item.path().string());
+    fs::path sequencedPath = ResourcesUtilities::GetResourcesFolder() / "testrequests" / "sequenced";
+    if (fs::exists(sequencedPath) && fs::is_directory(sequencedPath)) {
+        for (auto& item : std::filesystem::directory_iterator(sequencedPath)) {
+            if (item.is_directory()) {
+                sequencedDirs.emplace_back(item.path().string());
+            }
         }
     }
     return sequencedDirs;
 }();
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SequencedRequestTest);
 
 INSTANTIATE_TEST_SUITE_P(WebsocketRequestTests, WebsocketRequestTest, ::testing::ValuesIn(gWsPaths));
 INSTANTIATE_TEST_SUITE_P(HttpRequestTests, HTTPRequestTest, ::testing::ValuesIn(gHttpPaths));

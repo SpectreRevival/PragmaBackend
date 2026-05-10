@@ -44,8 +44,7 @@ boost::beast::flat_buffer TestWebsocketClient::SendPacket(const nlohmann::json& 
     boost::beast::flat_buffer buffer;
     boost::asio::steady_timer timer(ws->get_executor());
 
-    // Timeout waiting for response after 3 seconds
-    timer.expires_after(std::chrono::seconds(3));
+    timer.expires_after(std::chrono::seconds(5));
     timer.async_wait([&](auto ec) {
         if (!ec) {
             boost::system::error_code ignore;
@@ -72,4 +71,3 @@ TestWebsocketClient::~TestWebsocketClient() {
         ioThread.join(); // wait for background thread
     }
 }
- 

@@ -1,5 +1,4 @@
 #include <GameConnectionDetails.h>
-
 #include <cstdlib>
 #include <google/protobuf/util/json_util.h>
 #include <spdlog/spdlog.h>

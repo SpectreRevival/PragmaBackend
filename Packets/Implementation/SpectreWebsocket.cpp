@@ -1,5 +1,5 @@
-#include "PlayerDatabase.h"
 #include "PartyDatabase.h"
+#include "PlayerDatabase.h"
 #include "SavedNotificationData.pb.h"
 
 #include <PacketProcessor.h>
@@ -82,7 +82,7 @@ void SpectreWebsocket::NotificationThread(const std::stop_token& st) {
 
             SavedNotificationData savedData;
             {
-                std::lock_guard lock(notificationQueueLock);
+                std::scoped_lock lock(notificationQueueLock);
                 for (const Notification& notif : notificationsToDeliver) {
                     auto* newNotif = savedData.add_notificationstodeliver();
                     newNotif->set_notificationdata(notif.GetNotificationData());
@@ -182,7 +182,7 @@ std::optional<WebSocketConnectionPtr> SpectreWebsocketController::GetConnectionF
 
 void SpectreWebsocket::ScheduleNotification(const Notification& notif) {
     {
-        std::lock_guard lock(notificationQueueLock);
+        std::scoped_lock lock(notificationQueueLock);
         notificationsToDeliver.push_back(notif);
     }
     notificationQueueCondition.notify_one();

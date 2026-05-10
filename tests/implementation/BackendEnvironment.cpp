@@ -3,63 +3,72 @@
 #include <BackendEnvironment.h>
 #include <ResourcesUtilities.h>
 #include <filesystem>
+#include <process.hpp>
 #include <thread>
-#define WIN32_LEAN_AND_MEAN // why is this a thing. it literally won't compile w/o it
-#include <windows.h>
 
 namespace fs = std::filesystem;
 
-static DWORD RunBackendWindows() {
-    STARTUPINFOA si = {sizeof(si)};
-    PROCESS_INFORMATION pi = {};
-    std::filesystem::path exePath = ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path() /
-                                    "pragmabackend.exe";
-    BOOL ok = CreateProcessA(exePath.string().c_str(),
-        (LPSTR)"8081 8082 8083",
-        nullptr,
-        nullptr,
-        TRUE,
-        CREATE_NEW_PROCESS_GROUP,
-        nullptr,
-        nullptr,
-        &si,
-        &pi);
-    FreeConsole();
-    FreeConsole();
-    for (int i = 0; i < 50; i++) {
-        if (AttachConsole(pi.dwProcessId) != 0) break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-    SetConsoleCtrlHandler(nullptr, TRUE);
-    return pi.dwProcessId;
-}
-
 void BackendEnvironment::SetUp() {
-#if defined(_WIN32)
-    std::filesystem::path exePath = ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path() /
-                                    "pragmabackend.exe";
-    std::system("taskkill /f /im pragmabackend.exe"); // NOLINT
+#ifdef _WIN32
+    std::system("taskkill /f /im pragmabackend.exe 2>nul"); // NOLINT
 #elif defined(__linux__)
-    std::filesystem::path exePath = ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path() /
-                                    "pragmabackend";
-    std::system("pkill -9 pragmabackend"); // NOLINT
+    std::system("pkill -9 pragmabackend 2>/dev/null"); // NOLINT
 #endif
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
     std::filesystem::remove(PersistenceUtilities::GetSavePath() / "playerdata.sqlite");
-    backendPID = RunBackendWindows();
-    while (true) {
-        if (fs::exists(ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path() / "server.lock")) {
-            break;
+
+    std::filesystem::path backendDir = ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path();
+    std::filesystem::path lockPath = backendDir / "server.lock";
+    std::filesystem::remove(lockPath);
+
+    std::filesystem::path exePath = backendDir / "pragmabackend";
+#ifdef _WIN32
+    exePath.replace_extension(".exe");
+#endif
+
+    if (!fs::exists(exePath)) {
+        throw std::runtime_error("Backend executable not found at: " + exePath.string());
+    }
+
+    std::string cmdLine = exePath.string() + " 8081 8082 8083";
+
+    backendProcess = std::make_unique<TinyProcessLib::Process>(
+        cmdLine,
+        backendDir.string(),
+        [](const char* bytes, size_t n) { /* stdout */ },
+        [](const char* bytes, size_t n) { /* stderr */ });
+
+    const auto maxWaitTime = std::chrono::seconds(60);
+    const auto startTime = std::chrono::steady_clock::now();
+
+    while (!fs::exists(lockPath)) {
+        auto elapsed = std::chrono::steady_clock::now() - startTime;
+        if (elapsed > maxWaitTime) {
+            throw std::runtime_error(
+                "Backend process failed to start within timeout. "
+                "Expected lock file at: " +
+                lockPath.string());
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
 void BackendEnvironment::TearDown() {
-    GenerateConsoleCtrlEvent(CTRL_C_EVENT, NULL);
-    SetConsoleCtrlHandler(nullptr, FALSE);
-    HANDLE h = OpenProcess(SYNCHRONIZE, FALSE, backendPID);
-    WaitForSingleObject(h, INFINITE);
-    CloseHandle(h);
-    std::this_thread::sleep_for(std::chrono::seconds(1)); // wait for windows to release file handle
+    if (backendProcess) {
+#ifdef _WIN32
+        std::system("taskkill /f /im pragmabackend.exe 2>nul"); // NOLINT
+#elif defined(__linux__)
+        std::system("pkill -9 pragmabackend 2>/dev/null"); // NOLINT
+#endif
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        backendProcess.reset();
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
     std::filesystem::remove(PersistenceUtilities::GetSavePath() / "playerdata.sqlite");
     std::filesystem::remove(ResourcesUtilities::GetCurrentExecutablePath().parent_path().parent_path() / "server.lock");
 }

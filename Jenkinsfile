@@ -168,7 +168,7 @@ pipeline {
                             checkout scm
                             sh """
                                 FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
-                                clang-format -i \$FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp
+                                clang-format -i \$FILES main.cpp
                             """
                             sh """
                                 if ! git diff --quiet; then
@@ -201,7 +201,7 @@ pipeline {
                             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                                 sh """
                                     FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
-                                    run-clang-tidy \$FILES main.cpp StaticHTTPPackets.cpp StaticWSPackets.cpp -fix -p out/build/x64-debug-linux -extra-arg=-Werror
+                                    run-clang-tidy \$FILES main.cpp -fix -p out/build/x64-debug-linux -extra-arg=-Werror
                                 """
                             }
                             sh """

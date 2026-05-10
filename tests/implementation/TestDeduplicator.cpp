@@ -8,7 +8,7 @@
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
-void DeduplicateWebsocketRequests(const std::string& reqFolder) {
+static void DeduplicateWebsocketRequests(const std::string& reqFolder) {
     std::unordered_map<SpectreRpcType, std::pair<fs::path, double>> filesToKeep;
     for (const auto& item : fs::directory_iterator(reqFolder)) {
         if (!item.is_regular_file()) {
@@ -52,7 +52,7 @@ void DeduplicateWebsocketRequests(const std::string& reqFolder) {
     }
 }
 
-int64_t ParseTimestamp(std::string s) {
+static int64_t ParseTimestamp(std::string s) {
     s = s.substr(0, 19);
 
     std::tm tm{};
@@ -67,7 +67,7 @@ int64_t ParseTimestamp(std::string s) {
     return unixTime;
 }
 
-void DeduplicateHTTPRequests(const std::string& reqFolder) {
+static void DeduplicateHTTPRequests(const std::string& reqFolder) {
     std::unordered_map<std::string, std::pair<fs::path, int64_t>> filesToKeep;
     for (const auto& item : fs::directory_iterator(reqFolder)) {
         if (!item.is_regular_file()) {

@@ -1,12 +1,12 @@
 #pragma once
 #include <gtest/gtest.h>
+#include <memory>
 #include <process.hpp>
-#define WIN32_LEAN_AND_MEAN // won't compile without this :skull:
-#include <windows.h>
 
 class BackendEnvironment : public ::testing::Environment {
-private:
-    DWORD backendPID{};
+  private:
+    std::unique_ptr<TinyProcessLib::Process> backendProcess;
+
   public:
     void SetUp() override;
 
