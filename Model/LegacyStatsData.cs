@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class LegacyStatsData : IAttributeData<LegacyStatsData, Packets.LegacyStatsData>
+public record class LegacyStatsData
 {
     public required Int64 KillCount { get; set; } = 0;
     public required Int64 DeathCount { get; set; } = 0;
@@ -21,12 +21,12 @@ public record class LegacyStatsData : IAttributeData<LegacyStatsData, Packets.Le
     public required string[] TopSponsors { get; set; } = [];
     public required string[] TopWeapons { get; set; } = [];
 
-    public static LegacyStatsData GetFromDatabase(string key)
+    public static LegacyStatsData GetFromDatabase(string key, LegacyStatsType type)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase(string key)
+    public void SyncToDatabase(string key, LegacyStatsType type)
     {
         throw new NotImplementedException();
     }
@@ -34,5 +34,12 @@ public record class LegacyStatsData : IAttributeData<LegacyStatsData, Packets.Le
     public Packets.LegacyStatsData ToPacketType()
     {
         throw new NotImplementedException();
+    }
+
+    public enum LegacyStatsType
+    {
+        Casual = 0,
+        Ranked = 1,
+        Team = 2
     }
 }

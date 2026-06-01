@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS LegacyStats_Ranked (
+﻿CREATE TABLE IF NOT EXISTS LegacyStats_Casual (
 	player_id UUID PRIMARY KEY,
 	kill_count BIGINT NOT NULL DEFAULT 0,
 	death_count BIGINT NOT NULL DEFAULT 0,
