@@ -38,9 +38,9 @@ pipeline {
                         steps {
                             script {
                                 if(isUnix()){
-                                    sh 'dotnet build --configuration ${CONFIGURATION}'
+                                    sh "dotnet build --configuration ${CONFIGURATION}"
                                 } else {
-                                    bat 'dotnet build --configuration ${CONFIGURATION}'
+                                    bat "dotnet build --configuration ${CONFIGURATION}"
                                 }
                             }
                         }
