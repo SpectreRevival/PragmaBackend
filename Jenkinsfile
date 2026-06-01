@@ -61,7 +61,7 @@ pipeline {
             steps {
                 checkout scm
                 dir("Docker"){
-                    sh "docker build -t pragmabackend:latest -f Backend.dockerfile"
+                    sh "docker build -t pragmabackend:latest -f Backend.dockerfile ."
                     sh "docker tag pragmabackend:latest registry.bgfamily.ca/pragmabackend:latest"
                     sh "docker push registry.bgfamily.ca/pragmabackend:latest"
                     sh "docker tag pragmabackend:latest ohmivr/pragmabackend:latest"
@@ -74,7 +74,7 @@ pipeline {
             steps {
                 checkout scm
                 dir("Docker"){
-                    sh "docker build -t pragmabackend-pgdb:latest -f Postgres.dockerfile"
+                    sh "docker build -t pragmabackend-pgdb:latest -f Postgres.dockerfile ."
                     sh "docker tag pragmabackend-pgdb:latest registry.bgfamily.ca/pragmabackend-pgdb:latest"
                     sh "docker push registry.bgfamily.ca/pragmabackend-pgdb:latest"
                     sh "docker tag pragmabackend:latest ohmivr/pragmabackend-pgdb:latest"
