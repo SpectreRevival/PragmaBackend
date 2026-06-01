@@ -1,0 +1,53 @@
+syntax = "proto3";
+import "TrackedProgression.proto";
+package Packets;
+
+message InstancedItem {
+	string catalogId = 1;
+	string instanceId = 2;
+	InstanceExtData ext = 3;
+}
+
+message InstanceExtData {
+	double reserved = 1;
+	oneof customizationData {
+		InstancedCustomizationData instancedCustomizationData = 2;
+		ActiveProgressionData activeProgressionData = 3;
+		SponsorUnlockData sponsorUnlockData = 4;
+		TrackedProgression trackedProgression = 5;
+	}
+	bool viewed = 6;
+}
+
+message InstancedCustomizationData {
+	repeated AlterationChannel instancedAlterationChannels = 1;
+}
+
+message AlterationChannel {
+	string channelId = 1;
+	repeated string ownedAlterations = 2;
+}
+
+message ActiveProgressionData {
+	map<string,string> progressByStat = 1;
+	bool areObjectivesCompleted = 2;
+	string currentObjectiveId = 3;
+	double currentObjectiveIndex = 4;
+	bool isPremiumUnlocked = 5;
+	optional string teamId = 6;
+	optional ObjectiveContribution lastContribution = 7;
+	optional bool isBundlePurchased = 8;
+	optional double numLevelsPurchased = 9;
+}
+
+message ObjectiveContribution {
+	enum SourceType {
+		MATCH = 0;
+	}
+	SourceType sourceType = 1;
+	string sourceId = 2;
+}
+
+message SponsorUnlockData {
+	string sponsorName = 1;
+}

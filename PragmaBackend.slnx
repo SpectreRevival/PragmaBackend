@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Settings.json" />
+  </Folder>
+  <Project Path="BackendServer/BackendServer.csproj" />
+  <Project Path="Model/Model.csproj" />
+  <Project Path="Persistence/Persistence.csproj" />
+  <Project Path="Packets/Packets.csproj" />
+</Solution>

@@ -1,0 +1,15 @@
+syntax = "proto3";
+package Packets;
+
+message ContextualPlayerPresence {
+    bool isOnline = 1;
+    string lastUpdated = 2;
+    int32 mainPresenceId = 3;
+    string playerId = 4;
+    string presenceContext = 5;
+}
+
+message UpdatePlayerPresenceRequest {
+    string gameShardId = 1;
+    ContextualPlayerPresence playerPresence = 2;
+}

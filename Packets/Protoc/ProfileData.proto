@@ -1,0 +1,14 @@
+syntax = "proto3";
+import "FlatInstancedItem.proto";
+import "DisplayName.proto";
+package Packets;
+
+message ProfileData {
+	string playerId = 1;
+	DisplayName displayName = 2;
+	FlatInstancedItem banner = 3;
+	string crewScore = 4;
+	double currentSoloRank = 5;
+	double highestTeamRank = 6;
+	string divisionType = 7;
+}

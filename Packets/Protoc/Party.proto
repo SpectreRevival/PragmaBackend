@@ -1,0 +1,36 @@
+syntax = "proto3";
+import "PartyMember.proto";
+import "CrossplayPreferences.proto";
+import "CustomGameInfo.proto";
+package Packets;
+
+message Party {
+	BroadcastPartyExtraInfo extBroadcastParty = 1;
+	BroadcastPrivatePartyExtraInfo extPrivatePlayer = 2;
+	string partyId = 3;
+	repeated PartyMember partyMembers = 4;
+	string inviteCode = 5;
+	repeated string preferredGameServerZones = 6;
+	string version = 7;
+}
+
+message BroadcastPartyExtraInfo {
+	string pool = 1;
+	optional CustomGameInfo custom = 2; // only if pool == "custom"
+	map<string,string> standard = 3;
+	string lobbyMode = 4;
+	string chatId = 5;
+	string version = 6;
+	string region = 7;
+	string tag = 8;
+	string profile = 9;
+	repeated string tokens = 10;
+	bool useTeamMmr = 11;
+	bool hasAcceptableRegion = 12;
+	CrossplayPreferences crossPlayPreference = 13;
+	repeated string removePlayers = 14;
+}
+
+message BroadcastPrivatePartyExtraInfo {
+
+}

@@ -1,0 +1,7 @@
+syntax = "proto3";
+package Packets;
+
+message DisplayName {
+	string displayName = 1;
+	string discriminator = 2;
+}

@@ -1,0 +1,38 @@
+CREATE TABLE IF NOT EXISTS LegacyStats_Ranked (
+	player_id UUID PRIMARY KEY,
+	kill_count BIGINT NOT NULL DEFAULT 0,
+	death_count BIGINT NOT NULL DEFAULT 0,
+	ace_count BIGINT NOT NULL DEFAULT 0,
+	duality_kill_count BIGINT NOT NULL DEFAULT 0,
+	first_kill_count BIGINT NOT NULL DEFAULT 0,
+	first_death_count BIGINT NOT NULL DEFAULT 0,
+	kast DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+	duality_rating DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+	impact_count BIGINT NOT NULL DEFAULT 0,
+	total_matches_played BIGINT NOT NULL DEFAULT 0,
+	fan_count BIGINT NOT NULL DEFAULT 0,
+	win_count BIGINT NOT NULL DEFAULT 0,
+	total_rounds_played BIGINT NOT NULL DEFAULT 0,
+	headshots_count BIGINT NOT NULL DEFAULT 0,
+	total_damaging_shots_count BIGINT NOT NULL DEFAULT 0,
+	total_damage BIGINT NOT NULL DEFAULT 0,
+	top_sponsors TEXT[] NOT NULL DEFAULT "{}",
+	top_weapons TEXT[] NOT NULL DEFAULT "{}",
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE OR REPLACE FUNCTION update_modified_column()
+RETURNS TRIGGER AS $$
+BEGIN
+	NEW.updated_at = CURRENT_TIMESTAMP;
+	RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_stats_modtime ON LegacyStats_Ranked;
+
+CREATE TRIGGER update_stats_modtime
+BEFORE UPDATE ON LegacyStats_Ranked
+FOR EACH ROW
+EXECUTE FUNCTION update_modified_column();

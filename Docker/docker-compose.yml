@@ -1,0 +1,22 @@
+services:
+  database:
+    image: pragmabackend-pgdb:latest
+    container_name: pragmabackend-pgdb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: pragmabackend
+    volumes:
+      - pragmabackend_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  backend:
+    image: pragmabackend:latest
+    container_name: pragmabackend
+    restart: unless-stopped
+    depends_on:
+      - database
+
+volumes:
+  postgres_data:

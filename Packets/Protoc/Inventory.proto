@@ -1,0 +1,14 @@
+syntax = "proto3";
+import "InstancedItem.proto";
+import "StackableItem.proto";
+package Packets;
+
+message Inventory {
+	FullInventory full = 1;
+}
+
+message FullInventory {
+	repeated StackableItem stackables = 1;
+	repeated InstancedItem instanced = 2;
+	string version = 3;
+}

@@ -1,0 +1,6 @@
+Settings.json
+*~
+.vs/
+*/obj/*
+*/bin/*
+Docker/.env
