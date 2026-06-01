@@ -1,2 +1,2 @@
 FROM postgres:alpine
-COPY ./init-uuid.sh /docker-entrypoint-initdb.d/
+COPY ./init-uuid.sql /docker-entrypoint-initdb.d/
