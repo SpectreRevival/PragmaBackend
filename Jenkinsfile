@@ -15,7 +15,7 @@ pipeline {
                     }
                 }
                 
-                agent { label "${CONFIGURATION}" }
+                agent { label "${OS}" }
 
                 stages {
                     stage("Checkout"){
