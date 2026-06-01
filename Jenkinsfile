@@ -38,9 +38,9 @@ pipeline {
                         steps {
                             script {
                                 if(isUnix()){
-                                    sh "dotnet build --configuration ${CONFIGURATION}"
+                                    sh "dotnet build --configuration ${CONFIGURATION} /m:1 /p:UseSharedCompilation=false"
                                 } else {
-                                    bat "dotnet build --configuration ${CONFIGURATION}"
+                                    bat "dotnet build --configuration ${CONFIGURATION} /m:1 /p:UseSharedCompilation=false"
                                 }
                             }
                         }
