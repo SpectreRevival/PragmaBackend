@@ -1,8 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build-env
 WORKDIR /app
 
-# Dependencies
-COPY ../*.csproj ./
+COPY ../PragmaBackend.slnx ./
+COPY --parents ../**/*.csproj ./
 RUN dotnet restore
 
 COPY ../ ./
@@ -16,4 +16,4 @@ EXPOSE 8080
 EXPOSE 8081
 EXPOSE 8082
 
-ENTRYPOINT ["dotnet" "BackendServer.exe"]
+ENTRYPOINT ["dotnet", "BackendServer.exe"]
