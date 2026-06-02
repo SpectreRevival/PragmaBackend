@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS crosshair_config (
 		(inner_pip).thickness IS NOT NULL AND
 		(inner_pip).piplen IS NOT NULL AND
 		(inner_pip).opacity IS NOT NULL AND
-		(inner_pip).offset IS NOT NULL AND
+		(inner_pip).pip_offset IS NOT NULL AND
 		(inner_pip).move_accuracy_offset IS NOT NULL AND
 		(inner_pip).fire_accuracy_offset IS NOT NULL
 	),
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS crosshair_config (
 		(outer_pip).thickness IS NOT NULL AND
 		(outer_pip).piplen IS NOT NULL AND
 		(outer_pip).opacity IS NOT NULL AND
-		(outer_pip).offset IS NOT NULL AND
+		(outer_pip).pip_offset IS NOT NULL AND
 		(outer_pip).move_accuracy_offset IS NOT NULL AND
 		(outer_pip).fire_accuracy_offset IS NOT NULL
 	)

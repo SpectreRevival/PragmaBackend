@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS gamepad_config(
 		(custom_look_config).look_settings_ads.turn_accel_yaw_bonus IS NOT NULL AND
 		(custom_look_config).look_settings_ads.turn_accel_pitch_bonus IS NOT NULL AND
 		(custom_look_config).look_settings_ads.turn_accel_delay_seconds IS NOT NULL AND
-		(custom_look_config).look_settings_ads.turn_accel_time_to_max IS NOT NULL AND
+		(custom_look_config).look_settings_ads.turn_accel_time_to_max IS NOT NULL
 	),
 	CONSTRAINT verify_custom_response_curve CHECK (
 		(custom_response_curve).display_name IS NOT NULL AND

@@ -5,7 +5,7 @@ BEGIN
 			thickness DOUBLE PRECISION,
 			piplen DOUBLE PRECISION,
 			opacity DOUBLE PRECISION,
-			offset DOUBLE PRECISION,
+			pip_offset DOUBLE PRECISION,
 			move_accuracy_offset BOOL,
 			fire_accuracy_offset BOOL
 		);

@@ -11,7 +11,7 @@ RETURNS BOOLEAN AS $$
 	);
 $$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION at_least_on_member_leader(arr PartyMember[])
+CREATE OR REPLACE FUNCTION at_least_one_member_leader(arr PartyMember[])
 RETURNS BOOLEAN AS $$
 	SELECT EXISTS (
 		SELECT 1
