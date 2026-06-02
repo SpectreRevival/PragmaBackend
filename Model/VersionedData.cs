@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public class VersionedData
+public record class VersionedData
 {
     public Int64 Version { get; set; }
     public void IncrementVersion()
