@@ -56,6 +56,13 @@ pipeline {
                 }
             }
         }
+        stage("SQL Linter"){
+            agent { label 'linux' }
+            steps {
+                checkout scm
+		sh "sqlfluff lint -dialect postgres Persistence/"    
+            }
+        }
         stage("Compile backend docker image"){
             agent { label 'docker-linux' }
             steps {
@@ -80,6 +87,18 @@ pipeline {
                     sh "docker tag pragmabackend-pgdb:latest ohmivr/pragmabackend-pgdb:latest"
                     sh "docker push ohmivr/pragmabackend-pgdb:latest"
                 }
+            }
+        }
+    }
+
+    post {
+        always {
+            node('linux') {
+                step([
+                    $class: 'GitHubCommitStatusSetter',
+                    contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'jenkins/build-status'],
+                    reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'https://github.com/SpectreRevival/pragmabackend']
+                ])
             }
         }
     }
