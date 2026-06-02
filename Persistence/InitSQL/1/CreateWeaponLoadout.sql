@@ -1,7 +1,7 @@
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typename = 'WeaponAttachment') THEN
-		CREATE TYPE OutfitData AS (
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'WeaponAttachment') THEN
+		CREATE TYPE WeaponAttachment AS (
 			attachment_item_instance_id TEXT,
 			attachment_item_catalog_id TEXT
 		);
@@ -11,8 +11,8 @@ $$;
 
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typename = 'WeaponData') THEN
-		CREATE TYPE OutfitData AS (
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'WeaponData') THEN
+		CREATE TYPE WeaponData AS (
 			item_instance_id TEXT,
 			alteration_data ActiveAlterationData[],
 			item_catalog_id TEXT,
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 
 	CONSTRAINT verify_semi_auto_pistol CHECK (
 		(semi_auto_pistol).item_instance_id IS NOT NULL AND
-		(semi_auto_pistol).alterationData IS NOT NULL AND
+		(semi_auto_pistol).alteration_data IS NOT NULL AND
 		(semi_auto_pistol).item_catalog_id IS NOT NULL AND 
 		(
         ((semi_auto_pistol).attachment) IS NULL 
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_suppressed_pistol CHECK (
 		(suppressed_pistol).item_instance_id IS NOT NULL AND
-		(suppressed_pistol).alterationData IS NOT NULL AND
+		(suppressed_pistol).alteration_data IS NOT NULL AND
 		(suppressed_pistol).item_catalog_id IS NOT NULL AND 
 		(
         ((suppressed_pistol).attachment) IS NULL 
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_auto_pistol CHECK (
 		(auto_pistol).item_instance_id IS NOT NULL AND
-		(auto_pistol).alterationData IS NOT NULL AND
+		(auto_pistol).alteration_data IS NOT NULL AND
 		(auto_pistol).item_catalog_id IS NOT NULL AND 
 		(
         ((auto_pistol).attachment) IS NULL 
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_highcal_pistol CHECK (
 		(highcal_pistol).item_instance_id IS NOT NULL AND
-		(highcal_pistol).alterationData IS NOT NULL AND
+		(highcal_pistol).alteration_data IS NOT NULL AND
 		(highcal_pistol).item_catalog_id IS NOT NULL AND 
 		(
         ((highcal_pistol).attachment) IS NULL 
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_heavy_shotgun CHECK (
 		(heavy_shotgun).item_instance_id IS NOT NULL AND
-		(heavy_shotgun).alterationData IS NOT NULL AND
+		(heavy_shotgun).alteration_data IS NOT NULL AND
 		(heavy_shotgun).item_catalog_id IS NOT NULL AND 
 		(
         ((heavy_shotgun).attachment) IS NULL 
@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_auto_shotgun CHECK (
 		(auto_shotgun).item_instance_id IS NOT NULL AND
-		(auto_shotgun).alterationData IS NOT NULL AND
+		(auto_shotgun).alteration_data IS NOT NULL AND
 		(auto_shotgun).item_catalog_id IS NOT NULL AND 
 		(
         ((auto_shotgun).attachment) IS NULL 
@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_tactical_smg CHECK (
 		(tactical_smg).item_instance_id IS NOT NULL AND
-		(tactical_smg).alterationData IS NOT NULL AND
+		(tactical_smg).alteration_data IS NOT NULL AND
 		(tactical_smg).item_catalog_id IS NOT NULL AND 
 		(
         ((tactical_smg).attachment) IS NULL 
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_rapidfire_smg CHECK (
 		(rapidfire_smg).item_instance_id IS NOT NULL AND
-		(rapidfire_smg).alterationData IS NOT NULL AND
+		(rapidfire_smg).alteration_data IS NOT NULL AND
 		(rapidfire_smg).item_catalog_id IS NOT NULL AND 
 		(
         ((rapidfire_smg).attachment) IS NULL 
@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_suppressed_smg CHECK (
 		(suppressed_smg).item_instance_id IS NOT NULL AND
-		(suppressed_smg).alterationData IS NOT NULL AND
+		(suppressed_smg).alteration_data IS NOT NULL AND
 		(suppressed_smg).item_catalog_id IS NOT NULL AND 
 		(
         ((suppressed_smg).attachment) IS NULL 
@@ -165,7 +165,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_standard_ar CHECK (
 		(standard_ar).item_instance_id IS NOT NULL AND
-		(standard_ar).alterationData IS NOT NULL AND
+		(standard_ar).alteration_data IS NOT NULL AND
 		(standard_ar).item_catalog_id IS NOT NULL AND 
 		(
         ((standard_ar).attachment) IS NULL 
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_semi_auto_ar CHECK (
 		(semi_auto_ar).item_instance_id IS NOT NULL AND
-		(semi_auto_ar).alterationData IS NOT NULL AND
+		(semi_auto_ar).alteration_data IS NOT NULL AND
 		(semi_auto_ar).item_catalog_id IS NOT NULL AND 
 		(
         ((semi_auto_ar).attachment) IS NULL 
@@ -191,7 +191,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_burst_ar CHECK (
 		(burst_ar).item_instance_id IS NOT NULL AND
-		(burst_ar).alterationData IS NOT NULL AND
+		(burst_ar).alteration_data IS NOT NULL AND
 		(burst_ar).item_catalog_id IS NOT NULL AND 
 		(
         ((burst_ar).attachment) IS NULL 
@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_tactical_ar CHECK (
 		(tactical_ar).item_instance_id IS NOT NULL AND
-		(tactical_ar).alterationData IS NOT NULL AND
+		(tactical_ar).alteration_data IS NOT NULL AND
 		(tactical_ar).item_catalog_id IS NOT NULL AND 
 		(
         ((tactical_ar).attachment) IS NULL 
@@ -217,7 +217,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_suppressed_ar CHECK (
 		(suppressed_ar).item_instance_id IS NOT NULL AND
-		(suppressed_ar).alterationData IS NOT NULL AND
+		(suppressed_ar).alteration_data IS NOT NULL AND
 		(suppressed_ar).item_catalog_id IS NOT NULL AND 
 		(
         ((suppressed_ar).attachment) IS NULL 
@@ -230,7 +230,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_heavy_ar CHECK (
 		(heavy_ar).item_instance_id IS NOT NULL AND
-		(heavy_ar).alterationData IS NOT NULL AND
+		(heavy_ar).alteration_data IS NOT NULL AND
 		(heavy_ar).item_catalog_id IS NOT NULL AND 
 		(
         ((heavy_ar).attachment) IS NULL 
@@ -243,7 +243,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_highcal_mg CHECK (
 		(highcal_mg).item_instance_id IS NOT NULL AND
-		(highcal_mg).alterationData IS NOT NULL AND
+		(highcal_mg).alteration_data IS NOT NULL AND
 		(highcal_mg).item_catalog_id IS NOT NULL AND 
 		(
         ((highcal_mg).attachment) IS NULL 
@@ -256,7 +256,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_rapidfire_mg CHECK (
 		(rapidfire_mg).item_instance_id IS NOT NULL AND
-		(rapidfire_mg).alterationData IS NOT NULL AND
+		(rapidfire_mg).alteration_data IS NOT NULL AND
 		(rapidfire_mg).item_catalog_id IS NOT NULL AND 
 		(
         ((rapidfire_mg).attachment) IS NULL 
@@ -269,7 +269,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_semi_auto_sniper CHECK (
 		(semi_auto_sniper).item_instance_id IS NOT NULL AND
-		(semi_auto_sniper).alterationData IS NOT NULL AND
+		(semi_auto_sniper).alteration_data IS NOT NULL AND
 		(semi_auto_sniper).item_catalog_id IS NOT NULL AND 
 		(
         ((semi_auto_sniper).attachment) IS NULL 
@@ -282,7 +282,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_bolt_action_sniper CHECK (
 		(bolt_action_sniper).item_instance_id IS NOT NULL AND
-		(bolt_action_sniper).alterationData IS NOT NULL AND
+		(bolt_action_sniper).alteration_data IS NOT NULL AND
 		(bolt_action_sniper).item_catalog_id IS NOT NULL AND 
 		(
         ((bolt_action_sniper).attachment) IS NULL 
@@ -295,7 +295,7 @@ CREATE TABLE IF NOT EXISTS weapon_loadouts (
 	),
 	CONSTRAINT verify_melee CHECK (
 		(melee).item_instance_id IS NOT NULL AND
-		(melee).alterationData IS NOT NULL AND
+		(melee).alteration_data IS NOT NULL AND
 		(melee).item_catalog_id IS NOT NULL AND 
 		(
         ((melee).attachment) IS NULL 

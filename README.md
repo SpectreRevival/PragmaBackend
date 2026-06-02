@@ -1,5 +1,9 @@
 Emulates the backend service made by Pragma for the game spectre divide.
 
+# Recommended Tools
+- Visual Studio (either 2022 or 2026)
+- pgAdmin 4
+
 # Overview of Projects / Submodules
 
 ## Model

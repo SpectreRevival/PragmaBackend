@@ -27,7 +27,7 @@ public class PostgresDatabase : IAsyncDisposable
             Port = port,
             Username = user,
             Password = password,
-            Pooling = true
+            Pooling = false,
         };
 
         _dataSource = NpgsqlDataSource.Create(ConnStr.ConnectionString);
