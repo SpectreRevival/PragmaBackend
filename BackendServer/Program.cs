@@ -1,6 +1,8 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Packets;
 using Persistence;
 using Serilog;
@@ -25,7 +27,12 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 Log.Information("Started logging, initializing postgres next");
-PostgresDatabase pg = new();
+IConfiguration config = new ConfigurationBuilder()
+        .SetBasePath(AppContext.BaseDirectory)
+        .AddEnvironmentVariables()
+        .AddJsonFile("resources/env.json", optional: true, reloadOnChange: true)
+        .Build();
+PostgresDatabase.InstantiateDatabase(config);
 
 int currentScriptInitializationLevel = 0;
 string nextDirPath = Path.Combine(Path.Combine(Path.Combine(AppContext.BaseDirectory, "resources"), "InitSQL"), currentScriptInitializationLevel.ToString());
@@ -38,7 +45,7 @@ while (Directory.Exists(nextDirPath))
         string sqlScript = File.ReadAllText(filepath);
         try
         {
-            pg.GetRaw().CreateCommand(sqlScript).ExecuteNonQuery();
+            PostgresDatabase.Get().GetRaw().CreateCommand(sqlScript).ExecuteNonQuery();
         } catch (Exception ex)
         {
             Log.Error($"Exception thrown while executing sql script at {filepath}: {ex.Message}");
@@ -77,7 +84,7 @@ backendApp.Map("{*path}", async (HttpContext context, string? path) =>
 
 try
 {
-    backendApp.Run();
+    backendApp.Run("http://*:8080;http://*:8081;http://*:8082");
 }
 finally
 {

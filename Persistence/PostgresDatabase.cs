@@ -9,14 +9,9 @@ namespace Persistence;
 public class PostgresDatabase : IAsyncDisposable
 {
     private readonly NpgsqlDataSource _dataSource;
-    private static PostgresDatabase inst = new();
-    private readonly IConfiguration config = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddEnvironmentVariables()
-            .AddJsonFile("resources/env.json", optional: true, reloadOnChange: true)
-            .Build();
+    private static PostgresDatabase? inst;
 
-    public PostgresDatabase()
+    public PostgresDatabase(IConfiguration config)
     {
         string host = config["DB_HOST"] ?? "localhost";
         int port = int.Parse(config["DB_PORT"] ?? "5432");
@@ -57,6 +52,11 @@ public class PostgresDatabase : IAsyncDisposable
     public static PostgresDatabase Get()
     {
         return inst;
+    }
+
+    public static void InstantiateDatabase(IConfiguration config)
+    {
+        inst = new(config);
     }
 
     public async ValueTask DisposeAsync()
