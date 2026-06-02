@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION all_party_members_nonnull(arr PartyMember[])
+CREATE OR REPLACE FUNCTION all_party_members_nonnull(arr PARTYMEMBER [])
 RETURNS BOOLEAN AS $$
 	SELECT NOT EXISTS (
 		SELECT 1
@@ -11,7 +11,7 @@ RETURNS BOOLEAN AS $$
 	);
 $$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION at_least_one_member_leader(arr PartyMember[])
+CREATE OR REPLACE FUNCTION at_least_one_member_leader(arr PARTYMEMBER [])
 RETURNS BOOLEAN AS $$
 	SELECT EXISTS (
 		SELECT 1
@@ -21,18 +21,18 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE sql IMMUTABLE;
 
 CREATE TABLE IF NOT EXISTS parties (
-	party_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-	members PartyMember[] NOT NULL,
-	invite_code TEXT NOT NULL,
-	queue_pool TEXT NOT NULL,
-	lobby_mode TEXT NOT NULL,
-	chat_id TEXT NOT NULL,
-	use_team_mmr BOOL NOT NULL,
+    party_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    members PARTYMEMBER [] NOT NULL,
+    invite_code TEXT NOT NULL,
+    queue_pool TEXT NOT NULL,
+    lobby_mode TEXT NOT NULL,
+    chat_id TEXT NOT NULL,
+    use_team_mmr BOOL NOT NULL,
 
-	CONSTRAINT verify_party_members CHECK (
-		all_party_members_nonnull(members)
-	),
-	CONSTRAINT at_least_one_leader CHECK (
-		at_least_one_member_leader(members)
-	)
+    CONSTRAINT verify_party_members CHECK (
+        all_party_members_nonnull(members)
+    ),
+    CONSTRAINT at_least_one_leader CHECK (
+        at_least_one_member_leader(members)
+    )
 );

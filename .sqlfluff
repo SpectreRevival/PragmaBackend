@@ -1,0 +1,4 @@
+[sqlfluff]
+dialect = postgres
+encoding = utf-8-sig
+max_line_length = 150
