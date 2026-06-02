@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS player_config (
     show_matchmaking_counters BOOL NOT NULL,
     force_chat_enabled BOOL NOT NULL,
     most_recent_lobby_mode INT NOT NULL,
-    most_recent_party_id TEXT NOT NULL,
+    most_recent_party_id UUID NOT NULL,
     eula_accepted_version INT NOT NULL,
     eula_accepted_version_playstation INT NOT NULL,
     eula_accepted_version_xbox INT NOT NULL,

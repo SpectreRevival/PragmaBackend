@@ -2,7 +2,7 @@
 
 public record class OutfitData
 {
-    public required string ItemInstanceId { get; set; }
+    public required Guid ItemInstanceId { get; set; }
     public required ActiveAlterationData[] AlterationData { get; set; }
-    public required string ItemCatalogId { get; set; }
+    public required Guid ItemCatalogId { get; set; }
 }

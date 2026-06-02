@@ -2,7 +2,7 @@
 
 public record class PartyMember : VersionedData
 {
-    public required string PlayerId { get; set; }
+    public required Guid PlayerId { get; set; }
     public required bool IsReady { get; set; }
     public required bool IsLeader { get; set; }
     public required string PreferredTeam { get; set; }

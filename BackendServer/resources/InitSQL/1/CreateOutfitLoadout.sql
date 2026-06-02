@@ -2,9 +2,9 @@ DO $$
 BEGIN
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'OutfitData') THEN
 		CREATE TYPE OutfitData AS (
-			item_instance_id TEXT,
+			item_instance_id UUID,
 			alteration_data ActiveAlterationData[],
-			item_catalog_id TEXT
+			item_catalog_id UUID
 		);
 	END IF;
 END

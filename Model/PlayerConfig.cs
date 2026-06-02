@@ -16,7 +16,7 @@ public record class PlayerConfig : VersionedData
     public required bool ShowMatchmakingCounters { get; set; }
     public required bool ForceChatEnabled { get; set; }
     public required Int32 MostRecentLobbyMode { get; set; } // TODO ENUMIFY
-    public required string MostRecentPartyId { get; set; }
+    public required Guid MostRecentPartyId { get; set; }
     public required Int32 EndUserLicenseAcceptedVersion { get; set; }
     public required Int32 EndUserLicenseAcceptedVersionPlayStation { get; set; }
     public required Int32 EndUserLicenseAcceptedVersionXbox { get; set; }

@@ -2,18 +2,18 @@
 
 public abstract record class TrackedProgression
 {
-    public required string[] ActiveDailyQuests { get; set; }
-    public required string[] ActiveWeeklyQuests { get; set; }
-    public required string[] ActiveEventQuests { get; set; }
+    public required Guid[] ActiveDailyQuests { get; set; }
+    public required Guid[] ActiveWeeklyQuests { get; set; }
+    public required Guid[] ActiveEventQuests { get; set; }
     public required DateTimeOffset LastRolloverTimestamp { get; set; }
 }
 
 public record class TeamTrackedProgression : TrackedProgression
 {
-    public required string TeamId { get; set; }
+    public required Guid TeamId { get; set; }
 }
 
 public record class IndividualTrackedProgression : TrackedProgression
 {
-    public required string ActiveEndorsement { get; set; }
+    public required Guid ActiveEndorsement { get; set; }
 }

@@ -21,21 +21,6 @@ public record class LegacyStatsData
     public required string[] TopSponsors { get; set; } = [];
     public required string[] TopWeapons { get; set; } = [];
 
-    public static LegacyStatsData GetFromDatabase(string key, LegacyStatsType type)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void SyncToDatabase(string key, LegacyStatsType type)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Packets.LegacyStatsData ToPacketType()
-    {
-        throw new NotImplementedException();
-    }
-
     public enum LegacyStatsType
     {
         Casual = 0,

@@ -2,8 +2,8 @@
 
 public record class WeaponLoadout
 {
-    public required string PlayerId { get; set; }
-    public required string LoadoutId { get; set; }
+    public required Guid PlayerId { get; set; }
+    public required Guid LoadoutId { get; set; }
     public required WeaponData SemiAutoPistol { get; set; }
     public required WeaponData SuppressedPistol { get; set; }
     public required WeaponData AutoPistol { get; set; }

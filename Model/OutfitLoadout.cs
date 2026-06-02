@@ -2,8 +2,8 @@
 
 public record class OutfitLoadout
 {
-    public required string PlayerId { get; set; }
-    public required string LoadoutId { get; set; }
+    public required Guid PlayerId { get; set; }
+    public required Guid LoadoutId { get; set; }
     public required OutfitData Head { get; set; }
     public required OutfitData Hair { get; set; }
     public required OutfitData FaceStyle { get; set; }

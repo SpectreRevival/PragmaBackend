@@ -2,7 +2,7 @@
 
 public record class Party : VersionedData
 {
-    public required string PartyId { get; set; }
+    public required Guid PartyId { get; set; }
     public required PartyMember[] Members { get; set; }
     public required string InviteCode { get; set; }
     public required string QueuePool { get; set; }

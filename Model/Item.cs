@@ -2,8 +2,8 @@
 
 public abstract record class Item
 {
-    public required string CatalogId { get; set; }
-    public required string InstanceId { get; set; }
+    public required Guid CatalogId { get; set; }
+    public required Guid InstanceId { get; set; }
 }
 
 public record class StackableItem : Item
@@ -25,10 +25,10 @@ public record class ProgressionTrackingItem : InstancedItem
 {
     public required Dictionary<string,string> ProgressionByStats { get; set; }
     public required bool AreObjectivesCompleted { get; set; }
-    public required string CurrentObjectiveId { get; set; }
+    public required Guid CurrentObjectiveId { get; set; }
     public required Int32 CurrentObjectiveIndex { get; set; }
     public required bool IsPremiumUnlocked { get; set; }
-    public string? TeamId { get; set; }
+    public Guid? TeamId { get; set; }
     public ObjectiveContribution? LastContribution { get; set; }
     public required bool IsBundlePurchased { get; set; }
     public required Int32 NumLevelsPurchased { get; set; }
