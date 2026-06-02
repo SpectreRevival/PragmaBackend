@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Net.Sockets;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
+using Serilog;
 
 namespace Persistence;
 
@@ -8,18 +10,19 @@ public class PostgresDatabase : IAsyncDisposable
 {
     private readonly NpgsqlDataSource _dataSource;
     private static PostgresDatabase inst = new();
+    private readonly IConfiguration config = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddEnvironmentVariables()
+            .AddJsonFile("resources/env.json", optional: true, reloadOnChange: true)
+            .Build();
 
     public PostgresDatabase()
     {
-        IConfiguration config = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .Build();
-        string host = config["db:host"] ?? "localhost";
-        int port = int.Parse(config["db:port"] ?? "5432");
-        string user = config["db:username"] ?? throw new InvalidDataException("No username for db provided");
-        string password = config["db:password"] ?? throw new InvalidDataException("No password for db provided");
-        string dbName = config["db:database"] ?? throw new InvalidDataException("No db name provided");
+        string host = config["DB_HOST"] ?? "localhost";
+        int port = int.Parse(config["DB_PORT"] ?? "5432");
+        string user = config["DB_USERNAME"] ?? throw new InvalidDataException("No username for db provided");
+        string password = config["DB_PASSWORD"] ?? throw new InvalidDataException("No password for db provided");
+        string dbName = config["DB_DATABASE"] ?? throw new InvalidDataException("No db name provided");
 
         var ConnStr = new NpgsqlConnectionStringBuilder
         {
@@ -31,11 +34,18 @@ public class PostgresDatabase : IAsyncDisposable
         };
 
         _dataSource = NpgsqlDataSource.Create(ConnStr.ConnectionString);
-
-        foreach (string fileName in Directory.EnumerateFiles(Path.Combine(Directory.GetCurrentDirectory(), "InitSQL")))
+        while (true)
         {
-            string sql = File.ReadAllText(fileName);
-            _dataSource.CreateCommand(sql).ExecuteNonQuery();
+            try
+            {
+                Log.Information("Attempting to connect to database");
+                using var connection = _dataSource.OpenConnection();
+                break;
+            } catch (Exception ex) when (ex is SocketException || ex is PostgresException || ex is NpgsqlException)
+            {
+                Log.Warning("Database not ready yet... trying again in 5s");
+                Thread.Sleep(TimeSpan.FromSeconds(5));
+            }
         }
     }
 

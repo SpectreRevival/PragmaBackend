@@ -4,3 +4,5 @@ Settings.json
 */obj/*
 */bin/*
 Docker/.env
+BackendServer/resources/env.json
+*.swp

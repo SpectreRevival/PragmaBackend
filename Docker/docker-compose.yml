@@ -1,5 +1,8 @@
 services:
-  database:
+  backend-pgdb:
+    build:
+      context: .
+      dockerfile: ./Postgres.dockerfile
     image: pragmabackend-pgdb:latest
     container_name: pragmabackend-pgdb
     restart: unless-stopped
@@ -11,12 +14,34 @@ services:
       - pragmabackend_data:/var/lib/postgresql
     ports:
       - "5432:5432"
+    networks:
+      - pragmabackend_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pragmabackend"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
   backend:
+    build:
+      context: ..
+      dockerfile: ./Backend.dockerfile
     image: pragmabackend:latest
     container_name: pragmabackend
     restart: unless-stopped
     depends_on:
-      - database
+      backend-pgdb:
+        condition: service_healthy
+    environment:
+      DB_HOST: "backend-pgdb"
+      DB_PORT: 5432
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_DATABASE: pragmabackend
+    networks:
+      - pragmabackend_net
 
 volumes:
   pragmabackend_data:
+networks:
+  pragmabackend_net:
+    driver: bridge

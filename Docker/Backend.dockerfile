@@ -5,10 +5,11 @@ COPY ../PragmaBackend.slnx ./
 COPY --parents ../**/*.csproj ./
 RUN dotnet restore
 
-COPY ../ ./
+# env.json shouldn't be included in the build as it contains secrets
+COPY --exclude=**/env.json ../ ./
 RUN dotnet publish -c Release -o out
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build-env /app/out .
 
@@ -16,4 +17,4 @@ EXPOSE 8080
 EXPOSE 8081
 EXPOSE 8082
 
-ENTRYPOINT ["dotnet", "BackendServer.exe"]
+ENTRYPOINT ["dotnet", "BackendServer.dll"]
