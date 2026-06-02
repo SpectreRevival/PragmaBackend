@@ -21,4 +21,10 @@ public record class ProfileData
     public required Int32 HighestTeamRank { get; set; } // todo enum
     public required string DivisionType { get; set; } // todo enum
     public required Int64 InventoryVersion { get; set; }
+    public required string CrewId { get; set; }
+    public required string AccountIdProvider { get; set; } // todo enum
+    public required string PlatformName { get; set; }
+    public required string ProviderAccountId { get; set; }
+    public required string CrossplayPlatformKind { get; set; }
+    public required Int32 GamesRemainingUntilCrewJoin { get; set; }
 }

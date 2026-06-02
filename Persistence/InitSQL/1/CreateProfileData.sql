@@ -18,6 +18,12 @@ CREATE TABLE IF NOT EXISTS profile_data (
 	highest_team_rank INT NOT NULL,
 	division_type TEXT NOT NULL,
 	inventory_version INT NOT NULL DEFAULT 0,
+	crew_id TEXT NOT NULL,
+	account_id_provider TEXT NOT NULL,
+	platform_name TEXT NOT NULL,
+	provider_account_id TEXT NOT NULL,
+	crossplay_platform_kind TEXT NOT NULL,
+	games_remaining_until_crew_join INT NOT NULL,
 
 	CONSTRAINT verify_display_name CHECK (
 		(display_name).player_name IS NOT NULL AND
