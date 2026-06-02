@@ -20,4 +20,5 @@ public record class ProfileData
     public required Int32 CurrentSoloRank { get; set; } // todo enum
     public required Int32 HighestTeamRank { get; set; } // todo enum
     public required string DivisionType { get; set; } // todo enum
+    public required Int64 InventoryVersion { get; set; }
 }
