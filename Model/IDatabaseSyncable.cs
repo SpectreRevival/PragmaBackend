@@ -2,6 +2,6 @@
 
 public interface IDatabaseSyncable<T>
 {
-    public void SyncToDatabase();
-    public abstract static T RetrieveFromDatabase(string key);
+    public Task SyncToDatabase();
+    public abstract static Task<T?> RetrieveFromDatabase(string key);
 }

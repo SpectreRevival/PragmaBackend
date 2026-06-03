@@ -11,12 +11,12 @@ public record class StackableItem : Item, IDatabaseSyncable<StackableItem>
 {
     public required Int64 Amount { get; set; }
 
-    public static StackableItem RetrieveFromDatabase(string key)
+    public static Task<StackableItem?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }
@@ -31,12 +31,12 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
 {
     public required AlterationChannel[] AlterationChannels { get; set; }
 
-    public static CustomizedInstancedItem RetrieveFromDatabase(string key)
+    public static Task<CustomizedInstancedItem?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }
@@ -54,12 +54,12 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
     public required bool IsBundlePurchased { get; set; }
     public required Int32 NumLevelsPurchased { get; set; }
 
-    public static ProgressionTrackingItem RetrieveFromDatabase(string key)
+    public static Task<ProgressionTrackingItem?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }
@@ -69,12 +69,12 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
 {
    public required string SponsorName { get; set; }
 
-    public static SponsorUnlockTrackerItem RetrieveFromDatabase(string key)
+    public static Task<SponsorUnlockTrackerItem?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

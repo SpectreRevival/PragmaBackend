@@ -10,12 +10,12 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncable<Subt
     public required bool PostPlayerSubtitlesToChat { get; set; }
     public required Int32 NamesToShowMask { get; set; }
 
-    public static SubtitleUserSettings RetrieveFromDatabase(string key)
+    public static Task<SubtitleUserSettings?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

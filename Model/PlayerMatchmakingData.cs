@@ -21,12 +21,12 @@ public record class PlayerMatchmakingData : IDatabaseSyncable<PlayerMatchmakingD
     public required DateTimeOffset RestrictMatchmakingUntil { get; set; } = DateTimeOffset.MinValue;
     public required string MapHistory { get; set; } = "";
 
-    public static PlayerMatchmakingData RetrieveFromDatabase(string key)
+    public static Task<PlayerMatchmakingData?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

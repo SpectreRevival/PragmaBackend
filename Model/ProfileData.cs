@@ -28,12 +28,12 @@ public record class ProfileData : IDatabaseSyncable<ProfileData>
     public required string CrossplayPlatformKind { get; set; }
     public required Int32 GamesRemainingUntilCrewJoin { get; set; }
 
-    public static ProfileData RetrieveFromDatabase(string key)
+    public static Task<ProfileData?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

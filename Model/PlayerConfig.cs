@@ -96,12 +96,12 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncable<PlayerConfig
     public required string[] MutedChatContexts { get; set; }
     public required Int32 InputBindingsVersion { get; set; }
 
-    public static PlayerConfig RetrieveFromDatabase(string key)
+    public static Task<PlayerConfig?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

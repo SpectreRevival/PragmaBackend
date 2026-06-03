@@ -29,12 +29,12 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncable<GamepadConf
     public required double CustomDeadZoneLookAmount { get; set; }
     public required double WalkRunDeflectionThreshold { get; set; }
 
-    public static GamepadConfig RetrieveFromDatabase(string key)
+    public static Task<GamepadConfig?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

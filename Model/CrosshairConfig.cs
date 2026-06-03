@@ -19,12 +19,12 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncable<Crosshair
     public required PipConfig InnerPip { get; set; }
     public required PipConfig OuterPip { get; set; }
 
-    public static CrosshairConfig RetrieveFromDatabase(string key)
+    public static Task<CrosshairConfig?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

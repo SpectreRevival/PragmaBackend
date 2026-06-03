@@ -23,12 +23,12 @@ public record class LegacyStatsData : IDatabaseSyncable<LegacyStatsData>
     public required string[] TopSponsors { get; set; } = [];
     public required string[] TopWeapons { get; set; } = [];
 
-    public static LegacyStatsData RetrieveFromDatabase(string key)
+    public static Task<LegacyStatsData?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

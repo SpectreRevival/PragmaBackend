@@ -59,6 +59,16 @@ public class PostgresDatabase : IAsyncDisposable
         inst = new(config);
     }
 
+    /** 
+     * @brief Loads a SQL command from a path relative to the commands base directory
+     */
+    public static NpgsqlCommand LoadCommandFromFile(string relPath)
+    {
+        string fullPath = Path.Combine(Path.Combine(AppContext.BaseDirectory, "commands"), relPath);
+        string sqlCommandText = File.ReadAllText(fullPath);
+        return Get().GetRaw().CreateCommand(sqlCommandText);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if(_dataSource != null)

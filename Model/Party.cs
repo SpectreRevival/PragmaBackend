@@ -10,12 +10,12 @@ public record class Party : VersionedData, IDatabaseSyncable<Party>
     public required string ChatId { get; set; }
     public required bool UseTeamMMR { get; set; }
 
-    public static Party RetrieveFromDatabase(string key)
+    public static Task<Party?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

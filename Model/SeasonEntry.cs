@@ -8,12 +8,12 @@ public record class SeasonEntry : IDatabaseSyncable<SeasonEntry>
     public required DateTimeOffset LastWeekEndTimestmapMillis { get; set; }
     public required Int32 NumberOfWeeksInSeason { get; set; }
 
-    public static SeasonEntry RetrieveFromDatabase(string key)
+    public static Task<SeasonEntry?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

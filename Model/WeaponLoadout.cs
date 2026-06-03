@@ -25,12 +25,12 @@ public record class WeaponLoadout : IDatabaseSyncable<WeaponLoadout>
     public required WeaponData BoltActionSniper { get; set; }
     public required WeaponData Melee { get; set; }
 
-    public static WeaponLoadout RetrieveFromDatabase(string key)
+    public static Task<WeaponLoadout?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

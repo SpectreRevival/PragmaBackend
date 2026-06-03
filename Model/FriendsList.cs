@@ -9,12 +9,12 @@ public record class FriendsList : VersionedData, IDatabaseSyncable<FriendsList>
     public required Guid[] SentFriendInvites { get; set; } = [];
     public required Guid[] ReceivedFriendInvites { get; set; } = [];
 
-    public static FriendsList RetrieveFromDatabase(string key)
+    public static Task<FriendsList?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

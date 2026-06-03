@@ -8,12 +8,12 @@ public record class PlayerPresence : IDatabaseSyncable<PlayerPresence>
     public required Int32 AdvancedPresenceType { get; set; } // Todo make enum
     public required string AdvancedPresenceContext { get; set; }
 
-    public static PlayerPresence RetrieveFromDatabase(string key)
+    public static Task<PlayerPresence?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

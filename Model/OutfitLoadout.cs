@@ -10,12 +10,12 @@ public record class OutfitLoadout : IDatabaseSyncable<OutfitLoadout>
     public required OutfitData FaceAccessory { get; set; }
     public required OutfitData Outfit { get; set; }
 
-    public static OutfitLoadout RetrieveFromDatabase(string key)
+    public static Task<OutfitLoadout?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }

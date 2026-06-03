@@ -14,12 +14,12 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVi
     public required double OutlineThicknessScale { get; set; }
     public required double OutlineBrightnessScale { get; set; }
 
-    public static ColorVisionConfig RetrieveFromDatabase(string key)
+    public static Task<ColorVisionConfig?> RetrieveFromDatabase(string key)
     {
         throw new NotImplementedException();
     }
 
-    public void SyncToDatabase()
+    public Task SyncToDatabase()
     {
         throw new NotImplementedException();
     }
