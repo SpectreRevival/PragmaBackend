@@ -60,7 +60,7 @@ pipeline {
             agent { label 'linux' }
             steps {
                 checkout scm
-		sh "sqlfluff lint -dialect postgres Persistence/"    
+		sh "sqlfluff lint"    
             }
         }
         stage("Compile backend docker image"){
