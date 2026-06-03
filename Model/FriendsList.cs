@@ -14,6 +14,11 @@ public record class FriendsList : VersionedData, IDatabaseSyncable<FriendsList>
         throw new NotImplementedException();
     }
 
+    public object GetKey()
+    {
+        throw new NotImplementedException();
+    }
+
     public Task SyncToDatabase()
     {
         throw new NotImplementedException();

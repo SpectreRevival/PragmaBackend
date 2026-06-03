@@ -44,6 +44,11 @@ public record class SeasonEntry : IDatabaseSyncable<SeasonEntry>
         );
     }
 
+    public object GetKey()
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task SyncToDatabase()
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_season_entry.sql");

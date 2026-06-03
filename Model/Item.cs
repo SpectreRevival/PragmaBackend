@@ -16,6 +16,11 @@ public record class StackableItem : Item, IDatabaseSyncable<StackableItem>
         throw new NotImplementedException();
     }
 
+    public object GetKey()
+    {
+        throw new NotImplementedException();
+    }
+
     public Task SyncToDatabase()
     {
         throw new NotImplementedException();
@@ -32,6 +37,11 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
     public required AlterationChannel[] AlterationChannels { get; set; }
 
     public static Task<CustomizedInstancedItem?> RetrieveFromDatabase(string key)
+    {
+        throw new NotImplementedException();
+    }
+
+    public object GetKey()
     {
         throw new NotImplementedException();
     }
@@ -59,6 +69,11 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
         throw new NotImplementedException();
     }
 
+    public object GetKey()
+    {
+        throw new NotImplementedException();
+    }
+
     public Task SyncToDatabase()
     {
         throw new NotImplementedException();
@@ -70,6 +85,11 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
    public required string SponsorName { get; set; }
 
     public static Task<SponsorUnlockTrackerItem?> RetrieveFromDatabase(string key)
+    {
+        throw new NotImplementedException();
+    }
+
+    public object GetKey()
     {
         throw new NotImplementedException();
     }

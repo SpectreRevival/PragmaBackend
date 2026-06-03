@@ -12,6 +12,11 @@ public record class PlayerInventory : IDatabaseSyncable<PlayerInventory>
         throw new NotImplementedException();
     }
 
+    public object GetKey()
+    {
+        throw new NotImplementedException();
+    }
+
     public Task SyncToDatabase()
     {
         throw new NotImplementedException();

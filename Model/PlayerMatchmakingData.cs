@@ -26,6 +26,11 @@ public record class PlayerMatchmakingData : IDatabaseSyncable<PlayerMatchmakingD
         throw new NotImplementedException();
     }
 
+    public object GetKey()
+    {
+        throw new NotImplementedException();
+    }
+
     public Task SyncToDatabase()
     {
         throw new NotImplementedException();

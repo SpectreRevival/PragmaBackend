@@ -18,6 +18,11 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
         throw new NotImplementedException();
     }
 
+    public object GetKey()
+    {
+        throw new NotImplementedException();
+    }
+
     public Task SyncToDatabase()
     {
         throw new NotImplementedException();
@@ -29,6 +34,11 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
     public required Guid ActiveEndorsement { get; set; }
 
     public static Task<IndividualTrackedProgression?> RetrieveFromDatabase(string key)
+    {
+        throw new NotImplementedException();
+    }
+
+    public object GetKey()
     {
         throw new NotImplementedException();
     }

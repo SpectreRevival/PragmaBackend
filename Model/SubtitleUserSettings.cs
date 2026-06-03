@@ -15,6 +15,11 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncable<Subt
         throw new NotImplementedException();
     }
 
+    public object GetKey()
+    {
+        throw new NotImplementedException();
+    }
+
     public Task SyncToDatabase()
     {
         throw new NotImplementedException();

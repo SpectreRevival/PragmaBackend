@@ -40,6 +40,11 @@ public record class BattlepassData : IDatabaseSyncable<BattlepassData>
         );
     }
 
+    public object GetKey()
+    {
+        return PlayerId;
+    }
+
     public async Task SyncToDatabase()
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_battlepass_data.sql");

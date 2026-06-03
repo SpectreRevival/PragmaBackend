@@ -58,6 +58,11 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVi
         );
     }
 
+    public object GetKey()
+    {
+        return PlayerId;
+    }
+
     public async Task SyncToDatabase()
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_color_vision_config.sql");

@@ -13,6 +13,11 @@ public record class PlayerPresence : IDatabaseSyncable<PlayerPresence>
         throw new NotImplementedException();
     }
 
+    public object GetKey()
+    {
+        throw new NotImplementedException();
+    }
+
     public Task SyncToDatabase()
     {
         throw new NotImplementedException();

@@ -33,6 +33,11 @@ public record class ProfileData : IDatabaseSyncable<ProfileData>
         throw new NotImplementedException();
     }
 
+    public object GetKey()
+    {
+        throw new NotImplementedException();
+    }
+
     public Task SyncToDatabase()
     {
         throw new NotImplementedException();
