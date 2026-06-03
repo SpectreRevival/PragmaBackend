@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using Serilog;
+using Model;
 
 namespace Persistence;
 
@@ -27,8 +28,9 @@ public class PostgresDatabase : IAsyncDisposable
             Password = password,
             Pooling = false,
         };
-
-        _dataSource = NpgsqlDataSource.Create(ConnStr.ConnectionString);
+        var builder = new NpgsqlDataSourceBuilder(ConnStr.ConnectionString);
+        builder.MapComposite<RGBAColor>("RGBAColor");
+        _dataSource = builder.Build();
         while (true)
         {
             try
