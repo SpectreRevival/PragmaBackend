@@ -1,6 +1,6 @@
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'CrosshairDot') THEN
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('CrosshairDot')) THEN
 		CREATE TYPE CrosshairDot AS (
 			thickness DOUBLE PRECISION,
 			opacity DOUBLE PRECISION,

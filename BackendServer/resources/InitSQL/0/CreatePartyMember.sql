@@ -1,6 +1,6 @@
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PartyMember') THEN
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('PartyMember')) THEN
 		CREATE TYPE PartyMember AS (
 			player_id UUID,
 			is_ready BOOL,

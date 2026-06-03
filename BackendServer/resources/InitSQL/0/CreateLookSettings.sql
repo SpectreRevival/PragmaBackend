@@ -1,6 +1,6 @@
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'LookSettings') THEN
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('LookSettings')) THEN
 		CREATE TYPE LookSettings AS (
 			yaw_rate DOUBLE PRECISION,
 			pitch_scale DOUBLE PRECISION,

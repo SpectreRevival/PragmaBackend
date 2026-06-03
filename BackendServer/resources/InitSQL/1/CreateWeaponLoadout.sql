@@ -1,6 +1,6 @@
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'WeaponAttachment') THEN
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('WeaponAttachment')) THEN
 		CREATE TYPE WeaponAttachment AS (
 			attachment_item_instance_id UUID,
 			attachment_item_catalog_id UUID
@@ -11,7 +11,7 @@ $$;
 
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'WeaponData') THEN
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('WeaponData')) THEN
 		CREATE TYPE WeaponData AS (
 			item_instance_id UUID,
 			alteration_data ActiveAlterationData[],

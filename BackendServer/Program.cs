@@ -1,4 +1,5 @@
 ﻿using Google.Protobuf.WellKnownTypes;
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -55,8 +56,15 @@ while (Directory.Exists(nextDirPath))
     nextDirPath = Path.Combine(Path.Combine(Path.Combine(AppContext.BaseDirectory, "resources"), "InitSQL"), currentScriptInitializationLevel.ToString());
 }
 
-var backendApp = WebApplication.CreateBuilder()
-    .Build();
+var builder = WebApplication.CreateBuilder();
+builder.Configuration.SetBasePath(AppContext.BaseDirectory);
+builder.Configuration.AddEnvironmentVariables();
+builder.Configuration.AddJsonFile("resources/env.json", optional: true, reloadOnChange: true);
+builder.WebHost.ConfigureKestrel(opts =>
+{
+    opts.Configure(builder.Configuration.GetSection("Kestrel"));
+});
+var backendApp = builder.Build();
 backendApp.UseWebSockets(new WebSocketOptions
 {
     KeepAliveInterval = TimeSpan.FromSeconds(30)
@@ -84,7 +92,7 @@ backendApp.Map("{*path}", async (HttpContext context, string? path) =>
 
 try
 {
-    backendApp.Run("http://*:8080;http://*:8081;http://*:8082");
+    backendApp.Run();
 }
 finally
 {

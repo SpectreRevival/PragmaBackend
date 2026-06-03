@@ -1,6 +1,6 @@
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ObjectiveContributionSourceType') THEN
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('ObjectiveContributionSourceType')) THEN
 		CREATE TYPE ObjectiveContributionSourceType AS ENUM (
 			'MATCH'
 		);
@@ -10,7 +10,7 @@ $$;
 
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ObjectiveContribution') THEN
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('ObjectiveContribution')) THEN
 		CREATE TYPE ObjectiveContribution AS (
 			source_type ObjectiveContributionSourceType,
 			source_id UUID

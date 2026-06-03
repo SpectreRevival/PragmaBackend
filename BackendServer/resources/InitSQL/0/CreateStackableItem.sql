@@ -1,6 +1,6 @@
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'StackableItem') THEN
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('StackableItem')) THEN
 		CREATE TYPE StackableItem AS (
 			catalog_id UUID,
 			instance_id UUID,

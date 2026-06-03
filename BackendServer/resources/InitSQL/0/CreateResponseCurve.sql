@@ -1,6 +1,6 @@
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ResponseCurve') THEN
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('ResponseCurve')) THEN
 		CREATE TYPE ResponseCurve AS (
 			display_name TEXT,
 			exponent DOUBLE PRECISION,

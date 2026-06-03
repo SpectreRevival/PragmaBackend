@@ -1,6 +1,6 @@
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PipConfig') THEN
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('PipConfig')) THEN
 		CREATE TYPE PipConfig AS (
 			thickness DOUBLE PRECISION,
 			piplen DOUBLE PRECISION,

@@ -31,6 +31,10 @@ services:
     depends_on:
       backend-pgdb:
         condition: service_healthy
+    ports:
+      - "8081:8081"
+      - "8080:8080"
+      - "8082:8082"
     environment:
       DB_HOST: "backend-pgdb"
       DB_PORT: 5432
@@ -39,7 +43,8 @@ services:
       DB_DATABASE: pragmabackend
     networks:
       - pragmabackend_net
-
+    volumes:
+      - ../BackendServer/resources/env.json:/app/resources/env.json:ro
 volumes:
   pragmabackend_data:
 networks:

@@ -1,6 +1,6 @@
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'uint8') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('uint8')) THEN
         CREATE DOMAIN uint8 AS SMALLINT
             CHECK (VALUE >= 0 AND VALUE <= 255);
     END IF;
@@ -9,7 +9,7 @@ $$;
 
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'RGBAColor') THEN
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('RGBAColor')) THEN
 		CREATE TYPE RGBAColor AS (
 			r uint8,
 			g uint8,
