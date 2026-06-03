@@ -1,7 +1,8 @@
 ﻿namespace Model;
 
-public record class PlayerConfig : VersionedData
+public record class PlayerConfig : VersionedData, IDatabaseSyncable<PlayerConfig>
 {
+    public required Guid PlayerId { get; set; }
     public required bool UnlockAllPlayModes { get; set; }
     public required bool UnlockAllMenuTabs { get; set; }
     public required bool UnlockAllSponsors { get; set; }
@@ -94,4 +95,14 @@ public record class PlayerConfig : VersionedData
     public required string[] EnabledGraphStats { get; set; }
     public required string[] MutedChatContexts { get; set; }
     public required Int32 InputBindingsVersion { get; set; }
+
+    public static PlayerConfig RetrieveFromDatabase(string key)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void SyncToDatabase()
+    {
+        throw new NotImplementedException();
+    }
 }

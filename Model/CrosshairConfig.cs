@@ -1,7 +1,8 @@
 ﻿namespace Model;
 
-public record class CrosshairConfig : VersionedData
+public record class CrosshairConfig : VersionedData, IDatabaseSyncable<CrosshairConfig>
 {
+    public required Guid PlayerId { get; set; }
     public required Int32 ColorIndex { get; set; }
     public required bool AdvancedCrosshairSettings { get; set; }
     public required RGBAColor CustomColor { get; set; }
@@ -17,4 +18,14 @@ public record class CrosshairConfig : VersionedData
     public required CrosshairDot SniperDot { get; set; }
     public required PipConfig InnerPip { get; set; }
     public required PipConfig OuterPip { get; set; }
+
+    public static CrosshairConfig RetrieveFromDatabase(string key)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void SyncToDatabase()
+    {
+        throw new NotImplementedException();
+    }
 }

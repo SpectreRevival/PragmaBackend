@@ -1,7 +1,8 @@
 ﻿namespace Model;
 
-public record class GamepadConfig : VersionedData
+public record class GamepadConfig : VersionedData, IDatabaseSyncable<GamepadConfig>
 {
+    public required Guid PlayerId { get; set; }
     public required Int32 InputSchemeIndex { get; set; }
     public required Int32 GamepadGlyphIndex { get; set; }
     public required Int32 LookPresetIndex { get; set; }
@@ -27,4 +28,14 @@ public record class GamepadConfig : VersionedData
     public required string DeadZoneLookAmount { get; set; }
     public required double CustomDeadZoneLookAmount { get; set; }
     public required double WalkRunDeflectionThreshold { get; set; }
+
+    public static GamepadConfig RetrieveFromDatabase(string key)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void SyncToDatabase()
+    {
+        throw new NotImplementedException();
+    }
 }

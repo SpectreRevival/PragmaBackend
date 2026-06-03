@@ -1,7 +1,9 @@
 ﻿namespace Model;
 
-public record class LegacyStatsData
+public record class LegacyStatsData : IDatabaseSyncable<LegacyStatsData>
 {
+    public required Guid PlayerId { get; set; }
+    public required LegacyStatsType StatsType { get; set; }
     public required Int64 KillCount { get; set; } = 0;
     public required Int64 DeathCount { get; set; } = 0;
     public required Int64 AceCount { get; set; } = 0;
@@ -20,6 +22,16 @@ public record class LegacyStatsData
     public required Int64 TotalDamageCount { get; set; } = 0;
     public required string[] TopSponsors { get; set; } = [];
     public required string[] TopWeapons { get; set; } = [];
+
+    public static LegacyStatsData RetrieveFromDatabase(string key)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void SyncToDatabase()
+    {
+        throw new NotImplementedException();
+    }
 
     public enum LegacyStatsType
     {

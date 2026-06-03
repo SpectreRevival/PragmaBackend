@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class WeaponLoadout
+public record class WeaponLoadout : IDatabaseSyncable<WeaponLoadout>
 {
     public required Guid PlayerId { get; set; }
     public required Guid LoadoutId { get; set; }
@@ -24,4 +24,14 @@ public record class WeaponLoadout
     public required WeaponData SemiAutoSniper { get; set; }
     public required WeaponData BoltActionSniper { get; set; }
     public required WeaponData Melee { get; set; }
+
+    public static WeaponLoadout RetrieveFromDatabase(string key)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void SyncToDatabase()
+    {
+        throw new NotImplementedException();
+    }
 }
