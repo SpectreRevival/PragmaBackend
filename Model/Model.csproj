@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Packets\Packets.csproj" />
-    <ProjectReference Include="..\Persistence\Persistence.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -14,5 +13,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+	<ItemGroup>
+		<None Include="commands\**\*" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
 
 </Project>

@@ -3,6 +3,5 @@
   <Project Path="BackendServer/BackendServer.csproj" />
   <Project Path="Model/Model.csproj" />
   <Project Path="Packets/Packets.csproj" />
-  <Project Path="Persistence/Persistence.csproj" />
   <Project Path="Tests/Tests.csproj" Id="43ac737b-5311-4b42-af36-72dd57158279" />
 </Solution>
