@@ -7,7 +7,7 @@ namespace Model;
 public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVisionConfig, Guid>, IEquatable<ColorVisionConfig>
 {
     [SetsRequiredMembers]
-    public ColorVisionConfig(Guid playerId, string colorVisionType, int severity, bool correctDeficiency, bool showCorrectDeficiency, bool comfortSwapEffect, bool customOutlineColor, RGBAColor outlineColor, RGBAColor outlineColorLower, double outlineThicknessScale, double outlineBrightnessScale, Int64 version)
+    public ColorVisionConfig(Guid playerId, string colorVisionType, int severity, bool correctDeficiency, bool showCorrectDeficiency, bool comfortSwapEffect, bool customOutlineColor, RGBAColor outlineColor, RGBAColor outlineColorLower, double outlineThicknessScale, double outlineBrightnessScale, Int64 version) : base(version)
     {
         PlayerId = playerId;
         ColorVisionType = colorVisionType ?? throw new ArgumentNullException(nameof(colorVisionType));
@@ -20,7 +20,6 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVi
         OutlineColorLower = outlineColorLower;
         OutlineThicknessScale = outlineThicknessScale;
         OutlineBrightnessScale = outlineBrightnessScale;
-        Version = version;
     }
 
     public required Guid PlayerId { get; set; }

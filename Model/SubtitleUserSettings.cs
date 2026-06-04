@@ -7,7 +7,7 @@ namespace Model;
 public record class SubtitleUserSettings : VersionedData, IDatabaseSyncable<SubtitleUserSettings, Guid>, IEquatable<SubtitleUserSettings>
 {
     [SetsRequiredMembers]
-    public SubtitleUserSettings(Guid playerId, int fontSize, double backgroundOpacity, string speakerQualifierDisplay, bool postPlayerSubtitles, bool postPlayerSubtitlesToChat, int namesToShowMask, Int64 version)
+    public SubtitleUserSettings(Guid playerId, int fontSize, double backgroundOpacity, string speakerQualifierDisplay, bool postPlayerSubtitles, bool postPlayerSubtitlesToChat, int namesToShowMask, Int64 version) : base(version)
     {
         PlayerId = playerId;
         FontSize = fontSize;
@@ -16,7 +16,6 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncable<Subt
         PostPlayerSubtitles = postPlayerSubtitles;
         PostPlayerSubtitlesToChat = postPlayerSubtitlesToChat;
         NamesToShowMask = namesToShowMask;
-        Version = version;
     }
 
     public required Guid PlayerId { get; set; }

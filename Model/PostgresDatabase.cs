@@ -27,6 +27,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
             Username = user,
             Password = password,
             Pooling = false,
+            IncludeErrorDetail = config["SENSITIVE_LOGGING"] == "true"
         };
         var builder = new NpgsqlDataSourceBuilder(ConnStr.ConnectionString);
         builder.MapComposite<RGBAColor>("rgbacolor");

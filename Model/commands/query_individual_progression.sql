@@ -1,0 +1,1 @@
+SELECT * FROM individual_tracked_progression WHERE player_id = @player_id LIMIT 1;

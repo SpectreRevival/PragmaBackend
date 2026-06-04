@@ -1,7 +1,107 @@
-﻿namespace Model;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Model;
 
 public record class PlayerConfig : VersionedData, IDatabaseSyncable<PlayerConfig, Guid>
 {
+    [SetsRequiredMembers]
+    public PlayerConfig(Guid playerId, bool unlockAllPlayModes, bool unlockAllMenuTabs, bool unlockAllSponsors, bool bypassUnlockAllSponsorsOverride, bool bypassProgressionOverrides, bool bypassTeamSizeOverrides, bool bypassRegionSelectOverride, bool bypassCurrencyPurchasingOverride, bool disableDevMapSelector, bool showDebugInfoPanel, bool showPlatformInfoPanel, bool showMatchmakingCounters, bool forceChatEnabled, int mostRecentLobbyMode, Guid mostRecentPartyId, int endUserLicenseAcceptedVersion, int endUserLicenseAcceptedVersionPlayStation, int endUserLicenseAcceptedVersionXbox, int termsOfServiceAcceptedVersion, int termsOfServiceAcceptedVersionPlayStation, int termsOfServiceAcceptedVersionXbox, int nonDisclosureAgreementAcceptedVersion, int nonDisclosureAgreementAcceptedVersionPlayStation, int nonDisclosureAgreementAcceptedVersionXbox, int seizureWarningAcknowledgedVersion, int seizureWarningAcknowledgedVersionPlayStation, int seizureWarningAcknowledgedVersionXbox, int battlepassSeasonLoggedOn, double battlepassPurchasePopupLastTime, string nonDisclosureAgreementUserSignature, string nonDisclosureAgreementUserSignaturePlayStation, string nonDisclosureAgreementUserSignatureXbox, string nonDisclosureAgreementUserEmail, string nonDisclosureAgreementUserEmailPlayStation, string nonDisclosureAgreementUserEmailXbox, string lastVersionShownInDriversWarningDialog, int minSpecWarningDialogTimesDisplayed, int pingWarningDialogTimesDisplayed, bool hasCompletedLaunchSettingsFlow, bool isUsingManualMatchmakingRegionSelection, string[] manualMatchmakingRegionSelections, string[] rotatingNewsViewedMessages, double inkQuality, double mouseSensitivityADSScale, double mouseSensitivity, double minimapScale, double minimapSize, double minimapMaskOpacity, bool invertedYAxis, bool toggleCrouch, bool toggleWalk, bool toggleADS, string recoilBehavior, bool leftHandedEnabled, bool recoilPitchCorrectionEnabled, bool isTeamLaserEnabled, bool isHudMinimapRotationEnabled, bool isHudMinimapCenteredOnPlayer, bool isHudMinimapCircle, bool isHudMinimapMaskHighContrastEnabled, bool isHudSnapMinimapWithScoreboardEnabled, bool isDamageCameraEffectEnabled, bool streamerModeEnabled, bool hideLobbyCode, double aDSTracerRatio, double aDSTracerIntensity, double opticHitConfirmIntensity, bool anonymousMode, bool anonymizePlayerNames, bool streamerModeDisableIncomingVoiceChat, bool streamerModeDisableIncomingTextChat, bool isTextChatSoundEffectsEnabled, bool subtitlesEnabled, string verboseVoLevel, bool isBloodFXEnabled, ColorVisionConfig colorVisionConfig, CrosshairConfig crosshairConfig, SubtitleUserSettings subtitleUserSettings, GamepadConfig gamepadConfig, string[] overrideKeymaps, string voiceChatInputAudioDevice, string voiceChatOutputAudioDevice, bool voiceChatTeamEnabled, string voiceChatConsoleMode, bool voiceChatPartyEnabled, bool voiceChatPartyEnabledInGames, bool voiceChatTeamPushToTalk, bool voiceChatPartyPushToTalk, string[] enabledTextStats, string[] enabledGraphStats, string[] mutedChatContexts, int inputBindingsVersion, Int64 version) : base(version)
+    {
+        PlayerId = playerId;
+        UnlockAllPlayModes = unlockAllPlayModes;
+        UnlockAllMenuTabs = unlockAllMenuTabs;
+        UnlockAllSponsors = unlockAllSponsors;
+        BypassUnlockAllSponsorsOverride = bypassUnlockAllSponsorsOverride;
+        BypassProgressionOverrides = bypassProgressionOverrides;
+        BypassTeamSizeOverrides = bypassTeamSizeOverrides;
+        BypassRegionSelectOverride = bypassRegionSelectOverride;
+        BypassCurrencyPurchasingOverride = bypassCurrencyPurchasingOverride;
+        DisableDevMapSelector = disableDevMapSelector;
+        ShowDebugInfoPanel = showDebugInfoPanel;
+        ShowPlatformInfoPanel = showPlatformInfoPanel;
+        ShowMatchmakingCounters = showMatchmakingCounters;
+        ForceChatEnabled = forceChatEnabled;
+        MostRecentLobbyMode = mostRecentLobbyMode;
+        MostRecentPartyId = mostRecentPartyId;
+        EndUserLicenseAcceptedVersion = endUserLicenseAcceptedVersion;
+        EndUserLicenseAcceptedVersionPlayStation = endUserLicenseAcceptedVersionPlayStation;
+        EndUserLicenseAcceptedVersionXbox = endUserLicenseAcceptedVersionXbox;
+        TermsOfServiceAcceptedVersion = termsOfServiceAcceptedVersion;
+        TermsOfServiceAcceptedVersionPlayStation = termsOfServiceAcceptedVersionPlayStation;
+        TermsOfServiceAcceptedVersionXbox = termsOfServiceAcceptedVersionXbox;
+        NonDisclosureAgreementAcceptedVersion = nonDisclosureAgreementAcceptedVersion;
+        NonDisclosureAgreementAcceptedVersionPlayStation = nonDisclosureAgreementAcceptedVersionPlayStation;
+        NonDisclosureAgreementAcceptedVersionXbox = nonDisclosureAgreementAcceptedVersionXbox;
+        SeizureWarningAcknowledgedVersion = seizureWarningAcknowledgedVersion;
+        SeizureWarningAcknowledgedVersionPlayStation = seizureWarningAcknowledgedVersionPlayStation;
+        SeizureWarningAcknowledgedVersionXbox = seizureWarningAcknowledgedVersionXbox;
+        BattlepassSeasonLoggedOn = battlepassSeasonLoggedOn;
+        BattlepassPurchasePopupLastTime = battlepassPurchasePopupLastTime;
+        NonDisclosureAgreementUserSignature = nonDisclosureAgreementUserSignature ?? throw new ArgumentNullException(nameof(nonDisclosureAgreementUserSignature));
+        NonDisclosureAgreementUserSignaturePlayStation = nonDisclosureAgreementUserSignaturePlayStation ?? throw new ArgumentNullException(nameof(nonDisclosureAgreementUserSignaturePlayStation));
+        NonDisclosureAgreementUserSignatureXbox = nonDisclosureAgreementUserSignatureXbox ?? throw new ArgumentNullException(nameof(nonDisclosureAgreementUserSignatureXbox));
+        NonDisclosureAgreementUserEmail = nonDisclosureAgreementUserEmail ?? throw new ArgumentNullException(nameof(nonDisclosureAgreementUserEmail));
+        NonDisclosureAgreementUserEmailPlayStation = nonDisclosureAgreementUserEmailPlayStation ?? throw new ArgumentNullException(nameof(nonDisclosureAgreementUserEmailPlayStation));
+        NonDisclosureAgreementUserEmailXbox = nonDisclosureAgreementUserEmailXbox ?? throw new ArgumentNullException(nameof(nonDisclosureAgreementUserEmailXbox));
+        LastVersionShownInDriversWarningDialog = lastVersionShownInDriversWarningDialog ?? throw new ArgumentNullException(nameof(lastVersionShownInDriversWarningDialog));
+        MinSpecWarningDialogTimesDisplayed = minSpecWarningDialogTimesDisplayed;
+        PingWarningDialogTimesDisplayed = pingWarningDialogTimesDisplayed;
+        HasCompletedLaunchSettingsFlow = hasCompletedLaunchSettingsFlow;
+        IsUsingManualMatchmakingRegionSelection = isUsingManualMatchmakingRegionSelection;
+        ManualMatchmakingRegionSelections = manualMatchmakingRegionSelections ?? throw new ArgumentNullException(nameof(manualMatchmakingRegionSelections));
+        RotatingNewsViewedMessages = rotatingNewsViewedMessages ?? throw new ArgumentNullException(nameof(rotatingNewsViewedMessages));
+        InkQuality = inkQuality;
+        MouseSensitivityADSScale = mouseSensitivityADSScale;
+        MouseSensitivity = mouseSensitivity;
+        MinimapScale = minimapScale;
+        MinimapSize = minimapSize;
+        MinimapMaskOpacity = minimapMaskOpacity;
+        InvertedYAxis = invertedYAxis;
+        ToggleCrouch = toggleCrouch;
+        ToggleWalk = toggleWalk;
+        ToggleADS = toggleADS;
+        RecoilBehavior = recoilBehavior ?? throw new ArgumentNullException(nameof(recoilBehavior));
+        LeftHandedEnabled = leftHandedEnabled;
+        RecoilPitchCorrectionEnabled = recoilPitchCorrectionEnabled;
+        IsTeamLaserEnabled = isTeamLaserEnabled;
+        IsHudMinimapRotationEnabled = isHudMinimapRotationEnabled;
+        IsHudMinimapCenteredOnPlayer = isHudMinimapCenteredOnPlayer;
+        IsHudMinimapCircle = isHudMinimapCircle;
+        IsHudMinimapMaskHighContrastEnabled = isHudMinimapMaskHighContrastEnabled;
+        IsHudSnapMinimapWithScoreboardEnabled = isHudSnapMinimapWithScoreboardEnabled;
+        IsDamageCameraEffectEnabled = isDamageCameraEffectEnabled;
+        StreamerModeEnabled = streamerModeEnabled;
+        HideLobbyCode = hideLobbyCode;
+        ADSTracerRatio = aDSTracerRatio;
+        ADSTracerIntensity = aDSTracerIntensity;
+        OpticHitConfirmIntensity = opticHitConfirmIntensity;
+        AnonymousMode = anonymousMode;
+        AnonymizePlayerNames = anonymizePlayerNames;
+        StreamerModeDisableIncomingVoiceChat = streamerModeDisableIncomingVoiceChat;
+        StreamerModeDisableIncomingTextChat = streamerModeDisableIncomingTextChat;
+        IsTextChatSoundEffectsEnabled = isTextChatSoundEffectsEnabled;
+        SubtitlesEnabled = subtitlesEnabled;
+        VerboseVoLevel = verboseVoLevel ?? throw new ArgumentNullException(nameof(verboseVoLevel));
+        IsBloodFXEnabled = isBloodFXEnabled;
+        ColorVisionConfig = colorVisionConfig ?? throw new ArgumentNullException(nameof(colorVisionConfig));
+        CrosshairConfig = crosshairConfig ?? throw new ArgumentNullException(nameof(crosshairConfig));
+        SubtitleUserSettings = subtitleUserSettings ?? throw new ArgumentNullException(nameof(subtitleUserSettings));
+        GamepadConfig = gamepadConfig ?? throw new ArgumentNullException(nameof(gamepadConfig));
+        OverrideKeymaps = overrideKeymaps ?? throw new ArgumentNullException(nameof(overrideKeymaps));
+        VoiceChatInputAudioDevice = voiceChatInputAudioDevice ?? throw new ArgumentNullException(nameof(voiceChatInputAudioDevice));
+        VoiceChatOutputAudioDevice = voiceChatOutputAudioDevice ?? throw new ArgumentNullException(nameof(voiceChatOutputAudioDevice));
+        VoiceChatTeamEnabled = voiceChatTeamEnabled;
+        VoiceChatConsoleMode = voiceChatConsoleMode ?? throw new ArgumentNullException(nameof(voiceChatConsoleMode));
+        VoiceChatPartyEnabled = voiceChatPartyEnabled;
+        VoiceChatPartyEnabledInGames = voiceChatPartyEnabledInGames;
+        VoiceChatTeamPushToTalk = voiceChatTeamPushToTalk;
+        VoiceChatPartyPushToTalk = voiceChatPartyPushToTalk;
+        EnabledTextStats = enabledTextStats ?? throw new ArgumentNullException(nameof(enabledTextStats));
+        EnabledGraphStats = enabledGraphStats ?? throw new ArgumentNullException(nameof(enabledGraphStats));
+        MutedChatContexts = mutedChatContexts ?? throw new ArgumentNullException(nameof(mutedChatContexts));
+        InputBindingsVersion = inputBindingsVersion;
+    }
+
     public required Guid PlayerId { get; set; }
     public required bool UnlockAllPlayModes { get; set; }
     public required bool UnlockAllMenuTabs { get; set; }

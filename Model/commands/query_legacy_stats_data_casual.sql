@@ -1,0 +1,1 @@
+SELECT * FROM legacystats_casual WHERE player_id = @player_id LIMIT 1;

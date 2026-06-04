@@ -7,7 +7,7 @@ namespace Model;
 public record class CrosshairConfig : VersionedData, IDatabaseSyncable<CrosshairConfig, Guid>, IEquatable<CrosshairConfig>
 {
     [SetsRequiredMembers]
-    public CrosshairConfig(Guid playerId, int colorIndex, bool advancedCrosshairSettings, RGBAColor customColor, bool fireAccuracyFade, bool followRecoil, bool showOutlines, double outlineThickness, double outlineOpacity, bool showCenterDot, bool useADSSettings, CrosshairDot centerDot, CrosshairDot centerDotADS, CrosshairDot sniperDot, PipConfig innerPip, PipConfig outerPip, Int64 version)
+    public CrosshairConfig(Guid playerId, int colorIndex, bool advancedCrosshairSettings, RGBAColor customColor, bool fireAccuracyFade, bool followRecoil, bool showOutlines, double outlineThickness, double outlineOpacity, bool showCenterDot, bool useADSSettings, CrosshairDot centerDot, CrosshairDot centerDotADS, CrosshairDot sniperDot, PipConfig innerPip, PipConfig outerPip, Int64 version) : base(version)
     {
         PlayerId = playerId;
         ColorIndex = colorIndex;
@@ -25,7 +25,6 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncable<Crosshair
         SniperDot = sniperDot ?? throw new ArgumentNullException(nameof(sniperDot));
         InnerPip = innerPip ?? throw new ArgumentNullException(nameof(innerPip));
         OuterPip = outerPip ?? throw new ArgumentNullException(nameof(outerPip));
-        Version = version;
     }
 
     public required Guid PlayerId { get; set; }

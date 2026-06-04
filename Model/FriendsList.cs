@@ -7,7 +7,7 @@ namespace Model;
 public record class FriendsList : VersionedData, IDatabaseSyncable<FriendsList, Guid>, IEquatable<FriendsList>
 {
     [SetsRequiredMembers]
-    public FriendsList(Guid playerId, bool acceptingFriendInvites, Guid[] friends, Guid[] blocked, Guid[] sentFriendInvites, Guid[] receivedFriendInvites, Int64 version)
+    public FriendsList(Guid playerId, bool acceptingFriendInvites, Guid[] friends, Guid[] blocked, Guid[] sentFriendInvites, Guid[] receivedFriendInvites, Int64 version) : base(version)
     {
         PlayerId = playerId;
         AcceptingFriendInvites = acceptingFriendInvites;
@@ -15,7 +15,6 @@ public record class FriendsList : VersionedData, IDatabaseSyncable<FriendsList, 
         Blocked = blocked ?? throw new ArgumentNullException(nameof(blocked));
         SentFriendInvites = sentFriendInvites ?? throw new ArgumentNullException(nameof(sentFriendInvites));
         ReceivedFriendInvites = receivedFriendInvites ?? throw new ArgumentNullException(nameof(receivedFriendInvites));
-        Version = version;
     }
 
     public required Guid PlayerId { get; set; }

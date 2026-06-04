@@ -1,8 +1,16 @@
-﻿namespace Model;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Model;
 
 public record class VersionedData
 {
-    public Int64 Version { get; set; }
+    [SetsRequiredMembers]
+    public VersionedData(Int64 version)
+    {
+        Version = version;
+    }
+
+    public required Int64 Version { get; set; }
     public void IncrementVersion()
     {
         Version++;

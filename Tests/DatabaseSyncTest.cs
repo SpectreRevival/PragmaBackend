@@ -56,6 +56,11 @@ public class DatabaseSyncTest()
             Random.Shared.NextBytes(bytes);
             return Convert.ToBase64String(bytes);
         }
+        if (t.IsEnum)
+        {
+            Array values = Enum.GetValues(t);
+            return values.GetValue(Random.Shared.Next(values.Length));
+        }
 
         if (t.IsValueType)
             return CreateFromConstructor(t);
