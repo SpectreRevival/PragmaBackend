@@ -1,6 +1,8 @@
-﻿using Packets;
+﻿using Microsoft.CodeCoverage.Core.Reports.Coverage;
+using Packets;
 using Serilog;
 using System.Net.WebSockets;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -15,23 +17,29 @@ public class WebsocketTests
         string wsReqDir = Path.Combine(Path.Combine(AppContext.BaseDirectory, "testrequests"), "ws");
         foreach (string filePath in Directory.EnumerateFiles(wsReqDir))
         {
-            WebsocketTestData? data = JsonDocument.Parse(File.ReadAllText(filePath)).Deserialize<WebsocketTestData>();
-            if (data == null)
-            {
-                Log.Warning($"Failed to deserialize file at {filePath} to WebsocketTestData, skipping test");
-                continue;
-            }
             yield return new object[]
             {
-                data
+                filePath,
+                Path.GetFileNameWithoutExtension(filePath)
             };
         }
     }
 
-    [TestMethod]
-    [DynamicData(nameof(GetWebsocketTestInstances))]
-    public async Task RunWebsocketTest(WebsocketTestData testData)
+    public static string GetCustomTestName(MethodInfo methodInfo, object[] data)
     {
+        if (data != null && data.Length > 1 && data[1] is string testName)
+        {
+            return $"{methodInfo.Name}_{testName}";
+        }
+        return methodInfo.Name;
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(GetWebsocketTestInstances), DynamicDataDisplayName = nameof(GetCustomTestName))]
+    public async Task RunWebsocketTest(string testDataFile, string testName)
+    {
+        WebsocketTestData? testData = JsonDocument.Parse(File.ReadAllText(testDataFile)).Deserialize<WebsocketTestData>();
+        Assert.IsNotNull(testData);
         using var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromSeconds(10));
         using var ws = new ClientWebSocket();

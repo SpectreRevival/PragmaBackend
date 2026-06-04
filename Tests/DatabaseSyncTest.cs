@@ -1,5 +1,6 @@
 ﻿using Model;
 using System.Collections;
+using System.Reflection;
 using System.Text;
 
 namespace Tests;
@@ -10,9 +11,7 @@ public class DatabaseSyncTest()
     public static IEnumerable<object[]> GetClassesToTest()
     {
         var interfaceType = typeof(IDatabaseSyncable<>);
-        List<Type> implementingTypes = AppDomain.CurrentDomain.
-            GetAssemblies()
-            .SelectMany(a => a.GetTypes())
+        List<Type> implementingTypes = interfaceType.Assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract)
             .Where(t => t.GetInterfaces()
             .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType))
@@ -21,7 +20,7 @@ public class DatabaseSyncTest()
         {
             yield return new object[]
             {
-                implementingType
+                implementingType.AssemblyQualifiedName!
             };
         }
     }
@@ -87,10 +86,21 @@ public class DatabaseSyncTest()
         return mockType.GetProperty("Object")!.GetValue(mock);
     }
 
-    [TestMethod]
-    [DynamicData(nameof(GetClassesToTest))]
-    public async Task TestDatabaseSyncClass(Type syncableClass)
+    public static string GetCustomTestName(MethodInfo methodInfo, object[] data)
     {
+        if (data != null && data.Length > 0 && data[0] is string typeName)
+        {
+            var shortName = typeName.Split(',')[0].Split('.').Last();
+            return $"{methodInfo.Name}_{shortName}";
+        }
+        return methodInfo.Name;
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(GetClassesToTest), DynamicDataDisplayName = nameof(GetCustomTestName))]
+    public async Task TestDatabaseSyncClass(string syncableClassName)
+    {
+        Type syncableClass = Type.GetType(syncableClassName);
         var ctor = syncableClass.GetConstructors().OrderByDescending(c => c.GetParameters().Length).First();
         var args = new List<object>();
         foreach (var param in ctor.GetParameters())

@@ -26,7 +26,7 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncable<Crosshair
 
     public object GetKey()
     {
-        throw new NotImplementedException();
+        return PlayerId;
     }
 
     public Task SyncToDatabase()

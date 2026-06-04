@@ -41,6 +41,12 @@ services:
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_DATABASE: pragmabackend
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/instance-healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
     networks:
       - pragmabackend_net
     volumes:

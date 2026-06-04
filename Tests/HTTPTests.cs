@@ -1,5 +1,7 @@
-﻿using Serilog;
+﻿using Microsoft.CodeCoverage.Core.Reports.Coverage;
+using Serilog;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
@@ -13,23 +15,29 @@ public class HTTPTests
         string httpReqDir = Path.Combine(Path.Combine(AppContext.BaseDirectory, "testrequests"), "http");
         foreach (string filePath in Directory.EnumerateFiles(httpReqDir))
         {
-            HTTPTestData? data = JsonDocument.Parse(File.ReadAllText(filePath)).Deserialize<HTTPTestData>();
-            if (data == null)
-            {
-                Log.Warning($"Failed to deserialize file at {filePath} to HTTPTestData, skipping test");
-                continue;
-            }
             yield return new object[]
             {
-                data
+                filePath,
+                Path.GetFileNameWithoutExtension(filePath)
             };
         }
     }
 
-    [TestMethod]
-    [DynamicData(nameof(GetHTTPTestInstances))]
-    public async Task RunHTTPTest(HTTPTestData testData)
+    public static string GetCustomTestName(MethodInfo methodInfo, object[] data)
     {
+        if (data != null && data.Length > 1 && data[1] is string testName)
+        {
+            return $"{methodInfo.Name}_{testName}";
+        }
+        return methodInfo.Name;
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(GetHTTPTestInstances), DynamicDataDisplayName = nameof(GetCustomTestName))]
+    public async Task RunHTTPTest(string testDataFile, string testName)
+    {
+        HTTPTestData? testData = JsonDocument.Parse(File.ReadAllText(testDataFile)).Deserialize<HTTPTestData>();
+        Assert.IsNotNull(testData);
         using var cancelToken = new CancellationTokenSource();
         cancelToken.CancelAfter(TimeSpan.FromSeconds(10));
         HttpClient client = new()

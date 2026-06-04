@@ -7,7 +7,7 @@ using Model;
 
 namespace Persistence;
 
-public class PostgresDatabase : IAsyncDisposable
+public class PostgresDatabase : IAsyncDisposable, IDisposable
 {
     private readonly NpgsqlDataSource _dataSource;
     private static PostgresDatabase? inst;
@@ -77,5 +77,20 @@ public class PostgresDatabase : IAsyncDisposable
             await _dataSource.DisposeAsync();
         }
         GC.SuppressFinalize(this);
+    }
+
+    public void Dispose()
+    {
+        var awaiter = DisposeAsync().GetAwaiter();
+        while (!awaiter.IsCompleted)
+        {
+
+        }
+    }
+
+    public void ShutdownConnection()
+    {
+        Dispose();
+        inst = null;
     }
 }
