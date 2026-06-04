@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class CrosshairConfig : VersionedData, IDatabaseSyncable<CrosshairConfig>
+public record class CrosshairConfig : VersionedData, IDatabaseSyncable<CrosshairConfig, Guid>
 {
     public required Guid PlayerId { get; set; }
     public required Int32 ColorIndex { get; set; }
@@ -19,12 +19,12 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncable<Crosshair
     public required PipConfig InnerPip { get; set; }
     public required PipConfig OuterPip { get; set; }
 
-    public static Task<CrosshairConfig?> RetrieveFromDatabase(string key)
+    public static Task<CrosshairConfig?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         return PlayerId;
     }

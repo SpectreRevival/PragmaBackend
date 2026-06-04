@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class Party : VersionedData, IDatabaseSyncable<Party>
+public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>
 {
     public required Guid PartyId { get; set; }
     public required PartyMember[] Members { get; set; }
@@ -10,12 +10,12 @@ public record class Party : VersionedData, IDatabaseSyncable<Party>
     public required string ChatId { get; set; }
     public required bool UseTeamMMR { get; set; }
 
-    public static Task<Party?> RetrieveFromDatabase(string key)
+    public static Task<Party?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }

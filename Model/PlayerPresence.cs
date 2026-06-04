@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class PlayerPresence : IDatabaseSyncable<PlayerPresence>
+public record class PlayerPresence : IDatabaseSyncable<PlayerPresence, Guid>
 {
     public required Guid PlayerId { get; set; }
     public required PlayerBasicPresence BasicStatus { get; set; }
@@ -8,12 +8,12 @@ public record class PlayerPresence : IDatabaseSyncable<PlayerPresence>
     public required Int32 AdvancedPresenceType { get; set; } // Todo make enum
     public required string AdvancedPresenceContext { get; set; }
 
-    public static Task<PlayerPresence?> RetrieveFromDatabase(string key)
+    public static Task<PlayerPresence?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }

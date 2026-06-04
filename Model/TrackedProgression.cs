@@ -9,16 +9,16 @@ public abstract record class TrackedProgression
     public required DateTimeOffset LastRolloverTimestamp { get; set; }
 }
 
-public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncable<TeamTrackedProgression>
+public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncable<TeamTrackedProgression, Guid>
 {
     public required Guid TeamId { get; set; }
 
-    public static Task<TeamTrackedProgression?> RetrieveFromDatabase(string key)
+    public static Task<TeamTrackedProgression?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }
@@ -29,16 +29,16 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
     }
 }
 
-public record class IndividualTrackedProgression : TrackedProgression, IDatabaseSyncable<IndividualTrackedProgression>
+public record class IndividualTrackedProgression : TrackedProgression, IDatabaseSyncable<IndividualTrackedProgression, Guid>
 {
     public required Guid ActiveEndorsement { get; set; }
 
-    public static Task<IndividualTrackedProgression?> RetrieveFromDatabase(string key)
+    public static Task<IndividualTrackedProgression?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }

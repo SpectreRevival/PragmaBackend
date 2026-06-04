@@ -1,9 +1,9 @@
 ﻿namespace Model;
 
-public interface IDatabaseSyncable<T>
+public interface IDatabaseSyncable<T, KeyType>
 {
     public Task SyncToDatabase();
-    public abstract static Task<T?> RetrieveFromDatabase(string key);
+    public abstract static Task<T?> RetrieveFromDatabase(KeyType key);
 
-    public abstract object GetKey();
+    public abstract KeyType GetKey();
 }

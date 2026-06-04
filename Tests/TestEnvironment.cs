@@ -11,8 +11,7 @@ public class TestEnvironment
 {
     private static readonly IConfiguration config = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
-        .AddEnvironmentVariables()
-        .AddJsonFile("resources/env.json", optional: true, reloadOnChange: true)
+        .AddJsonFile(Path.Combine("resources", "test.env.json"), optional: false, reloadOnChange: true)
         .Build();
     public static bool BuildImage(string workingDirectory, string imageName, string dockerfilePath, string contextDir)
     {
@@ -25,7 +24,7 @@ public class TestEnvironment
     [AssemblyInitialize]
     public static void BuildImages(TestContext _)
     {
-        // base directory is Proj/bin/Debug/dotnetver/Executable
+        // base directory is .../PragmaBackend/Proj/bin/Debug/dotnetver/, just walk all the way back up to PragmaBackend and get the path of that dir
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
         string dockerDir = Path.Combine(slnDir, "Docker");
         string backendDockerFile = Path.Combine(dockerDir, "Backend.dockerfile");
@@ -41,7 +40,14 @@ public class TestEnvironment
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
         string dockerDir = Path.Combine(slnDir, "Docker");
         RunDockerCommand("compose up -d", dockerDir);
-        Thread.Sleep(TimeSpan.FromSeconds(15)); // Todo replace with a healthcheck on the backend instance
+        while (true)
+        {
+            var output = RunDockerCommand("inspect --format='{{.State.Health.Status}}' pragmabackend");
+            if (output.Output.Contains("healthy"))
+            {
+                break;
+            }
+        }
         PostgresDatabase.InstantiateDatabase(config);
     }
 

@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class LegacyPlayerData : IDatabaseSyncable<LegacyPlayerData>
+public record class LegacyPlayerData : IDatabaseSyncable<LegacyPlayerData, Guid>
 {
     public required Guid PlayerId { get; set; }
     public required LegacySeasonData SeasonData { get; set; }
@@ -8,12 +8,12 @@ public record class LegacyPlayerData : IDatabaseSyncable<LegacyPlayerData>
     public required LegacyStatsData CasualStats { get; set; }
     public required LegacyStatsData TeamStats { get; set; }
 
-    public static Task<LegacyPlayerData?> RetrieveFromDatabase(string key)
+    public static Task<LegacyPlayerData?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }

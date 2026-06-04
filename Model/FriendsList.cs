@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class FriendsList : VersionedData, IDatabaseSyncable<FriendsList>
+public record class FriendsList : VersionedData, IDatabaseSyncable<FriendsList, Guid>
 {
     public required Guid PlayerId { get; set; }
     public required bool AcceptingFriendInvites { get; set; } = true;
@@ -9,12 +9,12 @@ public record class FriendsList : VersionedData, IDatabaseSyncable<FriendsList>
     public required Guid[] SentFriendInvites { get; set; } = [];
     public required Guid[] ReceivedFriendInvites { get; set; } = [];
 
-    public static Task<FriendsList?> RetrieveFromDatabase(string key)
+    public static Task<FriendsList?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }

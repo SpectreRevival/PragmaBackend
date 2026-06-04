@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class PlayerConfig : VersionedData, IDatabaseSyncable<PlayerConfig>
+public record class PlayerConfig : VersionedData, IDatabaseSyncable<PlayerConfig, Guid>
 {
     public required Guid PlayerId { get; set; }
     public required bool UnlockAllPlayModes { get; set; }
@@ -96,12 +96,12 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncable<PlayerConfig
     public required string[] MutedChatContexts { get; set; }
     public required Int32 InputBindingsVersion { get; set; }
 
-    public static Task<PlayerConfig?> RetrieveFromDatabase(string key)
+    public static Task<PlayerConfig?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }

@@ -10,7 +10,7 @@ public class DatabaseSyncTest()
 {
     public static IEnumerable<object[]> GetClassesToTest()
     {
-        var interfaceType = typeof(IDatabaseSyncable<>);
+        var interfaceType = typeof(IDatabaseSyncable<,>);
         List<Type> implementingTypes = interfaceType.Assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract)
             .Where(t => t.GetInterfaces()
@@ -115,7 +115,8 @@ public class DatabaseSyncTest()
         var key = keyMethod.Invoke(obj, new object[] { });
         var fetchMethod = obj.GetType().GetMethod("RetrieveFromDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
 
-        var fetched = await (Task<object?>)fetchMethod.Invoke(null, new object[] { key });
+        dynamic task = fetchMethod.Invoke(null, new object[] { key });
+        var fetched = await task;
         Assert.AreEqual(fetched, obj);
     }
 }

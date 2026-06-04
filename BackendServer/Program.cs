@@ -30,8 +30,7 @@ Log.Logger = new LoggerConfiguration()
 Log.Information("Started logging, initializing postgres next");
 IConfiguration config = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
-        .AddEnvironmentVariables()
-        .AddJsonFile("resources/env.json", optional: true, reloadOnChange: true)
+        .AddJsonFile(Path.Combine("resources", "env.json"), optional: false, reloadOnChange: true)
         .Build();
 PostgresDatabase.InstantiateDatabase(config);
 
@@ -58,8 +57,7 @@ while (Directory.Exists(nextDirPath))
 
 var builder = WebApplication.CreateBuilder();
 builder.Configuration.SetBasePath(AppContext.BaseDirectory);
-builder.Configuration.AddEnvironmentVariables();
-builder.Configuration.AddJsonFile("resources/env.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddJsonFile(Path.Combine("resources", "env.json"), optional: false, reloadOnChange: true);
 builder.WebHost.ConfigureKestrel(opts =>
 {
     opts.Configure(builder.Configuration.GetSection("Kestrel"));
@@ -89,6 +87,8 @@ backendApp.Map("{*path}", async (HttpContext context, string? path) =>
     }
     return await handler.HandleAsync(context);
 });
+
+HTTPPacketHandler.InstantiateSingletons();
 
 try
 {

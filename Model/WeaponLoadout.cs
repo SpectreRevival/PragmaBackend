@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class WeaponLoadout : IDatabaseSyncable<WeaponLoadout>
+public record class WeaponLoadout : IDatabaseSyncable<WeaponLoadout, Guid>
 {
     public required Guid PlayerId { get; set; }
     public required Guid LoadoutId { get; set; }
@@ -25,12 +25,12 @@ public record class WeaponLoadout : IDatabaseSyncable<WeaponLoadout>
     public required WeaponData BoltActionSniper { get; set; }
     public required WeaponData Melee { get; set; }
 
-    public static Task<WeaponLoadout?> RetrieveFromDatabase(string key)
+    public static Task<WeaponLoadout?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }

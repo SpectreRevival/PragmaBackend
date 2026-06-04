@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class SeasonEntry : IDatabaseSyncable<SeasonEntry>
+public record class SeasonEntry : IDatabaseSyncable<SeasonEntry, Int32>
 {
     [SetsRequiredMembers]
     public SeasonEntry(int seasonNumber, DateTimeOffset startTimestampMillis, DateTimeOffset endTimestampMillis, DateTimeOffset lastWeekEndTimestampMillis, int numberOfWeeksInSeason)
@@ -22,14 +22,10 @@ public record class SeasonEntry : IDatabaseSyncable<SeasonEntry>
     public required DateTimeOffset LastWeekEndTimestampMillis { get; set; }
     public required Int32 NumberOfWeeksInSeason { get; set; }
 
-    public static async Task<SeasonEntry?> RetrieveFromDatabase(string key)
+    public static async Task<SeasonEntry?> RetrieveFromDatabase(Int32 key)
     {
-        if (!Int32.TryParse(key, out int seasonNo))
-        {
-            return null;
-        }
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_season_entry.sql");
-        cmd.Parameters.AddWithValue("season_number", seasonNo);
+        cmd.Parameters.AddWithValue("season_number", key);
         await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         if(!await reader.ReadAsync())
         {
@@ -44,7 +40,7 @@ public record class SeasonEntry : IDatabaseSyncable<SeasonEntry>
         );
     }
 
-    public object GetKey()
+    public Int32 GetKey()
     {
         throw new NotImplementedException();
     }

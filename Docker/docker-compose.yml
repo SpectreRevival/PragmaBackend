@@ -35,17 +35,12 @@ services:
       - "8081:8081"
       - "8080:8080"
       - "8082:8082"
-    environment:
-      DB_HOST: "backend-pgdb"
-      DB_PORT: 5432
-      DB_USERNAME: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
-      DB_DATABASE: pragmabackend
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:8080/instance-healthcheck"]
-      interval: 10s
+      interval: 60s
       timeout: 5s
       retries: 3
+      start_interval: 2s
       start_period: 60s
     networks:
       - pragmabackend_net

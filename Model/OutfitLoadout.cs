@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class OutfitLoadout : IDatabaseSyncable<OutfitLoadout>
+public record class OutfitLoadout : IDatabaseSyncable<OutfitLoadout, Guid>
 {
     public required Guid PlayerId { get; set; }
     public required Guid LoadoutId { get; set; }
@@ -10,12 +10,12 @@ public record class OutfitLoadout : IDatabaseSyncable<OutfitLoadout>
     public required OutfitData FaceAccessory { get; set; }
     public required OutfitData Outfit { get; set; }
 
-    public static Task<OutfitLoadout?> RetrieveFromDatabase(string key)
+    public static Task<OutfitLoadout?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }

@@ -49,4 +49,28 @@ public abstract class HTTPPacketHandler
         }
         return null;
     }
+
+    private static readonly List<HTTPPacketHandler> singletons = new();
+
+    public static void InstantiateSingletons()
+    {
+        Type singletonInterface = typeof(IHTTPPacketHandlerSingleton);
+        List<Type> singletonClasses = singletonInterface.Assembly.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract)
+            .Where(t => t.GetInterfaces()
+            .Any(i => i == singletonInterface)
+            ).ToList();
+        foreach(Type singletonClass in singletonClasses)
+        {
+            var httpMethodGetter = singletonClass.GetMethod("GetMethod", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            var httpRouteGetter = singletonClass.GetMethod("GetRoute", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            var httpMethod = httpMethodGetter.Invoke(null, new object[] { });
+            var httpRoute = httpRouteGetter.Invoke(null, new object[] { });
+            var ctor = singletonClass.GetConstructors().First();
+            singletons.Add((HTTPPacketHandler)ctor.Invoke(new object[]
+            {
+                httpMethod, httpRoute
+            }));
+        }
+    }
 }

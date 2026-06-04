@@ -2,7 +2,7 @@
 
 // Ohm - Intentionally removed country, subdivision, primary/secondary geographic region and address fields from this struct since we aren't going to store those for privacy reasons.
 
-public record class PlayerMatchmakingData : IDatabaseSyncable<PlayerMatchmakingData>
+public record class PlayerMatchmakingData : IDatabaseSyncable<PlayerMatchmakingData, Guid>
 {
     public required Guid PlayerId { get; set; }
     public required double CasualMMR { get; set; } = 0.0d;
@@ -21,12 +21,12 @@ public record class PlayerMatchmakingData : IDatabaseSyncable<PlayerMatchmakingD
     public required DateTimeOffset RestrictMatchmakingUntil { get; set; } = DateTimeOffset.MinValue;
     public required string MapHistory { get; set; } = "";
 
-    public static Task<PlayerMatchmakingData?> RetrieveFromDatabase(string key)
+    public static Task<PlayerMatchmakingData?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }

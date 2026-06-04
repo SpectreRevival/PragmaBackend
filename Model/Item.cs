@@ -7,16 +7,16 @@ public abstract record class Item
     public required Guid InstanceId { get; set; }
 }
 
-public record class StackableItem : Item, IDatabaseSyncable<StackableItem>
+public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>
 {
     public required Int64 Amount { get; set; }
 
-    public static Task<StackableItem?> RetrieveFromDatabase(string key)
+    public static Task<StackableItem?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }
@@ -32,16 +32,16 @@ public abstract record class InstancedItem : Item
     public required bool Viewed { get; set; }
 }
 
-public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<CustomizedInstancedItem>
+public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<CustomizedInstancedItem, Guid>
 {
     public required AlterationChannel[] AlterationChannels { get; set; }
 
-    public static Task<CustomizedInstancedItem?> RetrieveFromDatabase(string key)
+    public static Task<CustomizedInstancedItem?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }
@@ -52,7 +52,7 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
     }
 }
 
-public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<ProgressionTrackingItem>
+public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<ProgressionTrackingItem, Guid>
 {
     public required Dictionary<string,string> ProgressionByStats { get; set; }
     public required bool AreObjectivesCompleted { get; set; }
@@ -64,12 +64,12 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
     public required bool IsBundlePurchased { get; set; }
     public required Int32 NumLevelsPurchased { get; set; }
 
-    public static Task<ProgressionTrackingItem?> RetrieveFromDatabase(string key)
+    public static Task<ProgressionTrackingItem?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }
@@ -80,16 +80,16 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
     }
 }
 
-public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<SponsorUnlockTrackerItem>
+public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<SponsorUnlockTrackerItem, Guid>
 {
    public required string SponsorName { get; set; }
 
-    public static Task<SponsorUnlockTrackerItem?> RetrieveFromDatabase(string key)
+    public static Task<SponsorUnlockTrackerItem?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }

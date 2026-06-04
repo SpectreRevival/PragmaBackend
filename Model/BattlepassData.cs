@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class BattlepassData : IDatabaseSyncable<BattlepassData>
+public record class BattlepassData : IDatabaseSyncable<BattlepassData, Guid>
 {
     [SetsRequiredMembers]
     public BattlepassData(Guid playerId, Guid[] activeBattlePasses, Guid[] battlepassQuests, Guid[] activeBattlepassQuests, int battlepassLevel)
@@ -22,7 +22,7 @@ public record class BattlepassData : IDatabaseSyncable<BattlepassData>
     public required Guid[] ActiveBattlepassQuests { get; set; }
     public required Int32 BattlepassLevel { get; set; }
 
-    public async static Task<BattlepassData?> RetrieveFromDatabase(string key)
+    public async static Task<BattlepassData?> RetrieveFromDatabase(Guid key)
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_battlepass_data.sql");
         cmd.Parameters.AddWithValue("playerid", key);
@@ -40,7 +40,7 @@ public record class BattlepassData : IDatabaseSyncable<BattlepassData>
         );
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         return PlayerId;
     }
@@ -54,5 +54,25 @@ public record class BattlepassData : IDatabaseSyncable<BattlepassData>
         cmd.Parameters.AddWithValue("active_battlepass_quests", ActiveBattlepassQuests);
         cmd.Parameters.AddWithValue("battlepass_level", BattlepassLevel);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    public virtual bool Equals(BattlepassData? other)
+    {
+        if (other is null) return false;
+        return PlayerId == other.PlayerId && BattlepassLevel == other.BattlepassLevel
+            && ActiveBattlePasses.SequenceEqual(other.ActiveBattlePasses)
+            && BattlepassQuests.SequenceEqual(other.BattlepassQuests)
+            && ActiveBattlepassQuests.SequenceEqual(other.ActiveBattlepassQuests);
+    }
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(PlayerId);
+        hash.Add(BattlepassLevel);
+        hash.Add(ActiveBattlePasses);
+        hash.Add(BattlepassQuests);
+        hash.Add(ActiveBattlePasses);
+        return hash.ToHashCode();
     }
 }

@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVisionConfig>
+public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVisionConfig, Guid>
 {
     [SetsRequiredMembers]
     public ColorVisionConfig(Guid playerId, string colorVisionType, int severity, bool correctDeficiency, bool showCorrectDeficiency, bool comfortSwapEffect, bool customOutlineColor, RGBAColor outlineColor, RGBAColor outlineColorLower, double outlineThicknessScale, double outlineBrightnessScale)
@@ -34,7 +34,7 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVi
     public required double OutlineThicknessScale { get; set; }
     public required double OutlineBrightnessScale { get; set; }
 
-    public static async Task<ColorVisionConfig?> RetrieveFromDatabase(string key)
+    public static async Task<ColorVisionConfig?> RetrieveFromDatabase(Guid key)
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_color_vision_config.sql");
         cmd.Parameters.AddWithValue("playerid", key);
@@ -58,7 +58,7 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVi
         );
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         return PlayerId;
     }

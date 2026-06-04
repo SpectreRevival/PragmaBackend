@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class LegacyStatsData : IDatabaseSyncable<LegacyStatsData>
+public record class LegacyStatsData : IDatabaseSyncable<LegacyStatsData, Guid>
 {
     public required Guid PlayerId { get; set; }
     public required LegacyStatsType StatsType { get; set; }
@@ -23,12 +23,12 @@ public record class LegacyStatsData : IDatabaseSyncable<LegacyStatsData>
     public required string[] TopSponsors { get; set; } = [];
     public required string[] TopWeapons { get; set; } = [];
 
-    public static Task<LegacyStatsData?> RetrieveFromDatabase(string key)
+    public static Task<LegacyStatsData?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }

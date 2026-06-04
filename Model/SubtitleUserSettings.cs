@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class SubtitleUserSettings : VersionedData, IDatabaseSyncable<SubtitleUserSettings>
+public record class SubtitleUserSettings : VersionedData, IDatabaseSyncable<SubtitleUserSettings, Guid>
 {
     public required Guid PlayerId { get; set; }
     public required Int32 FontSize { get; set; }
@@ -10,12 +10,12 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncable<Subt
     public required bool PostPlayerSubtitlesToChat { get; set; }
     public required Int32 NamesToShowMask { get; set; }
 
-    public static Task<SubtitleUserSettings?> RetrieveFromDatabase(string key)
+    public static Task<SubtitleUserSettings?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }

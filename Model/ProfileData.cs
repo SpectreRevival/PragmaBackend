@@ -1,6 +1,6 @@
 ﻿namespace Model;
 
-public record class ProfileData : IDatabaseSyncable<ProfileData>
+public record class ProfileData : IDatabaseSyncable<ProfileData, Guid>
 {
     public required Guid PlayerId { get; set; }
     public required DisplayName DisplayName { get; set; }
@@ -28,12 +28,12 @@ public record class ProfileData : IDatabaseSyncable<ProfileData>
     public required string CrossplayPlatformKind { get; set; }
     public required Int32 GamesRemainingUntilCrewJoin { get; set; }
 
-    public static Task<ProfileData?> RetrieveFromDatabase(string key)
+    public static Task<ProfileData?> RetrieveFromDatabase(Guid key)
     {
         throw new NotImplementedException();
     }
 
-    public object GetKey()
+    public Guid GetKey()
     {
         throw new NotImplementedException();
     }
