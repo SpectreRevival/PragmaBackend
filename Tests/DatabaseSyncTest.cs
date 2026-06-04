@@ -40,9 +40,13 @@ public class DatabaseSyncTest()
             return (float)Random.Shared.NextDouble();
         if (t == typeof(bool))
             return Random.Shared.Next(2) == 0;
+        if (t == typeof(byte))
+        {
+            return (byte)Random.Shared.Next(256);
+        }
 
         if (t.IsValueType)
-            return Activator.CreateInstance(t);
+            return CreateFromConstructor(t);
 
         if (t == typeof(string))
         {
@@ -81,9 +85,18 @@ public class DatabaseSyncTest()
             return null;
         }
 
-        var mockType = typeof(Moq.Mock<>).MakeGenericType(t);
-        var mock = Activator.CreateInstance(mockType);
-        return mockType.GetProperty("Object")!.GetValue(mock);
+        return CreateFromConstructor(t);
+    }
+
+    public static object CreateFromConstructor(Type classToConstruct)
+    {
+        var ctor = classToConstruct.GetConstructors().OrderByDescending(c => c.GetParameters().Length).First();
+        var args = new List<object>();
+        foreach (var param in ctor.GetParameters())
+        {
+            args.Add(CreateArgument(param.ParameterType));
+        }
+        return ctor.Invoke(args.ToArray());
     }
 
     public static string GetCustomTestName(MethodInfo methodInfo, object[] data)
@@ -101,22 +114,22 @@ public class DatabaseSyncTest()
     public async Task TestDatabaseSyncClass(string syncableClassName)
     {
         Type syncableClass = Type.GetType(syncableClassName);
-        var ctor = syncableClass.GetConstructors().OrderByDescending(c => c.GetParameters().Length).First();
-        var args = new List<object>();
-        foreach (var param in ctor.GetParameters())
-        {
-            args.Add(CreateArgument(param.ParameterType));
-        }
-        var obj = ctor.Invoke(args.ToArray());
-        var syncMethod = obj.GetType().GetMethod("SyncToDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        var syncTask = (Task)syncMethod.Invoke(obj, new object[] {});
+        var obj1 = CreateFromConstructor(syncableClass);
+        var obj2 = CreateFromConstructor(syncableClass);
+        var obj3 = CreateFromConstructor(syncableClass);
+        var syncMethod = obj1.GetType().GetMethod("SyncToDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        var syncTask = (Task)syncMethod.Invoke(obj1, new object[] {});
+        var syncTask2 = (Task)syncMethod.Invoke(obj2, new object[] { });
+        var syncTask3 = (Task)syncMethod.Invoke(obj3, new object[] { });
         await syncTask;
-        var keyMethod = obj.GetType().GetMethod("GetKey", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        var key = keyMethod.Invoke(obj, new object[] { });
-        var fetchMethod = obj.GetType().GetMethod("RetrieveFromDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+        await syncTask2;
+        await syncTask3;
+        var keyMethod = obj1.GetType().GetMethod("GetKey", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        var key = keyMethod.Invoke(obj1, new object[] { });
+        var fetchMethod = obj1.GetType().GetMethod("RetrieveFromDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
 
         dynamic task = fetchMethod.Invoke(null, new object[] { key });
         var fetched = await task;
-        Assert.AreEqual(fetched, obj);
+        Assert.AreEqual(fetched, obj1);
     }
 }

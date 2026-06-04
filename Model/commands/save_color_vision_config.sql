@@ -18,6 +18,7 @@ color_vision_config_version
  @correctdeficiency,
  @showcorrectdeficiency,
  @comfortswapeffect,
+ @customoutlinecolor,
  @outlinecolor,
  @outlinecolorlower,
  @outlineThicknessScale,

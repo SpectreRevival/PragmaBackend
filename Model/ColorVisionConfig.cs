@@ -14,10 +14,10 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVi
         Severity = severity;
         CorrectDeficiency = correctDeficiency;
         ShowCorrectDeficiency = showCorrectDeficiency;
-        ComfortSwapEffect = comfortSwapEffect;
-        CustomOutlineColor = customOutlineColor;
-        OutlineColor = outlineColor ?? throw new ArgumentNullException(nameof(outlineColor));
-        OutlineColorLower = outlineColorLower ?? throw new ArgumentNullException(nameof(outlineColorLower));
+        UseComfortSwapEffect = comfortSwapEffect;
+        UseCustomOutlineColor = customOutlineColor;
+        OutlineColor = outlineColor;
+        OutlineColorLower = outlineColorLower;
         OutlineThicknessScale = outlineThicknessScale;
         OutlineBrightnessScale = outlineBrightnessScale;
     }
@@ -27,8 +27,8 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVi
     public required Int32 Severity { get; set; }
     public required bool CorrectDeficiency { get; set; }
     public required bool ShowCorrectDeficiency { get; set; }
-    public required bool ComfortSwapEffect { get; set; }
-    public required bool CustomOutlineColor { get; set; }
+    public required bool UseComfortSwapEffect { get; set; }
+    public required bool UseCustomOutlineColor { get; set; }
     public required RGBAColor OutlineColor { get; set; }
     public required RGBAColor OutlineColorLower { get; set; }
     public required double OutlineThicknessScale { get; set; }
@@ -71,7 +71,8 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVi
         cmd.Parameters.AddWithValue("severity", Severity);
         cmd.Parameters.AddWithValue("correctdeficiency", CorrectDeficiency);
         cmd.Parameters.AddWithValue("showcorrectdeficiency", ShowCorrectDeficiency);
-        cmd.Parameters.AddWithValue("comfortswapeffect", ComfortSwapEffect);
+        cmd.Parameters.AddWithValue("comfortswapeffect", UseComfortSwapEffect);
+        cmd.Parameters.AddWithValue("customoutlinecolor", UseCustomOutlineColor);
         cmd.Parameters.AddWithValue("outlinecolor", OutlineColor);
         cmd.Parameters.AddWithValue("outlinecolorlower", OutlineColorLower);
         cmd.Parameters.AddWithValue("outlineThicknessScale", OutlineThicknessScale);

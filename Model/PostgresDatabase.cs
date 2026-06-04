@@ -29,6 +29,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
             Pooling = false,
         };
         var builder = new NpgsqlDataSourceBuilder(ConnStr.ConnectionString);
+        builder.MapComposite<RGBAColor>("rgbacolor");
         _dataSource = builder.Build();
         while (true)
         {
