@@ -4,10 +4,10 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVisionConfig, Guid>
+public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVisionConfig, Guid>, IEquatable<ColorVisionConfig>
 {
     [SetsRequiredMembers]
-    public ColorVisionConfig(Guid playerId, string colorVisionType, int severity, bool correctDeficiency, bool showCorrectDeficiency, bool comfortSwapEffect, bool customOutlineColor, RGBAColor outlineColor, RGBAColor outlineColorLower, double outlineThicknessScale, double outlineBrightnessScale)
+    public ColorVisionConfig(Guid playerId, string colorVisionType, int severity, bool correctDeficiency, bool showCorrectDeficiency, bool comfortSwapEffect, bool customOutlineColor, RGBAColor outlineColor, RGBAColor outlineColorLower, double outlineThicknessScale, double outlineBrightnessScale, Int64 version)
     {
         PlayerId = playerId;
         ColorVisionType = colorVisionType ?? throw new ArgumentNullException(nameof(colorVisionType));
@@ -20,6 +20,7 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVi
         OutlineColorLower = outlineColorLower;
         OutlineThicknessScale = outlineThicknessScale;
         OutlineBrightnessScale = outlineBrightnessScale;
+        Version = version;
     }
 
     public required Guid PlayerId { get; set; }
@@ -54,7 +55,8 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVi
             await reader.GetFieldValueAsync<RGBAColor>(7),
             await reader.GetFieldValueAsync<RGBAColor>(8),
             await reader.GetFieldValueAsync<double>(9),
-            await reader.GetFieldValueAsync<double>(10)
+            await reader.GetFieldValueAsync<double>(10),
+            await reader.GetFieldValueAsync<Int64>(11)
         );
     }
 
@@ -79,5 +81,42 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVi
         cmd.Parameters.AddWithValue("outlineBrightnessScale", OutlineBrightnessScale);
         cmd.Parameters.AddWithValue("version", Version);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    public virtual bool Equals(ColorVisionConfig? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return PlayerId == other.PlayerId
+            && ColorVisionType == other.ColorVisionType
+            && Severity == other.Severity
+            && CorrectDeficiency == other.CorrectDeficiency
+            && ShowCorrectDeficiency == other.ShowCorrectDeficiency
+            && UseComfortSwapEffect == other.UseComfortSwapEffect
+            && UseCustomOutlineColor == other.UseCustomOutlineColor
+            && OutlineColor.Equals(other.OutlineColor)
+            && OutlineColorLower.Equals(other.OutlineColorLower)
+            && OutlineThicknessScale == other.OutlineThicknessScale
+            && OutlineBrightnessScale == other.OutlineBrightnessScale
+            && Version == other.Version;
+    }
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(PlayerId);
+        hash.Add(ColorVisionType);
+        hash.Add(Severity);
+        hash.Add(CorrectDeficiency);
+        hash.Add(ShowCorrectDeficiency);
+        hash.Add(UseComfortSwapEffect);
+        hash.Add(UseCustomOutlineColor);
+        hash.Add(OutlineColor);
+        hash.Add(OutlineColorLower);
+        hash.Add(OutlineThicknessScale);
+        hash.Add(OutlineBrightnessScale);
+        hash.Add(Version);
+        return hash.ToHashCode();
     }
 }

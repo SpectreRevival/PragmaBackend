@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS crosshair_config (
     player_id UUID PRIMARY KEY,
     color_index INT NOT NULL,
+    advanced_crosshair_settings BOOL NOT NULL,
     custom_color RGBACOLOR NOT NULL,
     fire_accuracy_fade BOOL NOT NULL,
     follow_recoil BOOL NOT NULL,
@@ -14,7 +15,7 @@ CREATE TABLE IF NOT EXISTS crosshair_config (
     sniper_dot CROSSHAIRDOT NOT NULL,
     inner_pip PIPCONFIG NOT NULL,
     outer_pip PIPCONFIG NOT NULL,
-    crosshair_config_version INT NOT NULL,
+    crosshair_config_version BIGINT NOT NULL,
 
     CONSTRAINT verify_custom_color CHECK (
         (custom_color).r IS NOT NULL

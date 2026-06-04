@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class SeasonEntry : IDatabaseSyncable<SeasonEntry, Int32>
+public record class SeasonEntry : IDatabaseSyncable<SeasonEntry, Int32>, IEquatable<SeasonEntry>
 {
     [SetsRequiredMembers]
     public SeasonEntry(int seasonNumber, DateTimeOffset startTimestampMillis, DateTimeOffset endTimestampMillis, DateTimeOffset lastWeekEndTimestampMillis, int numberOfWeeksInSeason)
@@ -42,7 +42,7 @@ public record class SeasonEntry : IDatabaseSyncable<SeasonEntry, Int32>
 
     public Int32 GetKey()
     {
-        throw new NotImplementedException();
+        return SeasonNumber;
     }
 
     public async Task SyncToDatabase()
@@ -54,5 +54,34 @@ public record class SeasonEntry : IDatabaseSyncable<SeasonEntry, Int32>
         cmd.Parameters.AddWithValue("last_week_end_ts", LastWeekEndTimestampMillis);
         cmd.Parameters.AddWithValue("num_weeks", NumberOfWeeksInSeason);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    public virtual bool Equals(SeasonEntry? other)
+    {
+        if (other is null) return false;
+
+        if (ReferenceEquals(this, other)) return true;
+
+        return SeasonNumber == other.SeasonNumber
+            && AreTimestampsEquivalent(StartTimestampMillis, other.StartTimestampMillis)
+            && AreTimestampsEquivalent(EndTimestampMillis, other.EndTimestampMillis)
+            && AreTimestampsEquivalent(LastWeekEndTimestampMillis, other.LastWeekEndTimestampMillis)
+            && NumberOfWeeksInSeason == other.NumberOfWeeksInSeason;
+    }
+
+    private static bool AreTimestampsEquivalent(DateTimeOffset a, DateTimeOffset b)
+    {
+        return Math.Abs((a - b).TotalMilliseconds) < 1;
+    }
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(SeasonNumber);
+        hash.Add(StartTimestampMillis);
+        hash.Add(EndTimestampMillis);
+        hash.Add(LastWeekEndTimestampMillis);
+        hash.Add(NumberOfWeeksInSeason);
+        return hash.ToHashCode();
     }
 }

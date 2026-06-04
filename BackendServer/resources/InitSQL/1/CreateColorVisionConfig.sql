@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS color_vision_config (
     outline_color_lower RGBACOLOR NOT NULL,
     outline_thickness_scale DOUBLE PRECISION NOT NULL,
     outline_brightness_scale DOUBLE PRECISION NOT NULL,
-    color_vision_config_version INT NOT NULL,
+    color_vision_config_version BIGINT NOT NULL,
 
     CONSTRAINT verify_outline_color CHECK (
         (outline_color).r IS NOT NULL

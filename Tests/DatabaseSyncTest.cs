@@ -1,5 +1,6 @@
 ﻿using Model;
 using System.Collections;
+using System.ComponentModel;
 using System.Reflection;
 using System.Text;
 
@@ -44,16 +45,20 @@ public class DatabaseSyncTest()
         {
             return (byte)Random.Shared.Next(256);
         }
-
-        if (t.IsValueType)
-            return CreateFromConstructor(t);
-
+        if (t == typeof(DateTimeOffset))
+        {
+            var utcNow = DateTimeOffset.UtcNow;
+            return utcNow.AddMinutes(Random.Shared.Next(0, 1440));
+        }
         if (t == typeof(string))
         {
             byte[] bytes = new byte[16];
             Random.Shared.NextBytes(bytes);
             return Convert.ToBase64String(bytes);
         }
+
+        if (t.IsValueType)
+            return CreateFromConstructor(t);
 
         if (t.IsArray)
         {
