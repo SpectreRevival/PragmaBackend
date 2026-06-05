@@ -33,6 +33,11 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         builder.MapComposite<RGBAColor>("rgbacolor");
         builder.MapComposite<CrosshairDot>("crosshairdot");
         builder.MapComposite<PipConfig>("pipconfig");
+        builder.MapComposite<WeaponAttachment>("weaponattachment");
+        builder.MapComposite<WeaponData>("weapondata");
+        builder.MapComposite<ActiveAlterationData>("activealterationdata");
+        builder.MapComposite<WeaponAttachment>("weaponattachment");
+        builder.MapComposite<WeaponData>("weapondata");
         _dataSource = builder.Build();
         while (true)
         {

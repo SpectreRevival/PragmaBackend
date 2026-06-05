@@ -23,8 +23,8 @@ END
 $$;
 
 CREATE TABLE IF NOT EXISTS weapon_loadouts (
-    player_id UUID PRIMARY KEY NOT NULL,
-    loadout_id UUID NOT NULL DEFAULT gen_random_uuid(),
+    loadout_id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    player_id UUID NOT NULL,
     semi_auto_pistol WEAPONDATA NOT NULL,
     suppressed_pistol WEAPONDATA NOT NULL,
     auto_pistol WEAPONDATA NOT NULL,
