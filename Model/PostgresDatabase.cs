@@ -38,6 +38,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         builder.MapComposite<ActiveAlterationData>("activealterationdata");
         builder.MapComposite<WeaponAttachment>("weaponattachment");
         builder.MapComposite<WeaponData>("weapondata");
+        builder.MapComposite<DisplayName>("displayname");
         _dataSource = builder.Build();
         while (true)
         {
@@ -67,6 +68,11 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
     public static void InstantiateDatabase(IConfiguration config)
     {
         inst = new(config);
+    }
+
+    public static bool IsInstantiated()
+    {
+        return inst != null;
     }
 
     /** 

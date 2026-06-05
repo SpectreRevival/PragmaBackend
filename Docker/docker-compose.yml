@@ -1,3 +1,4 @@
+name: pragmabackend
 services:
   backend-pgdb:
     build:

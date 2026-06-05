@@ -58,6 +58,16 @@ public class TestEnvironment
         RunDockerCommand("compose down -v");
     }
 
+    [AssemblyCleanup]
+    public static void CleanupAssembly(TestContext _)
+    {
+        if (PostgresDatabase.IsInstantiated())
+        {
+            PostgresDatabase.Get().ShutdownConnection();
+        }
+        RunDockerCommand("compose down -v");
+    }
+
     private static (int ExitCode, string Output, string Error) RunDockerCommand(string arguments, string? workingDir = null)
     {
         var psi = new ProcessStartInfo

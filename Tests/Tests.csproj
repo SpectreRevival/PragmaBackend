@@ -15,14 +15,11 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<None Include="testrequests\**\*" CopyToOutputDirectory="PreserveNewest" />
-	</ItemGroup>
-
-	<ItemGroup>
 	  <ProjectReference Include="..\Model\Model.csproj" />
 	  <ProjectReference Include="..\Packets\Packets.csproj" />
 	</ItemGroup>
 	<ItemGroup>
+		<None Include="testrequests\**\*" CopyToOutputDirectory="PreserveNewest"></None>
 		<None Include="..\BackendServer\resources\**\*"
 		      Link="resources\%(RecursiveDir)%(Filename)%(Extension)"
 		      CopyToOutputDirectory="PreserveNewest" />

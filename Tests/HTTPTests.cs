@@ -62,11 +62,5 @@ public class HTTPTests
                 throw;
             }
         }
-        catch (HttpRequestException ex)
-        {
-            Log.Error($"HTTP request failure: {ex.Message}");
-            Assert.Fail();
-            throw;
-        }
     }
 }
