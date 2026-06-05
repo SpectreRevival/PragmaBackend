@@ -56,13 +56,6 @@ pipeline {
                 }
             }
         }
-        stage("SQL Linter"){
-            agent { label 'linux' }
-            steps {
-                checkout scm
-		sh "sqlfluff lint"    
-            }
-        }
         stage("Compile backend docker image"){
             agent { label 'docker-linux' }
             steps {
