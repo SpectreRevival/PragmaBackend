@@ -90,7 +90,7 @@ pipeline {
                         values 'windows', 'linux'
                     }
                 }
-                agent { label "${OS}" }
+                agent { label "docker-${OS}" }
                 stages {
                     stage("Checkout"){
                         steps {
