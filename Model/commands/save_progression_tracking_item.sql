@@ -1,0 +1,42 @@
+INSERT INTO instanced_items (
+	instance_id,
+	catalog_id,
+	owning_player_id,
+	viewed,
+	progression_by_stats,
+	are_objectives_completed,
+	current_objective_id,
+	current_objective_index,
+	is_premium_unlocked,
+	team_id,
+	last_contribution,
+	is_bundle_purchased,
+	num_levels_purchased
+) VALUES (
+	@instance_id,
+	@catalog_id,
+	@owning_player_id,
+	@viewed,
+	@progression_by_stats,
+	@are_objectives_completed,
+	@current_objective_id,
+	@current_objective_index,
+	@is_premium_unlocked,
+	@team_id,
+	@last_contribution,
+	@is_bundle_purchased,
+	@num_levels_purchased
+) ON CONFLICT (instance_id)
+DO UPDATE SET
+	catalog_id = EXCLUDED.catalog_id,
+	owning_player_id = EXCLUDED.owning_player_id,
+	viewed = EXCLUDED.viewed,
+	progression_by_stats = EXCLUDED.progression_by_stats,
+	are_objectives_completed = EXCLUDED.are_objectives_completed,
+	current_objective_id = EXCLUDED.current_objective_id,
+	current_objective_index = EXCLUDED.current_objective_index,
+	is_premium_unlocked = EXCLUDED.is_premium_unlocked,
+	team_id = EXCLUDED.team_id,
+	last_contribution = EXCLUDED.last_contribution,
+	is_bundle_purchased = EXCLUDED.is_bundle_purchased,
+	num_levels_purchased = EXCLUDED.num_levels_purchased;

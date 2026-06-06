@@ -73,7 +73,19 @@ public class DatabaseSyncTest()
                 arr.SetValue(CreateArgument(elementType), i);
             return arr;
         }
-
+        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+        {
+            Type keyType = t.GenericTypeArguments[0];
+            Type valueType = t.GenericTypeArguments[1];
+            var dict = (IDictionary)Activator.CreateInstance(t);
+            for (int i = 0; i < Random.Shared.Next(5); i++)
+            {
+                object instKey = CreateArgument(keyType);
+                object instValue = CreateArgument(valueType);
+                dict.Add(instKey, instValue);
+            }
+            return dict;
+        }
         if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
         {
             var list = (IList)Activator.CreateInstance(t);

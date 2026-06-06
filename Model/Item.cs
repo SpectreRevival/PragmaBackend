@@ -163,7 +163,7 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
     }
 }
 
-public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<ProgressionTrackingItem, Guid>
+public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<ProgressionTrackingItem, Guid>, IEquatable<ProgressionTrackingItem>
 {
     [SetsRequiredMembers]
     public ProgressionTrackingItem(Guid owningPlayerId, Guid catalogId, Guid instanceId, bool viewed, Dictionary<string, string> progressionByStats, bool areObjectivesCompleted, Guid currentObjectiveId, int currentObjectiveIndex, bool isPremiumUnlocked, Guid? teamId, ObjectiveContribution? lastContribution, bool isBundlePurchased, int numLevelsPurchased) : base(owningPlayerId, catalogId, instanceId, viewed)
@@ -189,9 +189,30 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
     public required bool IsBundlePurchased { get; set; }
     public required Int32 NumLevelsPurchased { get; set; }
 
-    public static Task<ProgressionTrackingItem?> RetrieveFromDatabase(Guid key)
+    public static async Task<ProgressionTrackingItem?> RetrieveFromDatabase(Guid key)
     {
-        throw new NotImplementedException();
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_progression_tracking_item.sql");
+        cmd.Parameters.AddWithValue("instance_id", key);
+        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        if (!await reader.ReadAsync())
+        {
+            return null;
+        }
+        return new ProgressionTrackingItem(
+            await reader.GetFieldValueAsync<Guid>(2),
+            await reader.GetFieldValueAsync<Guid>(1),
+            await reader.GetFieldValueAsync<Guid>(0),
+            await reader.GetFieldValueAsync<bool>(3),
+            await reader.GetFieldValueAsync<Dictionary<string,string>>(4),
+            await reader.GetFieldValueAsync<bool>(5),
+            await reader.GetFieldValueAsync<Guid>(6),
+            await reader.GetFieldValueAsync<Int32>(7),
+            await reader.GetFieldValueAsync<bool>(8),
+            await reader.GetFieldValueAsync<Guid?>(9),
+            await reader.GetFieldValueAsync<ObjectiveContribution?>(10),
+            await reader.GetFieldValueAsync<bool>(11),
+            await reader.GetFieldValueAsync<Int32>(12)
+        );
     }
 
     public Guid GetKey()
@@ -199,9 +220,60 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
         return InstanceId;
     }
 
-    public Task SyncToDatabase()
+    public async Task SyncToDatabase()
     {
-        throw new NotImplementedException();
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_progression_tracking_item.sql");
+        cmd.Parameters.AddWithValue("instance_id", InstanceId);
+        cmd.Parameters.AddWithValue("catalog_id", CatalogId);
+        cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
+        cmd.Parameters.AddWithValue("viewed", Viewed);
+        cmd.Parameters.Add(new NpgsqlParameter("progression_by_stats", NpgsqlTypes.NpgsqlDbType.Hstore) { Value = ProgressionByStats });
+        cmd.Parameters.AddWithValue("are_objectives_completed", AreObjectivesCompleted);
+        cmd.Parameters.AddWithValue("current_objective_id", CurrentObjectiveId);
+        cmd.Parameters.AddWithValue("current_objective_index", CurrentObjectiveIndex);
+        cmd.Parameters.AddWithValue("is_premium_unlocked", IsPremiumUnlocked);
+        cmd.Parameters.AddWithValue("team_id", TeamId);
+        cmd.Parameters.AddWithValue("last_contribution", LastContribution);
+        cmd.Parameters.AddWithValue("is_bundle_purchased", IsBundlePurchased);
+        cmd.Parameters.AddWithValue("num_levels_purchased", NumLevelsPurchased);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public virtual bool Equals(ProgressionTrackingItem? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return InstanceId == other.InstanceId
+            && CatalogId == other.CatalogId
+            && OwningPlayerId == other.OwningPlayerId
+            && Viewed == other.Viewed
+            && ProgressionByStats.SequenceEqual(other.ProgressionByStats)
+            && AreObjectivesCompleted == other.AreObjectivesCompleted
+            && CurrentObjectiveId == other.CurrentObjectiveId
+            && IsPremiumUnlocked == other.IsPremiumUnlocked
+            && TeamId == other.TeamId
+            && (LastContribution == null || LastContribution.Equals(other.LastContribution))
+            && IsBundlePurchased == other.IsBundlePurchased
+            && NumLevelsPurchased == other.NumLevelsPurchased;
+    }
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(InstanceId);
+        hash.Add(CatalogId);
+        hash.Add(OwningPlayerId);
+        hash.Add(Viewed);
+        hash.Add(ProgressionByStats);
+        hash.Add(AreObjectivesCompleted);
+        hash.Add(CurrentObjectiveId);
+        hash.Add(IsPremiumUnlocked);
+        hash.Add(TeamId);
+        hash.Add(LastContribution);
+        hash.Add(IsBundlePurchased);
+        hash.Add(NumLevelsPurchased);
+        return hash.ToHashCode();
     }
 }
 
