@@ -1,0 +1,1 @@
+SELECT * FROM weapon_loadouts WHERE loadout_id = @loadout_id LIMIT 1;

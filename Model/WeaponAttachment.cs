@@ -1,9 +1,17 @@
 ﻿using NpgsqlTypes;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
 public record class WeaponAttachment : IEquatable<WeaponAttachment>
 {
+    [SetsRequiredMembers]
+    public WeaponAttachment(Guid attachmentItemInstanceId, Guid attachmentItemCatalogId)
+    {
+        AttachmentItemInstanceId = attachmentItemInstanceId;
+        AttachmentItemCatalogId = attachmentItemCatalogId;
+    }
+
     [PgName("attachment_item_instance_id")]
     public required Guid AttachmentItemInstanceId { get; set; }
     [PgName("attachment_item_catalog_id")]
