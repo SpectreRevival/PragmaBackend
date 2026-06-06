@@ -87,5 +87,5 @@ CREATE TABLE IF NOT EXISTS player_config (
     enabled_graph_stats TEXT [] NOT NULL,
     muted_chat_contexts TEXT [] NOT NULL,
     input_bindings_version INT NOT NULL,
-    player_config_version INT NOT NULL
+    player_config_version BIGINT NOT NULL
 );
