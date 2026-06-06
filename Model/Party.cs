@@ -1,8 +1,10 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using Npgsql;
+using Persistence;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>
+public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEquatable<Party>
 {
     [SetsRequiredMembers]
     public Party(Guid partyId, PartyMember[] members, string inviteCode, string queuePool, string lobbyMode, string chatId, bool useTeamMMR, Int64 version) : base(version)
@@ -24,18 +26,72 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>
     public required string ChatId { get; set; }
     public required bool UseTeamMMR { get; set; }
 
-    public static Task<Party?> RetrieveFromDatabase(Guid key)
+    public static async Task<Party?> RetrieveFromDatabase(Guid key)
     {
-        throw new NotImplementedException();
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_party.sql");
+        cmd.Parameters.AddWithValue("party_id", key);
+        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        if (!await reader.ReadAsync())
+        {
+            return null;
+        }
+        return new Party(
+            await reader.GetFieldValueAsync<Guid>(0),
+            await reader.GetFieldValueAsync<PartyMember[]>(1),
+            await reader.GetFieldValueAsync<string>(2),
+            await reader.GetFieldValueAsync<string>(3),
+            await reader.GetFieldValueAsync<string>(4),
+            await reader.GetFieldValueAsync<string>(5),
+            await reader.GetFieldValueAsync<bool>(6),
+            await reader.GetFieldValueAsync<Int64>(7)
+        );
     }
 
     public Guid GetKey()
     {
-        throw new NotImplementedException();
+        return PartyId;
     }
 
-    public Task SyncToDatabase()
+    public async Task SyncToDatabase()
     {
-        throw new NotImplementedException();
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_party.sql");
+        cmd.Parameters.AddWithValue("party_id", PartyId);
+        cmd.Parameters.AddWithValue("members", Members);
+        cmd.Parameters.AddWithValue("invite_code", InviteCode);
+        cmd.Parameters.AddWithValue("queue_pool", QueuePool);
+        cmd.Parameters.AddWithValue("lobby_mode", LobbyMode);
+        cmd.Parameters.AddWithValue("chat_id", ChatId);
+        cmd.Parameters.AddWithValue("use_team_mmr", UseTeamMMR);
+        cmd.Parameters.AddWithValue("version", Version);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public virtual bool Equals(Party? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return PartyId == other.PartyId
+            && Members.SequenceEqual(other.Members)
+            && InviteCode == other.InviteCode
+            && QueuePool == other.QueuePool
+            && LobbyMode == other.LobbyMode
+            && ChatId == other.ChatId
+            && UseTeamMMR == other.UseTeamMMR
+            && Version == other.Version;
+    }
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(PartyId);
+        hash.Add(Members);
+        hash.Add(InviteCode);
+        hash.Add(QueuePool);
+        hash.Add(LobbyMode);
+        hash.Add(ChatId);
+        hash.Add(UseTeamMMR);
+        hash.Add(Version);
+        return hash.ToHashCode();
     }
 }

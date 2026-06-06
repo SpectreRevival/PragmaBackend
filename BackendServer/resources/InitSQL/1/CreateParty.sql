@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS parties (
     lobby_mode TEXT NOT NULL,
     chat_id TEXT NOT NULL,
     use_team_mmr BOOL NOT NULL,
+	party_version BIGINT NOT NULL,
 
     CONSTRAINT verify_party_members CHECK (
         all_party_members_nonnull(members)

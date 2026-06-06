@@ -6,7 +6,8 @@ BEGIN
 			is_ready BOOL,
 			is_leader BOOL,
 			preferred_team TEXT,
-			ranked_mode_unlocked BOOL
+			ranked_mode_unlocked BOOL,
+			party_member_version BIGINT
 		);
 	END IF;
 END

@@ -45,6 +45,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         builder.MapComposite<ResponseCurve>("responsecurve");
         builder.MapComposite<LookSettings>("looksettings");
         builder.MapComposite<LookConfig>("lookconfig");
+        builder.MapComposite<PartyMember>("partymember");
         _dataSource = builder.Build();
         while (true)
         {
