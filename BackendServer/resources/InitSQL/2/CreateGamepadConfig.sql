@@ -1,4 +1,4 @@
-﻿CREATE TABLE IF NOT EXISTS gamepad_config (
+CREATE TABLE IF NOT EXISTS gamepad_config (
     player_id UUID PRIMARY KEY,
     input_scheme_index INT NOT NULL,
     gamepad_glyph_index INT NOT NULL,
@@ -25,7 +25,7 @@
     dead_zone_look_amount TEXT NOT NULL,
     custom_dead_zone_look_amount DOUBLE PRECISION NOT NULL,
     walk_run_deflection_threshold DOUBLE PRECISION NOT NULL,
-    gamepad_config_version INT NOT NULL,
+    gamepad_config_version BIGINT NOT NULL,
 
     CONSTRAINT verify_custom_look_config CHECK (
         (custom_look_config).display_name IS NOT NULL

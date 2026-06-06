@@ -11,8 +11,8 @@ END
 $$;
 
 CREATE TABLE IF NOT EXISTS outfit_loadouts (
-    player_id UUID PRIMARY KEY NOT NULL,
-    loadout_id UUID NOT NULL DEFAULT gen_random_uuid(),
+    loadout_id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    player_id UUID NOT NULL,
     head OUTFITDATA NOT NULL,
     hair OUTFITDATA NOT NULL,
     face_style OUTFITDATA NOT NULL,

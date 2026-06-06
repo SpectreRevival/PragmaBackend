@@ -39,6 +39,12 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         builder.MapComposite<WeaponAttachment>("weaponattachment");
         builder.MapComposite<WeaponData>("weapondata");
         builder.MapComposite<DisplayName>("displayname");
+        builder.MapComposite<OutfitData>("outfitdata");
+        builder.MapComposite<AlterationChannel>("alterationchannel");
+        builder.MapEnum<PlayerBasicPresence>("playerbasicpresence");
+        builder.MapComposite<ResponseCurve>("responsecurve");
+        builder.MapComposite<LookSettings>("looksettings");
+        builder.MapComposite<LookConfig>("lookconfig");
         _dataSource = builder.Build();
         while (true)
         {

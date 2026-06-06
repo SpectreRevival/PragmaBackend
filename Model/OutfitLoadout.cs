@@ -1,7 +1,23 @@
-﻿namespace Model;
+﻿using Npgsql;
+using Persistence;
+using System.Diagnostics.CodeAnalysis;
 
-public record class OutfitLoadout : IDatabaseSyncable<OutfitLoadout, Guid>
+namespace Model;
+
+public record class OutfitLoadout : IDatabaseSyncable<OutfitLoadout, Guid>, IEquatable<OutfitLoadout>
 {
+    [SetsRequiredMembers]
+    public OutfitLoadout(Guid playerId, Guid loadoutId, OutfitData head, OutfitData hair, OutfitData faceStyle, OutfitData faceAccessory, OutfitData outfit)
+    {
+        PlayerId = playerId;
+        LoadoutId = loadoutId;
+        Head = head ?? throw new ArgumentNullException(nameof(head));
+        Hair = hair ?? throw new ArgumentNullException(nameof(hair));
+        FaceStyle = faceStyle ?? throw new ArgumentNullException(nameof(faceStyle));
+        FaceAccessory = faceAccessory ?? throw new ArgumentNullException(nameof(faceAccessory));
+        Outfit = outfit ?? throw new ArgumentNullException(nameof(outfit));
+    }
+
     public required Guid PlayerId { get; set; }
     public required Guid LoadoutId { get; set; }
     public required OutfitData Head { get; set; }
@@ -10,18 +26,68 @@ public record class OutfitLoadout : IDatabaseSyncable<OutfitLoadout, Guid>
     public required OutfitData FaceAccessory { get; set; }
     public required OutfitData Outfit { get; set; }
 
-    public static Task<OutfitLoadout?> RetrieveFromDatabase(Guid key)
+    public static async Task<OutfitLoadout?> RetrieveFromDatabase(Guid key)
     {
-        throw new NotImplementedException();
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_outfit_loadout.sql");
+        cmd.Parameters.AddWithValue("loadout_id", key);
+        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        if (!await reader.ReadAsync())
+        {
+            return null;
+        }
+        return new OutfitLoadout(
+            await reader.GetFieldValueAsync<Guid>(1),
+            await reader.GetFieldValueAsync<Guid>(0),
+            await reader.GetFieldValueAsync<OutfitData>(2),
+            await reader.GetFieldValueAsync<OutfitData>(3),
+            await reader.GetFieldValueAsync<OutfitData>(4),
+            await reader.GetFieldValueAsync<OutfitData>(5),
+            await reader.GetFieldValueAsync<OutfitData>(6)
+        );
     }
 
     public Guid GetKey()
     {
-        throw new NotImplementedException();
+        return LoadoutId;
     }
 
-    public Task SyncToDatabase()
+    public async Task SyncToDatabase()
     {
-        throw new NotImplementedException();
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_outfit_loadout.sql");
+        cmd.Parameters.AddWithValue("loadout_id", LoadoutId);
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("head", Head);
+        cmd.Parameters.AddWithValue("hair", Hair);
+        cmd.Parameters.AddWithValue("face_style", FaceStyle);
+        cmd.Parameters.AddWithValue("face_accessory", FaceAccessory);
+        cmd.Parameters.AddWithValue("outfit", Outfit);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public virtual bool Equals(OutfitLoadout? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return LoadoutId == other.LoadoutId
+            && PlayerId == other.PlayerId
+            && Head.Equals(other.Head)
+            && Hair.Equals(other.Hair)
+            && FaceStyle.Equals(other.FaceStyle)
+            && FaceAccessory.Equals(other.FaceAccessory)
+            && Outfit.Equals(other.Outfit);
+    }
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(LoadoutId);
+        hash.Add(PlayerId);
+        hash.Add(Hair);
+        hash.Add(Head);
+        hash.Add(FaceStyle);
+        hash.Add(FaceAccessory);
+        hash.Add(Outfit);
+        return hash.ToHashCode();
     }
 }

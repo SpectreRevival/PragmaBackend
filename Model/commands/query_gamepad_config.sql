@@ -1,0 +1,1 @@
+SELECT * FROM gamepad_config WHERE player_id = @player_id LIMIT 1;

@@ -1,0 +1,1 @@
+SELECT * FROM stackable_items WHERE instance_id = @instance_id LIMIT 1;
