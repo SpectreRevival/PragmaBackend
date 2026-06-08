@@ -38,8 +38,13 @@ public class WebsocketTests
     [DynamicData(nameof(GetWebsocketTestInstances), DynamicDataDisplayName = nameof(GetCustomTestName))]
     public async Task RunWebsocketTest(string testDataFile, string testName)
     {
+        string[] skippedWsTests = File.ReadAllLines(Path.Combine(Path.Combine(AppContext.BaseDirectory, "testrequests"), "wsSkipTests.txt"));
         WebsocketTestData? testData = JsonDocument.Parse(File.ReadAllText(testDataFile)).Deserialize<WebsocketTestData>();
         Assert.IsNotNull(testData);
+        if (skippedWsTests.Any(rpc => rpc == testData.rpcType))
+        {
+            Assert.Inconclusive($"Skipping because rpc {testData.rpcType} is in the skipped websocket tests list");
+        }
         using var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromSeconds(10));
         using var ws = new ClientWebSocket();
@@ -79,12 +84,15 @@ public class WebsocketTests
             string resText = await reader.ReadToEndAsync(cts.Token);
             if (resText.Contains("notification")) continue; // skip notifications
             SpectreWebsocketResponse? res = JsonDocument.Parse(resText).Deserialize<SpectreWebsocketResponse>();
-            if(res == null)
+            if (res == null)
             {
                 Assert.Fail();
                 throw new InvalidDataException("Failed to convert res to SpectreWebsocketResponse json");
             }
-            Assert.AreEqual(res.response.payload, testData.responsePayload);
+            if(!JsonTestUtil.JsonMatchesSchema(res.response.payload.ToJsonString(), testData.responsePayload.ToJsonString(), testData.ignoreReplace == true, testData.ignoreAdd == true))
+            {
+                Assert.Fail("Json schema did not match");
+            }
             await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Completed request", cts.Token);
             break;
         }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Packets;
+using Packets.Processors;
 using Persistence;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
@@ -89,6 +90,8 @@ backendApp.Map("{*path}", async (HttpContext context, string? path) =>
 });
 
 HTTPPacketHandler.InstantiateSingletons();
+StaticHTTPResponder.InstantiateResponders();
+StaticWebsocketResponder.InstantiateResponders();
 
 try
 {

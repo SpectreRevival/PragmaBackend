@@ -248,12 +248,15 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
             && CatalogId == other.CatalogId
             && OwningPlayerId == other.OwningPlayerId
             && Viewed == other.Viewed
-            && ProgressionByStats.SequenceEqual(other.ProgressionByStats)
+            && ProgressionByStats.Count == other.ProgressionByStats.Count
+            && !ProgressionByStats.Except(other.ProgressionByStats).Any()
             && AreObjectivesCompleted == other.AreObjectivesCompleted
             && CurrentObjectiveId == other.CurrentObjectiveId
+            && CurrentObjectiveIndex == other.CurrentObjectiveIndex
             && IsPremiumUnlocked == other.IsPremiumUnlocked
             && TeamId == other.TeamId
-            && (LastContribution == null || LastContribution.Equals(other.LastContribution))
+            && (LastContribution is null && other.LastContribution is null)
+|| (LastContribution is not null && LastContribution.Equals(other.LastContribution))
             && IsBundlePurchased == other.IsBundlePurchased
             && NumLevelsPurchased == other.NumLevelsPurchased;
     }

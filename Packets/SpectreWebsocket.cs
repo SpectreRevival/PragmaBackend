@@ -18,13 +18,6 @@ public class SpectreWebsocket
     private Int32 sequenceId = 0;
     private readonly SemaphoreSlim sendLock = new(1, 1);
     private static readonly Int32 MAX_BUFFER_SIZE = 32 * 1024 * 1024;
-    private static readonly JsonFormatter outFormatter = new(
-        new JsonFormatter.Settings(true)
-        .WithFormatDefaultValues(true)
-        .WithFormatEnumsAsIntegers(true)
-        .WithIndentation("")
-        .WithPreserveProtoFieldNames(true)
-    );
 
     [SetsRequiredMembers]
     public SpectreWebsocket(HttpContext upgradeRequest, WebSocket webSocket)
@@ -81,10 +74,9 @@ public class SpectreWebsocket
                         continue;
                     } else
                     {
-                        IMessage messageOut = await processor.ProcessPacket(wsReq, this);
+                        SpectreWebsocketMessage messageOut = await processor.ProcessPacket(wsReq, this);
                         await sendLock.WaitAsync(cancellationToken);
-                        string payloadString = outFormatter.Format(messageOut);
-                        string fullMessage = "{\"sequenceNumber\":" + sequenceId.ToString() + ",\"response\":{\"requestId\":" + wsReq.RequestId.ToString() + ",\"type\":\"" + wsReq.RpcType.GetResponseType().ToString() + "\",\"payload\":" + payloadString + "}}";
+                        string fullMessage = "{\"sequenceNumber\":" + sequenceId.ToString() + ",\"response\":{\"requestId\":" + wsReq.RequestId.ToString() + ",\"type\":\"" + wsReq.RpcType.GetResponseType().ToString() + "\",\"payload\":" + messageOut.GetData() + "}}";
                         Socket.SendAsync(Encoding.UTF8.GetBytes(fullMessage), WebSocketMessageType.Text, true, cancellationToken);
                         sequenceId++;
                         sendLock.Release();

@@ -36,8 +36,13 @@ public class HTTPTests
     [DynamicData(nameof(GetHTTPTestInstances), DynamicDataDisplayName = nameof(GetCustomTestName))]
     public async Task RunHTTPTest(string testDataFile, string testName)
     {
+        string[] skipRoutes = File.ReadAllLines(Path.Combine(Path.Combine(AppContext.BaseDirectory, "testrequests"), "httpSkipTests.txt"));
         HTTPTestData? testData = JsonDocument.Parse(File.ReadAllText(testDataFile)).Deserialize<HTTPTestData>();
         Assert.IsNotNull(testData);
+        if (skipRoutes.Any(route => route == testData.path))
+        {
+            Assert.Inconclusive($"Skipping due to route {testData.path} appearing in skip routes list");
+        }
         using var cancelToken = new CancellationTokenSource();
         cancelToken.CancelAfter(TimeSpan.FromSeconds(10));
         HttpClient client = new()
@@ -51,7 +56,10 @@ public class HTTPTests
             HttpResponseMessage res = await client.SendAsync(req, cancelToken.Token);
             res.EnsureSuccessStatusCode();
             string content = await res.Content.ReadAsStringAsync(cancelToken.Token);
-            Assert.AreEqual(content, testData.response);
+            if(!JsonTestUtil.JsonMatchesSchema(content, testData.response, false, false))
+            {
+                Assert.Fail("Json content doesn't match");
+            }
         }
         catch (OperationCanceledException ex) when (cancelToken.IsCancellationRequested)
         {

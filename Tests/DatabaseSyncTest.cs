@@ -68,6 +68,12 @@ public class DatabaseSyncTest()
         if (t.IsArray)
         {
             var elementType = t.GetElementType();
+            if(elementType == typeof(PartyMember))
+            {
+                var members = Array.CreateInstance(typeof(PartyMember), 1);
+                members.SetValue(new PartyMember(Guid.NewGuid(), (bool)CreateArgument(typeof(bool)), true, (string)CreateArgument(typeof(string)), (bool)CreateArgument(typeof(bool)), (long)CreateArgument(typeof(long))), 0);
+                return members;
+            }
             var arr = Array.CreateInstance(elementType, 3);
             for (int i = 0; i < arr.Length; i++)
                 arr.SetValue(CreateArgument(elementType), i);
@@ -153,5 +159,7 @@ public class DatabaseSyncTest()
         dynamic task = fetchMethod.Invoke(null, new object[] { key });
         var fetched = await task;
         Assert.AreEqual(fetched, obj1);
+        Assert.AreNotEqual(fetched, obj2);
+        Assert.AreNotEqual(fetched, obj3);
     }
 }
