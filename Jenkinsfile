@@ -87,7 +87,7 @@ pipeline {
                 axes {
                     axis {
                         name 'OS'
-                        values 'windows', 'linux'
+                        values 'linux'
                     }
                 }
                 agent { label "docker-${OS}" }
