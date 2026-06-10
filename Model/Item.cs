@@ -7,22 +7,22 @@ namespace Model;
 public abstract record class Item
 {
     [SetsRequiredMembers]
-    protected Item(Guid owningPlayerId, Guid catalogId, Guid instanceId)
+    protected Item(Guid owningPlayerId, string catalogId, Guid instanceId)
     {
         OwningPlayerId = owningPlayerId;
-        CatalogId = catalogId;
+        CatalogId = catalogId ?? throw new ArgumentNullException(nameof(catalogId));
         InstanceId = instanceId;
     }
 
     public required Guid OwningPlayerId { get; set; }
-    public required Guid CatalogId { get; set; }
+    public required string CatalogId { get; set; }
     public required Guid InstanceId { get; set; }
 }
 
 public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>, IEquatable<StackableItem>
 {
     [SetsRequiredMembers]
-    public StackableItem(Guid owningPlayerId, Guid catalogId, Guid instanceId, Int64 amount) : base(owningPlayerId, catalogId, instanceId)
+    public StackableItem(Guid owningPlayerId, string catalogId, Guid instanceId, Int64 amount) : base(owningPlayerId, catalogId, instanceId)
     {
         Amount = amount;
     }
@@ -40,7 +40,7 @@ public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>
         }
         return new StackableItem(
             await reader.GetFieldValueAsync<Guid>(3),
-            await reader.GetFieldValueAsync<Guid>(1),
+            await reader.GetFieldValueAsync<string>(1),
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<Int64>(2)
         );
@@ -86,7 +86,7 @@ public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>
 public abstract record class InstancedItem : Item
 {
     [SetsRequiredMembers]
-    protected InstancedItem(Guid owningPlayerId, Guid catalogId, Guid instanceId, bool viewed) : base(owningPlayerId, catalogId, instanceId)
+    protected InstancedItem(Guid owningPlayerId, string catalogId, Guid instanceId, bool viewed) : base(owningPlayerId, catalogId, instanceId)
     {
         Viewed = viewed;
     }
@@ -97,7 +97,7 @@ public abstract record class InstancedItem : Item
 public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<CustomizedInstancedItem, Guid>, IEquatable<CustomizedInstancedItem>
 {
     [SetsRequiredMembers]
-    public CustomizedInstancedItem(Guid owningPlayerId, Guid catalogId, Guid instanceId, bool viewed, AlterationChannel[] alterationChannels) : base(owningPlayerId, catalogId, instanceId, viewed)
+    public CustomizedInstancedItem(Guid owningPlayerId, string catalogId, Guid instanceId, bool viewed, AlterationChannel[] alterationChannels) : base(owningPlayerId, catalogId, instanceId, viewed)
     {
         AlterationChannels = alterationChannels;
     }
@@ -115,7 +115,7 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
         }
         return new CustomizedInstancedItem(
             await reader.GetFieldValueAsync<Guid>(2),
-            await reader.GetFieldValueAsync<Guid>(1),
+            await reader.GetFieldValueAsync<string>(1),
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<bool>(3),
             await reader.GetFieldValueAsync<AlterationChannel[]>(4)
@@ -165,7 +165,7 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
 public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<ProgressionTrackingItem, Guid>, IEquatable<ProgressionTrackingItem>
 {
     [SetsRequiredMembers]
-    public ProgressionTrackingItem(Guid owningPlayerId, Guid catalogId, Guid instanceId, bool viewed, Dictionary<string, string> progressionByStats, bool areObjectivesCompleted, Guid currentObjectiveId, int currentObjectiveIndex, bool isPremiumUnlocked, Guid? teamId, ObjectiveContribution? lastContribution, bool isBundlePurchased, int numLevelsPurchased) : base(owningPlayerId, catalogId, instanceId, viewed)
+    public ProgressionTrackingItem(Guid owningPlayerId, string catalogId, Guid instanceId, bool viewed, Dictionary<string, string> progressionByStats, bool areObjectivesCompleted, Guid currentObjectiveId, int currentObjectiveIndex, bool isPremiumUnlocked, Guid? teamId, ObjectiveContribution? lastContribution, bool isBundlePurchased, int numLevelsPurchased) : base(owningPlayerId, catalogId, instanceId, viewed)
     {
         ProgressionByStats = progressionByStats ?? throw new ArgumentNullException(nameof(progressionByStats));
         AreObjectivesCompleted = areObjectivesCompleted;
@@ -199,7 +199,7 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
         }
         return new ProgressionTrackingItem(
             await reader.GetFieldValueAsync<Guid>(2),
-            await reader.GetFieldValueAsync<Guid>(1),
+            await reader.GetFieldValueAsync<string>(1),
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<bool>(3),
             await reader.GetFieldValueAsync<Dictionary<string,string>>(4),
@@ -282,7 +282,7 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
 public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<SponsorUnlockTrackerItem, Guid>, IEquatable<SponsorUnlockTrackerItem>
 {
     [SetsRequiredMembers]
-    public SponsorUnlockTrackerItem(Guid owningPlayerId, Guid catalogId, Guid instanceId, bool viewed, string sponsorName) : base(owningPlayerId, catalogId, instanceId, viewed)
+    public SponsorUnlockTrackerItem(Guid owningPlayerId, string catalogId, Guid instanceId, bool viewed, string sponsorName) : base(owningPlayerId, catalogId, instanceId, viewed)
     {
         SponsorName = sponsorName;
     }
@@ -300,7 +300,7 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
         }
         return new SponsorUnlockTrackerItem(
             await reader.GetFieldValueAsync<Guid>(2),
-            await reader.GetFieldValueAsync<Guid>(1),
+            await reader.GetFieldValueAsync<string>(1),
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<bool>(3),
             await reader.GetFieldValueAsync<string>(4)
