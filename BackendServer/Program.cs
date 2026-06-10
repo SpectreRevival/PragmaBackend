@@ -69,6 +69,7 @@ backendApp.Map("{*path}", async (HttpContext context, string? path) =>
 });
 
 HTTPPacketHandler.InstantiateSingletons();
+WebsocketPacketProcessor.InstantiateSingletons();
 StaticHTTPResponder.InstantiateResponders();
 StaticWebsocketResponder.InstantiateResponders();
 
