@@ -1,10 +1,12 @@
 ﻿using Npgsql;
 using Persistence;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class GamepadConfig : VersionedData, IDatabaseSyncable<GamepadConfig, Guid>, IEquatable<GamepadConfig>
+public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<GamepadConfig, Guid>, IEquatable<GamepadConfig>
 {
     [SetsRequiredMembers]
     public GamepadConfig(Guid playerId, int inputSchemeIndex, int gamepadGlyphIndex, int lookPresetIndex, LookConfig customLookConfig, ResponseCurve customResponseCurve, bool invertLook, int controllerFeedbackValue, bool turnAccel, bool aimAssist, int responseCurveIndex, double responseCurveArcDeg, double responseCurveSlope, double responseCurveLinearBlendPow, double customScaleADS, bool toggleCrouch, bool toggleWalk, bool togglePlantDefuse, bool toggleADS, string endWalkWhenFiringBehavior, double aDSTriggerThreshold, string deadZoneMoveAmount, double customDeadZoneMoveAmount, string deadZoneLookAmount, double customDeadZoneLookAmount, double walkRunDeflectionThreshold, Int64 version) : base(version)
@@ -205,5 +207,16 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncable<GamepadConf
         hash.Add(CustomDeadZoneLookAmount);
         hash.Add(WalkRunDeflectionThreshold);
         return hash.ToHashCode();
+    }
+
+    public static GamepadConfig CreateDefault(Guid playerId)
+    {
+        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "GamepadConfig.json")));
+        defaultJson[nameof(PlayerId)] = playerId;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        return defaultJson.Deserialize<GamepadConfig>(options);
     }
 }

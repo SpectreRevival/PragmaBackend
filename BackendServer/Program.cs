@@ -35,27 +35,6 @@ IConfiguration config = new ConfigurationBuilder()
         .Build();
 PostgresDatabase.InstantiateDatabase(config);
 
-int currentScriptInitializationLevel = 0;
-string nextDirPath = Path.Combine(Path.Combine(Path.Combine(AppContext.BaseDirectory, "resources"), "InitSQL"), currentScriptInitializationLevel.ToString());
-while (Directory.Exists(nextDirPath))
-{
-    Log.Information($"Beginning script initialization level {currentScriptInitializationLevel}");
-    foreach (string filepath in Directory.EnumerateFiles(nextDirPath))
-    {
-        Log.Information($"Executing sql script from {filepath}");
-        string sqlScript = File.ReadAllText(filepath);
-        try
-        {
-            PostgresDatabase.Get().GetRaw().CreateCommand(sqlScript).ExecuteNonQuery();
-        } catch (Exception ex)
-        {
-            Log.Error($"Exception thrown while executing sql script at {filepath}: {ex.Message}");
-        }
-    }
-    currentScriptInitializationLevel++;
-    nextDirPath = Path.Combine(Path.Combine(Path.Combine(AppContext.BaseDirectory, "resources"), "InitSQL"), currentScriptInitializationLevel.ToString());
-}
-
 var builder = WebApplication.CreateBuilder();
 builder.Configuration.SetBasePath(AppContext.BaseDirectory);
 builder.Configuration.AddJsonFile(Path.Combine("resources", "env.json"), optional: false, reloadOnChange: true);

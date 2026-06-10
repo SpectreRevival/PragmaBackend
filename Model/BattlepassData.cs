@@ -1,10 +1,12 @@
 ﻿using Npgsql;
 using Persistence;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class BattlepassData : IDatabaseSyncable<BattlepassData, Guid>
+public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Guid>
 {
     [SetsRequiredMembers]
     public BattlepassData(Guid playerId, Guid[] activeBattlePasses, Guid[] battlepassQuests, Guid[] activeBattlepassQuests, int battlepassLevel)
@@ -74,5 +76,12 @@ public record class BattlepassData : IDatabaseSyncable<BattlepassData, Guid>
         hash.Add(BattlepassQuests);
         hash.Add(ActiveBattlePasses);
         return hash.ToHashCode();
+    }
+
+    public static BattlepassData CreateDefault(Guid playerId)
+    {
+        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "BattlepassData.json")));
+        defaultJson[nameof(PlayerId)] = playerId;
+        return defaultJson.Deserialize<BattlepassData>();
     }
 }

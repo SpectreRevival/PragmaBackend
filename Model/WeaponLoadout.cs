@@ -1,10 +1,12 @@
 ﻿using Npgsql;
 using Persistence;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class WeaponLoadout : IDatabaseSyncable<WeaponLoadout, Guid>, IEquatable<WeaponLoadout>
+public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid>, IEquatable<WeaponLoadout>
 {
     [SetsRequiredMembers]
     public WeaponLoadout(Guid playerId, Guid loadoutId, WeaponData semiAutoPistol, WeaponData suppressedPistol, WeaponData autoPistol, WeaponData highcalPistol, WeaponData heavyShotgun, WeaponData autoShotgun, WeaponData tacticalSMG, WeaponData rapidfireSMG, WeaponData suppressedSMG, WeaponData standardAR, WeaponData semiAutoAR, WeaponData burstAR, WeaponData tacticalAR, WeaponData suppressedAR, WeaponData heavyAR, WeaponData highcalMG, WeaponData rapidfireMG, WeaponData semiAutoSniper, WeaponData boltActionSniper, WeaponData melee)
@@ -177,5 +179,18 @@ public record class WeaponLoadout : IDatabaseSyncable<WeaponLoadout, Guid>, IEqu
         hash.Add(BoltActionSniper);
         hash.Add(Melee);
         return hash.ToHashCode();
+    }
+
+    public static WeaponLoadout CreateDefault(Guid playerId)
+    {
+        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "WeaponLoadout.json")));
+        defaultJson[nameof(PlayerId)] = playerId;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        WeaponLoadout defaultValue = defaultJson.Deserialize<WeaponLoadout>(options);
+        defaultValue.LoadoutId = Guid.NewGuid();
+        return defaultValue;
     }
 }

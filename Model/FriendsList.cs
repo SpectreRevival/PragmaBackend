@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class FriendsList : VersionedData, IDatabaseSyncable<FriendsList, Guid>, IEquatable<FriendsList>
+public record class FriendsList : VersionedData, IDatabaseSyncableDefault<FriendsList, Guid>, IEquatable<FriendsList>
 {
     [SetsRequiredMembers]
     public FriendsList(Guid playerId, bool acceptingFriendInvites, Guid[] friends, Guid[] blocked, Guid[] sentFriendInvites, Guid[] receivedFriendInvites, Int64 version) : base(version)
@@ -18,11 +18,11 @@ public record class FriendsList : VersionedData, IDatabaseSyncable<FriendsList, 
     }
 
     public required Guid PlayerId { get; set; }
-    public required bool AcceptingFriendInvites { get; set; } = true;
-    public required Guid[] Friends { get; set; } = [];
-    public required Guid[] Blocked { get; set; } = [];
-    public required Guid[] SentFriendInvites { get; set; } = [];
-    public required Guid[] ReceivedFriendInvites { get; set; } = [];
+    public required bool AcceptingFriendInvites { get; set; }
+    public required Guid[] Friends { get; set; }
+    public required Guid[] Blocked { get; set; }
+    public required Guid[] SentFriendInvites { get; set; }
+    public required Guid[] ReceivedFriendInvites { get; set; }
 
     public static async Task<FriendsList?> RetrieveFromDatabase(Guid key)
     {
@@ -87,5 +87,10 @@ public record class FriendsList : VersionedData, IDatabaseSyncable<FriendsList, 
         hash.Add(ReceivedFriendInvites);
         hash.Add(Version);
         return hash.ToHashCode();
+    }
+
+    public static FriendsList CreateDefault(Guid key)
+    {
+        return new FriendsList(key, true, [], [], [], [], 0);
     }
 }

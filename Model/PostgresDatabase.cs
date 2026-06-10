@@ -11,6 +11,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
 {
     private readonly NpgsqlDataSource _dataSource;
     private static PostgresDatabase? inst;
+    private readonly IConfiguration config;
 
     public PostgresDatabase(IConfiguration config)
     {
@@ -19,6 +20,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         string user = config["DB_USERNAME"] ?? throw new InvalidDataException("No username for db provided");
         string password = config["DB_PASSWORD"] ?? throw new InvalidDataException("No password for db provided");
         string dbName = config["DB_DATABASE"] ?? throw new InvalidDataException("No db name provided");
+        this.config = config;
 
         var ConnStr = new NpgsqlConnectionStringBuilder
         {
@@ -29,6 +31,33 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
             Pooling = false,
             IncludeErrorDetail = config["SENSITIVE_LOGGING"] == "true"
         };
+
+        // We have to do the type initialization before so when NpgsqlDataSourceBuilder is created the types are correct (it fetches them into a local cache on creation)
+        using (var conn = new NpgsqlConnection(ConnStr.ConnectionString))
+        {
+            conn.Open();
+            int currentScriptInitializationLevel = 0;
+            string nextDirPath = Path.Combine(AppContext.BaseDirectory, "commands", "init", currentScriptInitializationLevel.ToString());
+            while (Directory.Exists(nextDirPath))
+            {
+                Log.Information($"Beginning script initialization level {currentScriptInitializationLevel}");
+                foreach (string filepath in Directory.EnumerateFiles(nextDirPath))
+                {
+                    Log.Information($"Executing sql script from {filepath}");
+                    string sqlScript = File.ReadAllText(filepath);
+                    try
+                    {
+                        new NpgsqlCommand(sqlScript, conn).ExecuteNonQuery();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Exception thrown while executing sql script at {filepath}: {ex.Message}");
+                    }
+                }
+                currentScriptInitializationLevel++;
+                nextDirPath = Path.Combine(AppContext.BaseDirectory, "commands", "init", currentScriptInitializationLevel.ToString());
+            }
+        }
         var builder = new NpgsqlDataSourceBuilder(ConnStr.ConnectionString);
         builder.MapComposite<RGBAColor>("rgbacolor");
         builder.MapComposite<CrosshairDot>("crosshairdot");
@@ -116,5 +145,10 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
     {
         Dispose();
         inst = null;
+    }
+
+    public IConfiguration GetConfiguration()
+    {
+        return config;
     }
 }

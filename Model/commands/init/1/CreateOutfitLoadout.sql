@@ -4,7 +4,7 @@ BEGIN
 		CREATE TYPE OutfitData AS (
 			item_instance_id UUID,
 			alteration_data ActiveAlterationData[],
-			item_catalog_id UUID
+			item_catalog_id TEXT
 		);
 	END IF;
 END

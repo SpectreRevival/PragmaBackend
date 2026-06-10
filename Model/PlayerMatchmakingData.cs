@@ -6,7 +6,7 @@ namespace Model;
 
 // Ohm - Intentionally removed country, subdivision, primary/secondary geographic region and address fields from this struct since we aren't going to store those for privacy reasons.
 
-public record class PlayerMatchmakingData : IDatabaseSyncable<PlayerMatchmakingData, Guid>, IEquatable<PlayerMatchmakingData>
+public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatchmakingData, Guid>, IEquatable<PlayerMatchmakingData>
 {
     [SetsRequiredMembers]
     public PlayerMatchmakingData(Guid playerId, double casualMMR, double rankedMMR, long soloRankPoints, long casualMatchesPlayed, long rankedMatchesPlayed, long casualMatchesPlayedSeasonal, long rankedMatchesPlayedSeasonal, string[] rankedPlacementMatches, long currentSoloRank, long highestTeamRank, long casualMatchesWon, long rankedMatchesWon, DateTimeOffset priorityMatchmakingUntil, DateTimeOffset restrictMatchmakingUntil, string mapHistory)
@@ -30,21 +30,21 @@ public record class PlayerMatchmakingData : IDatabaseSyncable<PlayerMatchmakingD
     }
 
     public required Guid PlayerId { get; set; }
-    public required double CasualMMR { get; set; } = 0.0d;
-    public required double RankedMMR { get; set; } = 0.0d;
-    public required Int64 SoloRankPoints { get; set; } = 0;
-    public required Int64 CasualMatchesPlayed { get; set; } = 0;
-    public required Int64 RankedMatchesPlayed { get; set; } = 0;
-    public required Int64 CasualMatchesPlayedSeasonal { get; set; } = 0;
-    public required Int64 RankedMatchesPlayedSeasonal { get; set; } = 0;
-    public required string[] RankedPlacementMatches { get; set; } = [];
-    public required Int64 CurrentSoloRank { get; set; } = 0;// Todo replace with enum
-    public required Int64 HighestTeamRank { get; set; } = 0;// same
-    public required Int64 CasualMatchesWon { get; set; } = 0;
-    public required Int64 RankedMatchesWon { get; set; } = 0;
-    public required DateTimeOffset PriorityMatchmakingUntil { get; set; } = DateTimeOffset.MinValue;
-    public required DateTimeOffset RestrictMatchmakingUntil { get; set; } = DateTimeOffset.MinValue;
-    public required string MapHistory { get; set; } = "";
+    public required double CasualMMR { get; set; }
+    public required double RankedMMR { get; set; }
+    public required Int64 SoloRankPoints { get; set; }
+    public required Int64 CasualMatchesPlayed { get; set; }
+    public required Int64 RankedMatchesPlayed { get; set; }
+    public required Int64 CasualMatchesPlayedSeasonal { get; set; }
+    public required Int64 RankedMatchesPlayedSeasonal { get; set; }
+    public required string[] RankedPlacementMatches { get; set; }
+    public required Int64 CurrentSoloRank { get; set; }// Todo replace with enum
+    public required Int64 HighestTeamRank { get; set; }// same
+    public required Int64 CasualMatchesWon { get; set; }
+    public required Int64 RankedMatchesWon { get; set; }
+    public required DateTimeOffset PriorityMatchmakingUntil { get; set; }
+    public required DateTimeOffset RestrictMatchmakingUntil { get; set; }
+    public required string MapHistory { get; set; }
 
     public static async Task<PlayerMatchmakingData?> RetrieveFromDatabase(Guid key)
     {
@@ -145,5 +145,10 @@ public record class PlayerMatchmakingData : IDatabaseSyncable<PlayerMatchmakingD
         hash.Add(RestrictMatchmakingUntil.ToUnixTimeMilliseconds());
         hash.Add(MapHistory);
         return hash.ToHashCode();
+    }
+
+    public static PlayerMatchmakingData CreateDefault(Guid key)
+    {
+        return new PlayerMatchmakingData(key, 0, 0, 0, 0, 0, 0, 0, [], 0, 0, 0, 0, DateTimeOffset.MinValue, DateTimeOffset.MinValue, "");
     }
 }

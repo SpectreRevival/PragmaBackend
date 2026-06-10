@@ -3,7 +3,7 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = lower('WeaponAttachment')) THEN
 		CREATE TYPE WeaponAttachment AS (
 			attachment_item_instance_id UUID,
-			attachment_item_catalog_id UUID
+			attachment_item_catalog_id TEXT
 		);
 	END IF;
 END
@@ -15,7 +15,7 @@ BEGIN
 		CREATE TYPE WeaponData AS (
 			item_instance_id UUID,
 			alteration_data ActiveAlterationData[],
-			item_catalog_id UUID,
+			item_catalog_id TEXT,
 			attachment WeaponAttachment
 		);
 	END IF;

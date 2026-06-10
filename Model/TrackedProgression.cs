@@ -1,6 +1,8 @@
 ﻿using Npgsql;
 using Persistence;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
@@ -23,7 +25,7 @@ public abstract record class TrackedProgression
     public required DateTimeOffset LastRolloverTimestamp { get; set; }
 }
 
-public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncable<TeamTrackedProgression, Guid>, IEquatable<TeamTrackedProgression>
+public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<TeamTrackedProgression, Guid>, IEquatable<TeamTrackedProgression>
 {
     [SetsRequiredMembers]
     public TeamTrackedProgression(Guid playerId, Guid[] activeDailyQuests, Guid[] activeWeeklyQuests, Guid[] activeEventQuests, DateTimeOffset lastRolloverTimestamp, Guid teamId) : base(playerId, activeDailyQuests, activeWeeklyQuests, activeEventQuests, lastRolloverTimestamp)
@@ -93,9 +95,20 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
         hash.Add(TeamId);
         return hash.ToHashCode();
     }
+
+    public static TeamTrackedProgression CreateDefault(Guid playerId)
+    {
+        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "TeamTrackedProgression.json")));
+        defaultJson[nameof(PlayerId)] = playerId;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        return defaultJson.Deserialize<TeamTrackedProgression>(options);
+    }
 }
 
-public record class IndividualTrackedProgression : TrackedProgression, IDatabaseSyncable<IndividualTrackedProgression, Guid>, IEquatable<IndividualTrackedProgression>
+public record class IndividualTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<IndividualTrackedProgression, Guid>, IEquatable<IndividualTrackedProgression>
 {
     [SetsRequiredMembers]
     public IndividualTrackedProgression(Guid playerId, Guid[] activeDailyQuests, Guid[] activeWeeklyQuests, Guid[] activeEventQuests, DateTimeOffset lastRolloverTimestamp, Guid activeEndorsement) : base(playerId, activeDailyQuests, activeWeeklyQuests, activeEventQuests, lastRolloverTimestamp)
@@ -164,5 +177,16 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
         hash.Add(LastRolloverTimestamp.ToUnixTimeMilliseconds());
         hash.Add(ActiveEndorsement);
         return hash.ToHashCode();
+    }
+
+    public static IndividualTrackedProgression CreateDefault(Guid playerId)
+    {
+        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "IndividualTrackedProgression.json")));
+        defaultJson[nameof(PlayerId)] = playerId;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        return defaultJson.Deserialize<IndividualTrackedProgression>(options);
     }
 }

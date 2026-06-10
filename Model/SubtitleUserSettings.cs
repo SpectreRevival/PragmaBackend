@@ -1,10 +1,12 @@
 ﻿using Npgsql;
 using Persistence;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class SubtitleUserSettings : VersionedData, IDatabaseSyncable<SubtitleUserSettings, Guid>, IEquatable<SubtitleUserSettings>
+public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefault<SubtitleUserSettings, Guid>, IEquatable<SubtitleUserSettings>
 {
     [SetsRequiredMembers]
     public SubtitleUserSettings(Guid playerId, int fontSize, double backgroundOpacity, string speakerQualifierDisplay, bool postPlayerSubtitles, bool postPlayerSubtitlesToChat, int namesToShowMask, Int64 version) : base(version)
@@ -93,5 +95,16 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncable<Subt
         hash.Add(NamesToShowMask);
         hash.Add(Version);
         return hash.ToHashCode();
+    }
+
+    public static SubtitleUserSettings CreateDefault(Guid playerId)
+    {
+        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "SubtitleUserSettings.json")));
+        defaultJson[nameof(PlayerId)] = playerId;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        return defaultJson.Deserialize<SubtitleUserSettings>(options);
     }
 }

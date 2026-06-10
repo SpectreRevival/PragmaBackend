@@ -1,10 +1,12 @@
 ﻿using Npgsql;
 using Persistence;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class ProfileData : IDatabaseSyncable<ProfileData, Guid>, IEquatable<ProfileData>
+public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, IEquatable<ProfileData>
 {
     [SetsRequiredMembers]
     public ProfileData(Guid playerId, DisplayName displayName, Guid bannerItemId, Guid preSprayItemId, Guid matchSprayItemId, Guid postSprayItemId, Guid attackerOutfitLoadoutId, Guid defenderOutfitLoadoutId, Guid attackerWeaponLoadoutId, Guid defenderWeaponLoadoutId, DateTimeOffset lastUpdated, DateTimeOffset nextNewDayRollover, DateTimeOffset lastLogin, int playerFlags, long crewScore, int currentSoloRank, int highestTeamRank, string divisionType, long inventoryVersion, Guid crewId, string accountIdProvider, string platformName, string providerAccountId, string crossplayPlatformKind, int gamesRemainingUntilCrewJoin)
@@ -197,5 +199,16 @@ public record class ProfileData : IDatabaseSyncable<ProfileData, Guid>, IEquatab
         hash.Add(CrossplayPlatformKind);
         hash.Add(GamesRemainingUntilCrewJoin);
         return hash.ToHashCode();
+    }
+
+    public static ProfileData CreateDefault(Guid playerId)
+    {
+        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ProfileData.json")));
+        defaultJson[nameof(PlayerId)] = playerId;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        return defaultJson.Deserialize<ProfileData>(options);
     }
 }

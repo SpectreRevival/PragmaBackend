@@ -24,7 +24,7 @@ public record class LegacyStatsDataKey
     public required LegacyStatsType StatsType { get; set; }
 }
 
-public record class LegacyStatsData : IDatabaseSyncable<LegacyStatsData, LegacyStatsDataKey>, IEquatable<LegacyStatsData>
+public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, LegacyStatsDataKey>, IEquatable<LegacyStatsData>
 {
     [SetsRequiredMembers]
     public LegacyStatsData(Guid playerId, LegacyStatsType statsType, long killCount, long deathCount, long aceCount, long dualityKillCount, long firstKillCount, long firstDeathCount, double kAST, double dualityRating, long impactCount, long totalMatchesPlayedCount, long fanCount, long winCount, long totalRoundsPlayedCount, long headshotsCount, long totalDamagingShotsCount, long totalDamageCount, string[] topSponsors, string[] topWeapons)
@@ -186,5 +186,10 @@ public record class LegacyStatsData : IDatabaseSyncable<LegacyStatsData, LegacyS
         hash.Add(TopSponsors);
         hash.Add(TopWeapons);
         return hash.ToHashCode();
+    }
+
+    public static LegacyStatsData CreateDefault(LegacyStatsDataKey key)
+    {
+        return new LegacyStatsData(key.PlayerId, key.StatsType, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, [], []);
     }
 }

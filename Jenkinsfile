@@ -130,6 +130,17 @@ pipeline {
                             }
                         }
                     }
+                    stage("Run default init tests"){
+			steps {
+				script {
+					if(isUnix()){
+						sh 'dotnet test --configuration Release --filter Name~TestDefaultInitialization'
+					} else {
+						bat 'dotnet test --configuration Release --filter Name~TestDefaultInitialization'
+					}
+				}
+			}
+		    }
                     stage("Run HTTP tests"){
                         steps {
                             script {

@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class PlayerPresence : IDatabaseSyncable<PlayerPresence, Guid>, IEquatable<PlayerPresence>
+public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Guid>, IEquatable<PlayerPresence>
 {
     [SetsRequiredMembers]
     public PlayerPresence(Guid playerId, PlayerBasicPresence basicStatus, DateTimeOffset lastUpdatedTime, int advancedPresenceType, string advancedPresenceContext)
@@ -78,6 +78,11 @@ public record class PlayerPresence : IDatabaseSyncable<PlayerPresence, Guid>, IE
         hash.Add(AdvancedPresenceType);
         hash.Add(AdvancedPresenceContext);
         return hash.ToHashCode();
+    }
+
+    public static PlayerPresence CreateDefault(Guid key)
+    {
+        return new PlayerPresence(key, PlayerBasicPresence.Offline, DateTimeOffset.MinValue, 0, "");
     }
 }
 

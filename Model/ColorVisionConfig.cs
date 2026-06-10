@@ -1,25 +1,38 @@
 ﻿using Npgsql;
 using Persistence;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class ColorVisionConfig : VersionedData, IDatabaseSyncable<ColorVisionConfig, Guid>, IEquatable<ColorVisionConfig>
+public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<ColorVisionConfig, Guid>, IEquatable<ColorVisionConfig>
 {
     [SetsRequiredMembers]
-    public ColorVisionConfig(Guid playerId, string colorVisionType, int severity, bool correctDeficiency, bool showCorrectDeficiency, bool comfortSwapEffect, bool customOutlineColor, RGBAColor outlineColor, RGBAColor outlineColorLower, double outlineThicknessScale, double outlineBrightnessScale, Int64 version) : base(version)
+    public ColorVisionConfig(Guid playerId, string colorVisionType, int severity, bool correctDeficiency, bool showCorrectDeficiency, bool useComfortSwapEffect, bool useCustomOutlineColor, RGBAColor outlineColor, RGBAColor outlineColorLower, double outlineThicknessScale, double outlineBrightnessScale, Int64 version) : base(version)
     {
         PlayerId = playerId;
         ColorVisionType = colorVisionType ?? throw new ArgumentNullException(nameof(colorVisionType));
         Severity = severity;
         CorrectDeficiency = correctDeficiency;
         ShowCorrectDeficiency = showCorrectDeficiency;
-        UseComfortSwapEffect = comfortSwapEffect;
-        UseCustomOutlineColor = customOutlineColor;
+        UseComfortSwapEffect = useComfortSwapEffect;
+        UseCustomOutlineColor = useCustomOutlineColor;
         OutlineColor = outlineColor;
         OutlineColorLower = outlineColorLower;
         OutlineThicknessScale = outlineThicknessScale;
         OutlineBrightnessScale = outlineBrightnessScale;
+    }
+
+    public static ColorVisionConfig CreateDefault(Guid playerId)
+    {
+        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ColorVisionConfig.json")));
+        defaultJson[nameof(PlayerId)] = playerId;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        return defaultJson.Deserialize<ColorVisionConfig>(options);
     }
 
     public required Guid PlayerId { get; set; }

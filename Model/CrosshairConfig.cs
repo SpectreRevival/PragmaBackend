@@ -1,10 +1,12 @@
 ﻿using Npgsql;
 using Persistence;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class CrosshairConfig : VersionedData, IDatabaseSyncable<CrosshairConfig, Guid>, IEquatable<CrosshairConfig>
+public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<CrosshairConfig, Guid>, IEquatable<CrosshairConfig>
 {
     [SetsRequiredMembers]
     public CrosshairConfig(Guid playerId, int colorIndex, bool advancedCrosshairSettings, RGBAColor customColor, bool fireAccuracyFade, bool followRecoil, bool showOutlines, double outlineThickness, double outlineOpacity, bool showCenterDot, bool useADSSettings, CrosshairDot centerDot, CrosshairDot centerDotADS, CrosshairDot sniperDot, PipConfig innerPip, PipConfig outerPip, Int64 version) : base(version)
@@ -145,5 +147,16 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncable<Crosshair
         hash.Add(OuterPip);
         hash.Add(Version);
         return hash.ToHashCode();
+    }
+
+    public static CrosshairConfig CreateDefault(Guid playerId)
+    {
+        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "CrosshairConfig.json")));
+        defaultJson[nameof(PlayerId)] = playerId;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        return defaultJson.Deserialize<CrosshairConfig>(options);
     }
 }

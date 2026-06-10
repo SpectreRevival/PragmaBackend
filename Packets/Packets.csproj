@@ -7,6 +7,10 @@
   </PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Model\Model.csproj"></ProjectReference>
+	</ItemGroup>
+
+	<ItemGroup>
 		<Protobuf Include="Protoc\**\*.proto" GrpcServices="None" AdditionalImportDirs="Protoc\" AdditionalArgs="--csharp_opt=base_namespace=Packets"></Protobuf>
 	</ItemGroup>
 
@@ -21,7 +25,7 @@
 	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	    <PrivateAssets>all</PrivateAssets>
 	  </PackageReference>
-	  <PackageReference Include="Serilog" Version="4.3.0" />
+	  <PackageReference Include="Serilog" Version="4.3.1" />
 	  <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
 	</ItemGroup>
 	<ItemGroup>

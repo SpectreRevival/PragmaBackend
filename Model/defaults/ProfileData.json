@@ -1,0 +1,29 @@
+{
+  "DisplayName": {
+    "PlayerName": "Player",
+    "Discriminator": "0000"
+  },
+  "BannerItemId": "FF01EF00-D0F2-4583-B4A4-CC56A606B404",
+  "PreSprayItemId": "31C3D93D-B02C-4543-B879-3D489DE6954C",
+  "MatchSprayItemId": "C50FB72D-5642-4384-BBB6-13E9D244CB65",
+  "PostSprayItemId": "FA3765FD-DC25-4B95-A515-86E12AF0320E",
+  "AttackerOutfitLoadoutId": "00000000-0000-0000-0000-000000000000",
+  "DefenderOutfitLoadoutId": "00000000-0000-0000-0000-000000000000",
+  "AttackerWeaponLoadoutId": "00000000-0000-0000-0000-000000000000",
+  "DefenderWeaponLoadoutId": "00000000-0000-0000-0000-000000000000",
+  "LastUpdated": "1981-01-01T00:00:00Z",
+  "NextNewDayRollover": "1981-01-01T00:00:00Z",
+  "LastLogin": "1981-01-01T00:00:00Z",
+  "PlayerFlags": 0,
+  "CrewScore": 0,
+  "CurrentSoloRank": 0,
+  "HighestTeamRank": 0,
+  "DivisionType": "",
+  "InventoryVersion": 0,
+  "CrewId": "00000000-0000-0000-0000-000000000000",
+  "AccountIdProvider": "STEAM",
+  "ProviderAccountId": "0",
+  "PlatformName": "PC",
+  "CrossplayPlatformKind": "CROSS_PLAY_PLATFORM_PC",
+  "GamesRemainingUntilCrewJoin": 10
+}

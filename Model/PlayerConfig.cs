@@ -1,10 +1,12 @@
 ﻿using Npgsql;
 using Persistence;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class PlayerConfig : VersionedData, IDatabaseSyncable<PlayerConfig, Guid>, IEquatable<PlayerConfig>
+public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<PlayerConfig, Guid>, IEquatable<PlayerConfig>
 {
     [SetsRequiredMembers]
     public PlayerConfig(Guid playerId, bool unlockAllPlayModes, bool unlockAllMenuTabs, bool unlockAllSponsors, bool bypassUnlockAllSponsorsOverride, bool bypassProgressionOverrides, bool bypassTeamSizeOverrides, bool bypassRegionSelectOverride, bool bypassCurrencyPurchasingOverride, bool disableDevMapSelector, bool showDebugInfoPanel, bool showPlatformInfoPanel, bool showMatchmakingCounters, bool forceChatEnabled, int mostRecentLobbyMode, Guid mostRecentPartyId, int endUserLicenseAcceptedVersion, int endUserLicenseAcceptedVersionPlayStation, int endUserLicenseAcceptedVersionXbox, int termsOfServiceAcceptedVersion, int termsOfServiceAcceptedVersionPlayStation, int termsOfServiceAcceptedVersionXbox, int nonDisclosureAgreementAcceptedVersion, int nonDisclosureAgreementAcceptedVersionPlayStation, int nonDisclosureAgreementAcceptedVersionXbox, int seizureWarningAcknowledgedVersion, int seizureWarningAcknowledgedVersionPlayStation, int seizureWarningAcknowledgedVersionXbox, int battlepassSeasonLoggedOn, double battlepassPurchasePopupLastTime, string nonDisclosureAgreementUserSignature, string nonDisclosureAgreementUserSignaturePlayStation, string nonDisclosureAgreementUserSignatureXbox, string nonDisclosureAgreementUserEmail, string nonDisclosureAgreementUserEmailPlayStation, string nonDisclosureAgreementUserEmailXbox, string lastVersionShownInDriversWarningDialog, int minSpecWarningDialogTimesDisplayed, int pingWarningDialogTimesDisplayed, bool hasCompletedLaunchSettingsFlow, bool isUsingManualMatchmakingRegionSelection, string[] manualMatchmakingRegionSelections, string[] rotatingNewsViewedMessages, double inkQuality, double mouseSensitivityADSScale, double mouseSensitivity, double minimapScale, double minimapSize, double minimapMaskOpacity, bool invertedYAxis, bool toggleCrouch, bool toggleWalk, bool toggleADS, string recoilBehavior, bool leftHandedEnabled, bool recoilPitchCorrectionEnabled, bool isTeamLaserEnabled, bool isHudMinimapRotationEnabled, bool isHudMinimapCenteredOnPlayer, bool isHudMinimapCircle, bool isHudMinimapMaskHighContrastEnabled, bool isHudSnapMinimapWithScoreboardEnabled, bool isDamageCameraEffectEnabled, bool streamerModeEnabled, bool hideLobbyCode, double aDSTracerRatio, double aDSTracerIntensity, double opticHitConfirmIntensity, bool anonymousMode, bool anonymizePlayerNames, bool streamerModeDisableIncomingVoiceChat, bool streamerModeDisableIncomingTextChat, bool isTextChatSoundEffectsEnabled, bool subtitlesEnabled, string verboseVoLevel, bool isBloodFXEnabled, string[] overrideKeymaps, string voiceChatInputAudioDevice, string voiceChatOutputAudioDevice, bool voiceChatTeamEnabled, string voiceChatConsoleMode, bool voiceChatPartyEnabled, bool voiceChatPartyEnabledInGames, bool voiceChatTeamPushToTalk, bool voiceChatPartyPushToTalk, string[] enabledTextStats, string[] enabledGraphStats, string[] mutedChatContexts, int inputBindingsVersion, Int64 version) : base(version)
@@ -582,5 +584,16 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncable<PlayerConfig
         hash.Add(InputBindingsVersion);
         hash.Add(Version);
         return hash.ToHashCode();
+    }
+
+    public static PlayerConfig CreateDefault(Guid playerId)
+    {
+        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "PlayerConfig.json")));
+        defaultJson[nameof(PlayerId)] = playerId;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        return defaultJson.Deserialize<PlayerConfig>(options);
     }
 }

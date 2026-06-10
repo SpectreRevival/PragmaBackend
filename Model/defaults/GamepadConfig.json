@@ -1,0 +1,52 @@
+{
+  "version": 15,
+  "inputSchemeIndex": 0,
+  "gamepadGlyphIndex": 2,
+  "lookPresetIndex": 2,
+  "customLookConfig": {
+    "displayName": "Custom",
+    "lookSettings": {
+      "yawRate": 160,
+      "pitchScale": 0.75,
+      "turnAccelYawBonus": 220,
+      "turnAccelPitchBonus": 0,
+      "turnAccelDelaySeconds": 0,
+      "turnAccelTimeToMax": 0.33000001311302185
+    },
+    "lookSettingsADS": {
+      "yawRate": 110,
+      "pitchScale": 0.75,
+      "turnAccelYawBonus": 30,
+      "turnAccelPitchBonus": 30,
+      "turnAccelDelaySeconds": 0.25,
+      "turnAccelTimeToMax": 1
+    }
+  },
+  "customResponseCurve": {
+    "displayName": "Undefined",
+    "exponent": 1,
+    "responseCurveArcDeg": 52,
+    "responseCurveSlope": 0.10000000149011612,
+    "responseCurveLinearBlendPow": 0.20000000298023224
+  },
+  "bInvertLook": false,
+  "controllerFeedbackValue": 1,
+  "bTurnAccel": true,
+  "bAimAssist": true,
+  "responseCurveIndex": 0,
+  "responseCurveArcDeg": 52,
+  "responseCurveSlope": 0.10000000149011612,
+  "responseCurveLinearBlendPow": 0.20000000298023224,
+  "customScaleADS": 1,
+  "bToggleCrouch": true,
+  "bToggleWalk": true,
+  "bTogglePlantDefuse": false,
+  "bToggleADS": false,
+  "endWalkWhenFiringBehavior": "ADSOnly",
+  "aDSTriggerThreshold": 0.800000011920929,
+  "deadZoneMoveAmount": "Large",
+  "customDeadZoneMoveAmount": 0,
+  "deadZoneLookAmount": "Small",
+  "customDeadZoneLookAmount": 0,
+  "walkRunDeflectionThreshold": 0.949999988079071
+}

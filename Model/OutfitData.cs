@@ -6,7 +6,7 @@ namespace Model;
 public record class OutfitData : IEquatable<OutfitData>
 {
     [SetsRequiredMembers]
-    public OutfitData(Guid itemInstanceId, ActiveAlterationData[] alterationData, Guid itemCatalogId)
+    public OutfitData(Guid itemInstanceId, ActiveAlterationData[] alterationData, string itemCatalogId)
     {
         ItemInstanceId = itemInstanceId;
         AlterationData = alterationData ?? throw new ArgumentNullException(nameof(alterationData));
@@ -18,7 +18,7 @@ public record class OutfitData : IEquatable<OutfitData>
     [PgName("alteration_data")]
     public required ActiveAlterationData[] AlterationData { get; set; }
     [PgName("item_catalog_id")]
-    public required Guid ItemCatalogId { get; set; }
+    public required string ItemCatalogId { get; set; }
 
     public virtual bool Equals(OutfitData? other)
     {

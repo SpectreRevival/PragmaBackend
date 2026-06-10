@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class LegacySeasonData : IDatabaseSyncable<LegacySeasonData, Guid>, IEquatable<LegacySeasonData>
+public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData, Guid>, IEquatable<LegacySeasonData>
 {
     [SetsRequiredMembers]
     public LegacySeasonData(Guid playerId, long soloRankedPoints, long currentSoloRank)
@@ -65,5 +65,10 @@ public record class LegacySeasonData : IDatabaseSyncable<LegacySeasonData, Guid>
         hash.Add(SoloRankedPoints);
         hash.Add(CurrentSoloRank);
         return hash.ToHashCode();
+    }
+
+    public static LegacySeasonData CreateDefault(Guid key)
+    {
+        return new LegacySeasonData(key, 0, 0);
     }
 }

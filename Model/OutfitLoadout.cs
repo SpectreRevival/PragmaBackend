@@ -1,10 +1,12 @@
 ﻿using Npgsql;
 using Persistence;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class OutfitLoadout : IDatabaseSyncable<OutfitLoadout, Guid>, IEquatable<OutfitLoadout>
+public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid>, IEquatable<OutfitLoadout>
 {
     [SetsRequiredMembers]
     public OutfitLoadout(Guid playerId, Guid loadoutId, OutfitData head, OutfitData hair, OutfitData faceStyle, OutfitData faceAccessory, OutfitData outfit)
@@ -89,5 +91,18 @@ public record class OutfitLoadout : IDatabaseSyncable<OutfitLoadout, Guid>, IEqu
         hash.Add(FaceAccessory);
         hash.Add(Outfit);
         return hash.ToHashCode();
+    }
+
+    public static OutfitLoadout CreateDefault(Guid playerId)
+    {
+        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "OutfitLoadout.json")));
+        defaultJson[nameof(PlayerId)] = playerId;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        OutfitLoadout defaultValue = defaultJson.Deserialize<OutfitLoadout>(options);
+        defaultValue.LoadoutId = Guid.NewGuid();
+        return defaultValue;
     }
 }
