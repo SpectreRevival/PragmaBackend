@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS stackable_items (
     instance_id UUID PRIMARY KEY,
-    catalog_id UUID NOT NULL,
+    catalog_id TEXT NOT NULL,
     amount BIGINT NOT NULL,
     owning_player_id UUID NOT NULL
 );
