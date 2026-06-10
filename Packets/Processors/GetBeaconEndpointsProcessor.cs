@@ -20,7 +20,7 @@ public class GetBeaconEndpointsProcessor : WebsocketPacketProcessor, IWebsocketP
 
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
-        string type = Packet.RequestPayload.GetProperty("type").GetString();
+        string type = Packet.RequestPayload["type"]!.ToString();
         if(type == "hathora")
         {
             return SpectreWebsocketMessage.From(hathoraResponse);
