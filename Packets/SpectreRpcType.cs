@@ -23,7 +23,7 @@ public record class SpectreRpcType
         string resName = GetName();
         if(resName.Length >= 7 && resName.EndsWith("Request"))
         {
-            resName.Remove(resName.Length - 7);
+            resName = resName.Remove(resName.Length - 7);
         }
         resName += "Response";
         return new SpectreRpcType(resName);

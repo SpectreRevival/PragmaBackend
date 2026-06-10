@@ -184,13 +184,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         return playerProfile;
     }
 
-    public class AuthenticateHandlerRequest
-    {
-        public required string providerId { get; set; }
-        public required string providerToken { get; set; }
-        public required string gameShardId { get; set; }
-        public required string loginQueuePassToken { get; set; }
-    }
+    public record AuthenticateHandlerRequest(string providerId, string providerToken, string gameShardId, string loginQueuePassToken);
 
     public record PragmaTokenPair(string pragmaGameToken, string pragmaSocialToken);
 

@@ -46,7 +46,7 @@ services:
     networks:
       - pragmabackend_net
     volumes:
-      - ../BackendServer/resources/env.json:/app/resources/env.json:ro
+      - ../BackendServer/resources/docker.env.json:/app/resources/env.json:ro
 volumes:
   pragmabackend_data:
 networks:

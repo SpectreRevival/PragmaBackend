@@ -12,6 +12,7 @@ public abstract class WebsocketPacketProcessor
     protected WebsocketPacketProcessor(SpectreRpcType rpcType)
     {
         RpcType = rpcType;
+        processors.Add(rpcType, this);
     }
     public abstract Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler);
 

@@ -29,11 +29,12 @@ public class SpectreWebsocket
             throw new InvalidDataException("tried to start websocket connection without authorization header");
         }
         string bearer = token.ToString();
-        if(!bearer.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        if (!bearer.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidDataException("auth header was not a bearer token");
         }
-        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(bearer);
+        string rawJwt = bearer[7..].Trim();
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(rawJwt);
         Guid? possiblePID = Guid.Parse(jwt.Claims.FirstOrDefault(c => c.Type == "pragmaPlayerId")?.Value ?? throw new InvalidDataException("failed to get value for pragmaPlayerId claim"));
         if (possiblePID == null)
         {
