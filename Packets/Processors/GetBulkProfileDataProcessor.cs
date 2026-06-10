@@ -36,7 +36,7 @@ public class GetBulkProfileDataProcessor : WebsocketPacketProcessor, IWebsocketP
             Model.CustomizedInstancedItem? bannerFullItem = await Model.CustomizedInstancedItem.RetrieveFromDatabase(profileData.BannerItemId);
             if(bannerFullItem == null)
             {
-                throw new InvalidDataException($"Couldn't find CustomizedInstancedItem associated with bannerItemId in profile data {profileData.BannerItemId}")
+                throw new InvalidDataException($"Couldn't find CustomizedInstancedItem associated with bannerItemId in profile data {profileData.BannerItemId}");
             }
             bannerItem.ItemCatalogId = bannerFullItem.CatalogId;
             res.BulkProfileData.Add(packet);
