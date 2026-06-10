@@ -83,87 +83,12 @@ pipeline {
             }
         }
         stage("Run tests"){
-            matrix {
-                axes {
-                    axis {
-                        name 'OS'
-                        values 'linux'
-                    }
-                }
-                agent { label "docker-${OS}" }
-                stages {
-                    stage("Checkout"){
-                        steps {
-                            checkout scm
-                        }
-                    }
-                    stage("Download dependencies"){
-                        steps {
-                            script {
-                                if(isUnix()){
-                                    sh 'dotnet restore'
-                                } else {
-                                    bat 'dotnet restore'
-                                }
-                            }
-                        }
-                    }
-                    stage("Build project"){
-                        steps {
-                            script {
-                                if(isUnix()){
-                                    sh 'dotnet build --configuration Release /m:1 /p:UseSharedCompilation=false /nodeReuse:false'
-                                } else {
-                                    bat 'dotnet build --configuration Release /m:1 /p:UseSharedCompilation=false /nodeReuse:false'
-                                }
-                            }
-                        }
-                    }
-                    stage("Run database tests"){
-                        steps {
-                            script {
-                                if(isUnix()){
-                                    sh 'dotnet test --configuration Release --filter Name~TestDatabaseSync'
-                                } else {
-                                    bat 'dotnet test --configuration Release --filter Name~TestDatabaseSync'
-                                }
-                            }
-                        }
-                    }
-                    stage("Run default init tests"){
-			steps {
-				script {
-					if(isUnix()){
-						sh 'dotnet test --configuration Release --filter Name~TestDefaultInitialization'
-					} else {
-						bat 'dotnet test --configuration Release --filter Name~TestDefaultInitialization'
-					}
-				}
-			}
-		    }
-                    stage("Run HTTP tests"){
-                        steps {
-                            script {
-                                if(isUnix()){
-                                    sh 'dotnet test --configuration Release --filter Name~RunHTTPTest'
-                                } else {
-                                    bat 'dotnet test --configuration Release --filter Name~RunHTTPTest'
-                                }
-                            }
-                        }
-                    }
-                    stage("Run Websocket Tests"){
-                        steps {
-                            script {
-                                if(isUnix()){
-                                    sh 'dotnet test --configuration Release --filter Name~RunWebsocketTest'
-                                } else {
-                                    bat 'dotnet test --configuration Release --filter Name~RunWebsocketTest'
-                                }
-                            }
-                        }
-                    }
-                }
+            agent { label 'docker-linux' }
+            steps {
+                checkout scm
+                sh 'dotnet restore'
+                sh 'dotnet build --configuration Release /m:1 /p:UseSharedCompilation=false /nodeReuse:false'
+                sh 'dotnet test --configuration Release'
             }
         }
     }
