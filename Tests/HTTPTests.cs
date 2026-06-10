@@ -15,10 +15,11 @@ public class HTTPTests
         string httpReqDir = Path.Combine(Path.Combine(AppContext.BaseDirectory, "testrequests"), "http");
         foreach (string filePath in Directory.EnumerateFiles(httpReqDir))
         {
+            HTTPTestData testData = JsonDocument.Parse(File.ReadAllText(filePath)).Deserialize<HTTPTestData>();
             yield return new object[]
             {
                 filePath,
-                Path.GetFileNameWithoutExtension(filePath)
+                testData.path
             };
         }
     }

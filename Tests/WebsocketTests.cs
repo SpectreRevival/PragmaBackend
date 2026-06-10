@@ -19,10 +19,11 @@ public class WebsocketTests
         string wsReqDir = Path.Combine(Path.Combine(AppContext.BaseDirectory, "testrequests"), "ws");
         foreach (string filePath in Directory.EnumerateFiles(wsReqDir))
         {
+            WebsocketTestData? testData = JsonDocument.Parse(File.ReadAllText(filePath)).Deserialize<WebsocketTestData>();
             yield return new object[]
             {
                 filePath,
-                Path.GetFileNameWithoutExtension(filePath)
+                testData.rpcType
             };
         }
     }
