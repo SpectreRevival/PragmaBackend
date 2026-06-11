@@ -38,8 +38,9 @@ public class FetchPlayerWeaponLoadouts : WebsocketPacketProcessor, IWebsocketPac
 
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
+        FetchLoadoutsRequest req = Packet.GetPayloadAsMessage<FetchLoadoutsRequest>();
         NpgsqlCommand cmd = PostgresDatabase.Get().GetRaw().CreateCommand("SELECT loadout_id FROM weapon_loadouts WHERE player_id = @player_id");
-        cmd.Parameters.AddWithValue("player_id", ConnectionHandler.PlayerId);
+        cmd.Parameters.AddWithValue("player_id", Guid.Parse(req.PlayerId));
         await using var reader = await cmd.ExecuteReaderAsync();
         WeaponLoadouts responseData = new();
         while(await reader.ReadAsync())
