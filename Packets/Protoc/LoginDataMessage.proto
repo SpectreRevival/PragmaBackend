@@ -15,7 +15,7 @@ message LoginData {
 message LoginDataExt {
 	repeated string inboxMessages = 1;
 	PlayerData playerData = 2;
-	int32 noCrew = 3;
+	double noCrew = 3;
 	string nextCrewAutomationDate = 4;
 	bool crewAutomationInProcess = 5;
 	string currentServiceTimestampMillis = 6;
