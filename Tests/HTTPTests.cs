@@ -52,7 +52,7 @@ public class HTTPTests
         };
         try
         {
-            using var req = new HttpRequestMessage(new HttpMethod(testData.method), $"http://localhost:8080{testData.path}");
+            using var req = new HttpRequestMessage(new HttpMethod(testData.method), $"http://localhost:21330{testData.path}");
             req.Content = new StringContent(testData.request, Encoding.UTF8, "application/json");
             HttpResponseMessage res = await client.SendAsync(req, cancelToken.Token);
             res.EnsureSuccessStatusCode();

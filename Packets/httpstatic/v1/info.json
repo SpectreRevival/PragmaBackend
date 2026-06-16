@@ -4,19 +4,19 @@
   "backendMode": "PRODUCTION",
   "authenticateBackend": {
     "host": "127.0.0.1",
-    "port": 8082,
+    "port": 21330,
     "protocol": "http",
     "scheme": "http"
   },
   "socialBackend": {
     "host": "127.0.0.1",
-    "port": 8082,
+    "port": 21331,
     "protocol": "http",
     "webSocketProtocol": "ws"
   },
   "gameBackend": {
     "host": "127.0.0.1",
-    "port": 8081,
+    "port": 21332,
     "protocol": "http",
     "webSocketProtocol": "ws"
   },

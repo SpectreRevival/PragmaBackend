@@ -14,7 +14,7 @@ services:
     volumes:
       - pragmabackend_data:/var/lib/postgresql
     ports:
-      - "5432:5432"
+      - "1264:5432"
     networks:
       - pragmabackend_net
     healthcheck:
@@ -33,11 +33,11 @@ services:
       backend-pgdb:
         condition: service_healthy
     ports:
-      - "8081:8081"
-      - "8080:8080"
-      - "8082:8082"
+      - "21330:21330"
+      - "21331:21331"
+      - "21332:21332"
     healthcheck:
-      test: ["CMD", "curl", "-fs", "http://localhost:8080/instance-healthcheck"]
+      test: ["CMD", "curl", "-fs", "http://localhost:21330/instance-healthcheck"]
       interval: 60s
       timeout: 5s
       retries: 3
