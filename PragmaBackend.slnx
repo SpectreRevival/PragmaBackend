@@ -4,4 +4,10 @@
   <Project Path="Model/Model.csproj" />
   <Project Path="Packets/Packets.csproj" />
   <Project Path="Tests/Tests.csproj" Id="43ac737b-5311-4b42-af36-72dd57158279" />
+  <Folder Name="/Automation/">
+	  <File Path="Jenkinsfile" />
+  </Folder>
+  <Folder Name="/Docs/">
+	  <File Path="README.md" />
+  </Folder>
 </Solution>
