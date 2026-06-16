@@ -35,7 +35,15 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         // We have to do the type initialization before so when NpgsqlDataSourceBuilder is created the types are correct (it fetches them into a local cache on creation)
         using (var conn = new NpgsqlConnection(ConnStr.ConnectionString))
         {
-            conn.Open();
+            int connectTimeout = int.Parse(config.GetRequiredSection("DB_CONNECT_TIMEOUT_S").Value);
+            if (connectTimeout == 0)
+            {
+                conn.Open();
+            } else
+            {
+                CancellationTokenSource src = new CancellationTokenSource(TimeSpan.FromSeconds(connectTimeout));
+                conn.OpenAsync(src.Token).GetAwaiter().GetResult();
+            }
             int currentScriptInitializationLevel = 0;
             string nextDirPath = Path.Combine(AppContext.BaseDirectory, "commands", "init", currentScriptInitializationLevel.ToString());
             while (Directory.Exists(nextDirPath))
