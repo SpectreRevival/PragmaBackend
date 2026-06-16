@@ -3,6 +3,5 @@ Settings.json
 .vs/
 */obj/*
 */bin/*
-Docker/.env
-BackendServer/resources/env.json
 *.swp
+Tests/TestResults
