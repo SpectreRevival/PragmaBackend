@@ -62,6 +62,9 @@ public class JsonTestUtil
         foreach (PatchOperation op in patchDiff.Operations)
         {
             Console.WriteLine($"- Path: {op.Path}\nOp: {op.Op.ToString()}\nValue: {op.Value}");
+        }
+        foreach (PatchOperation op in patchDiff.Operations)
+        {
             if (op.Op == OperationType.Remove || op.Op == OperationType.Move)
             {
                 return false;

@@ -5,19 +5,24 @@
   "responsePayload": {
     "loadouts": [
       {
+        "faceStyleData": {
+          "attachmentItemCatalogId": "",
+          "attachmentItemInstanceId": "",
+          "alterationData": [
+            {
+              "channelId": "Color",
+              "alterationId": "Option1"
+            }
+          ],
+          "itemCatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_001",
+          "itemInstanceId": "*",
+          "itemType": ""
+        },
         "faceAccessoryData": {
           "alterationData": [],
           "attachmentItemCatalogId": "",
           "attachmentItemInstanceId": "",
-          "itemCatalogId": "",
-          "itemInstanceId": "*",
-          "itemType": ""
-        },
-        "faceStyleData": {
-          "alterationData": [],
-          "attachmentItemCatalogId": "",
-          "attachmentItemInstanceId": "",
-          "itemCatalogId": "",
+          "itemCatalogId": "CharacterCosmeticItemSimple:HAccessoryID_M_Prince",
           "itemInstanceId": "*",
           "itemType": ""
         },
@@ -80,43 +85,48 @@
         "playerId": "*"
       },
       {
+        "faceStyleData": {
+          "attachmentItemCatalogId": "",
+          "attachmentItemInstanceId": "",
+          "alterationData": [
+            {
+              "channelId": "Color",
+              "alterationId": "Option1"
+            }
+          ],
+          "itemCatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_001",
+          "itemInstanceId": "*",
+          "itemType": ""
+        },
         "faceAccessoryData": {
           "alterationData": [],
           "attachmentItemCatalogId": "",
           "attachmentItemInstanceId": "",
-          "itemCatalogId": "",
-          "itemInstanceId": "",
-          "itemType": ""
-        },
-        "faceStyleData": {
-          "alterationData": [],
-          "attachmentItemCatalogId": "",
-          "attachmentItemInstanceId": "",
-          "itemCatalogId": "",
-          "itemInstanceId": "",
+          "itemCatalogId": "CharacterCosmeticItemSimple:HAccessoryID_M_Prince",
+          "itemInstanceId": "*",
           "itemType": ""
         },
         "hairData": {
           "alterationData": [
             {
-              "alterationId": "Option5",
+              "alterationId": "Option7",
               "channelId": "Color"
             }
           ],
           "attachmentItemCatalogId": "",
           "attachmentItemInstanceId": "",
-          "itemCatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0020",
+          "itemCatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0016",
           "itemInstanceId": "*",
           "itemType": ""
         },
         "headData": {
           "alterationData": [
             {
-              "alterationId": "Option8",
+              "alterationId": "Option5",
               "channelId": "SkinTone"
             },
             {
-              "alterationId": "Option2",
+              "alterationId": "Option3",
               "channelId": "LipColor"
             },
             {
@@ -128,13 +138,13 @@
               "channelId": "EyebrowColor"
             },
             {
-              "alterationId": "Option3",
+              "alterationId": "Option5",
               "channelId": "Voice"
             }
           ],
           "attachmentItemCatalogId": "",
           "attachmentItemInstanceId": "",
-          "itemCatalogId": "CharacterCosmeticItemHead:HeadID_Face_002_B",
+          "itemCatalogId": "CharacterCosmeticItemHead:HeadID_Face_003",
           "itemInstanceId": "*",
           "itemType": ""
         },
@@ -148,11 +158,11 @@
           ],
           "attachmentItemCatalogId": "",
           "attachmentItemInstanceId": "",
-          "itemCatalogId": "CharacterCosmeticItemOutfit:OutfitID_M_Default",
+          "itemCatalogId": "CharacterCosmeticItemOutfit:OutfitID_F_Default",
           "itemInstanceId": "*",
           "itemType": ""
         },
-        "playerId": "$PLAYER_ID"
+        "playerId": "*"
       }
     ],
     "message": [
