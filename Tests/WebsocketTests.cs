@@ -1,7 +1,9 @@
 ﻿using Microsoft.CodeCoverage.Core.Reports.Coverage;
+using Newtonsoft.Json.Linq;
 using Packets;
 using Packets.Processors;
 using Serilog;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Json;
 using System.Net.WebSockets;
 using System.Reflection;
@@ -17,7 +19,7 @@ public class WebsocketTests
     public static IEnumerable<object[]> GetWebsocketTestInstances()
     {
         string wsReqDir = Path.Combine(Path.Combine(AppContext.BaseDirectory, "testrequests"), "ws");
-        foreach (string filePath in Directory.EnumerateFiles(wsReqDir))
+        foreach (string filePath in Directory.EnumerateFiles(wsReqDir, "*.json"))
         {
             WebsocketTestData? testData = JsonDocument.Parse(File.ReadAllText(filePath)).Deserialize<WebsocketTestData>();
             yield return new object[]
@@ -48,12 +50,21 @@ public class WebsocketTests
             "00000000-0000-0000-0000-000000000001",
             "eyJraWQiOiJkM0p0T3E2ankzX0hxdXdUc3J6dDgxd2gzQkxpQS00Zi1xTThtai0wLVlRPSIsImFsZyI6IlJTMjU2IiwidHlwIjoiSldUIn0.eyJpc3MiOiJwcmFnbWEiLCJzdWIiOiIxMTYyOCIsImlhdCI6MTc0MDUwNzQyNywiZXhwIjoxNzQwNTkzODI3LCJqdGkiOiIyYjFiMzc5Yi1jZmQwLTRkMzAtYWE4NS02OWMyZWIyMWE4MWEiLCJ0aWNrZXROdW1iZXIiOiIxMTYyOCIsImlzQWxsb3dlZEluIjoidHJ1ZSJ9.PJp5MNXz2_xvCkq_XjzZeui1MvS9ylDLDgeLkJiv9jp_FVnTI9LISMtajHcef-7JehNs5sQC6P_Gpmb6JuVdD4k7HUX7a9IAgM8HKAagnfgmymn02SSpL7Mfz9wbH8FgOYU2ylKG_ExIW_aSG5HK588_waNeSydygwX2zRoSf8ZYZzbUHmMsZcG2iXpDq_Peejbt6Cgep9lsyNE5L5ZZzil9_KVu3FaEojcrI7tiPpHX7wi2K_J78rxmg2weUreowhv0VJA-YGqtOUlqFl7Ep8VGi-IrJdAf4gLeiVZMQoktc_g5tD9FgXzEAH_aDoBqGgoqnbKLcWLRiT1TAYGgXtCfw15Efh_ta-h4IIOI-DAnhJ1ujapd80Z87Wo6h7SpBaOitaI-bjBPkqDQGe2JooUNCrki848vPrfu0IQW00vawUtLX6LaS_aAEs0L2Vjxyebk1X37E9KwTDoxQGdmurutcnvSmVXOoO4P8F6o4oGx-A9d6HgFJl5rRie2LrWSJHlmcFm5_IKYw7okHwBh63Cx3mhUevji5SkEGj3gbwlBURjeEXpOm0qr-ECeKdmagbi_ipiiQB8m8FNwAbx9Z-Sl3nbJ-kS3QtPZrFHqxf91sgFY16H6sn1ruhna-ZygG5cYKf4JWbEcmLrSmdQ_xIBODjWDcatvNKGrv7Cx_Ng"
         );
-        HttpResponseMessage authResponse = await client.PostAsJsonAsync("http://host.docker.internal:21331/v1/account/authenticateorcreatev2", authRequest);
+        HttpResponseMessage authResponse = await client.PostAsJsonAsync("http://localhost:21331/v1/account/authenticateorcreatev2", authRequest);
         authResponse.EnsureSuccessStatusCode();
         AuthenticateHandler.AuthenticateHandlerResponse authResponseTokens = await authResponse.Content.ReadFromJsonAsync<AuthenticateHandler.AuthenticateHandlerResponse>();
         string[] skippedWsTests = File.ReadAllLines(Path.Combine(Path.Combine(AppContext.BaseDirectory, "testrequests"), "wsSkipTests.txt"));
         WebsocketTestData? testData = JsonDocument.Parse(File.ReadAllText(testDataFile)).Deserialize<WebsocketTestData>();
         Assert.IsNotNull(testData);
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(authResponseTokens.pragmaTokens.pragmaGameToken);
+        Guid? possiblePID = Guid.Parse(jwt.Claims.FirstOrDefault(c => c.Type == "pragmaPlayerId")?.Value ?? throw new InvalidDataException("failed to get value for pragmaPlayerId claim"));
+        if (possiblePID == null)
+        {
+            throw new InvalidDataException("No valid GUID on pragmaPlayerId claim");
+        }
+        string playerId = possiblePID.ToString();
+        testData.requestBody.ReplaceToken("$PLAYER_ID", playerId);
+        testData.responsePayload.ReplaceToken("$PLAYER_ID", playerId);
         if (skippedWsTests.Any(rpc => rpc == testData.rpcType))
         {
             Assert.Inconclusive($"Skipping because rpc {testData.rpcType} is in the skipped websocket tests list");
@@ -62,7 +73,7 @@ public class WebsocketTests
         cts.CancelAfter(TimeSpan.FromSeconds(10));
         using var ws = new ClientWebSocket();
         ws.Options.SetRequestHeader("Authorization", $"Bearer {authResponseTokens.pragmaTokens.pragmaGameToken}");
-        await ws.ConnectAsync(new Uri("ws://host.docker.internal:21331/"), cts.Token);
+        await ws.ConnectAsync(new Uri("ws://localhost:21331/"), cts.Token);
 
         JsonObject fullSendMessage = new();
         fullSendMessage["requestId"] = 0;

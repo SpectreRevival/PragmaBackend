@@ -1,7 +1,7 @@
 {
   "requestBody": {
     "playerIds": [
-      "250D6BEA-4F0D-4DED-96CC-6E40EC80AFAB"
+      "$PLAYER_ID"
     ]
   },
   "responsePayload": {
@@ -23,7 +23,7 @@
         },
         "divisionType": "*",
         "highestTeamRank": 0.0,
-        "playerId": "250d6bea-4f0d-4ded-96cc-6e40ec80afab"
+        "playerId": "$PLAYER_ID"
       }
     ]
   },

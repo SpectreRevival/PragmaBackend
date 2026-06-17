@@ -13,7 +13,7 @@ public class HTTPTests
     public static IEnumerable<object[]> GetHTTPTestInstances()
     {
         string httpReqDir = Path.Combine(Path.Combine(AppContext.BaseDirectory, "testrequests"), "http");
-        foreach (string filePath in Directory.EnumerateFiles(httpReqDir))
+        foreach (string filePath in Directory.EnumerateFiles(httpReqDir, "*.json"))
         {
             HTTPTestData testData = JsonDocument.Parse(File.ReadAllText(filePath)).Deserialize<HTTPTestData>();
             yield return new object[]
@@ -52,7 +52,7 @@ public class HTTPTests
         };
         try
         {
-            using var req = new HttpRequestMessage(new HttpMethod(testData.method), $"http://host.docker.internal:21330{testData.path}");
+            using var req = new HttpRequestMessage(new HttpMethod(testData.method), $"http://localhost:21330{testData.path}");
             req.Content = new StringContent(testData.request, Encoding.UTF8, "application/json");
             HttpResponseMessage res = await client.SendAsync(req, cancelToken.Token);
             res.EnsureSuccessStatusCode();

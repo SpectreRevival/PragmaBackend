@@ -149,6 +149,6 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
 
     public static PlayerMatchmakingData CreateDefault(Guid key)
     {
-        return new PlayerMatchmakingData(key, 0, 0, 0, 0, 0, 0, 0, [], 0, 0, 0, 0, DateTimeOffset.MinValue, DateTimeOffset.MinValue, "");
+        return new PlayerMatchmakingData(key, 0, 0, 0, 0, 0, 0, 0, [], 0, 0, 0, 0, DateTimeOffset.FromUnixTimeMilliseconds(0), DateTimeOffset.FromUnixTimeMilliseconds(0), "");
     }
 }

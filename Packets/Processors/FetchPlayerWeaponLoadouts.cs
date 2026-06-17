@@ -48,6 +48,8 @@ public class FetchPlayerWeaponLoadouts : WebsocketPacketProcessor, IWebsocketPac
             Guid loadoutId = reader.GetGuid(0);
             Model.WeaponLoadout curLoadout = await Model.WeaponLoadout.RetrieveFromDatabase(loadoutId);
             WeaponLoadout packetLoadout = new();
+            packetLoadout.PlayerId = req.PlayerId;
+            packetLoadout.LoadoutId = curLoadout.LoadoutId.ToString();
             packetLoadout.SemiautoPistolData = WeaponDataFromModelData(curLoadout.SemiAutoPistol);
             packetLoadout.SuppressedPistolData = WeaponDataFromModelData(curLoadout.SuppressedPistol);
             packetLoadout.AutoPistolData = WeaponDataFromModelData(curLoadout.AutoPistol);
