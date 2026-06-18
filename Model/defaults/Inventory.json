@@ -1,0 +1,3038 @@
+{
+  "StackableItems": [
+    {
+      "CatalogId": "SpectreCurrencyItemDefinition:CurrencyID_Currency",
+      "InstanceId": "00000000-0000-0000-0000-000000000000",
+      "Amount": 0
+    },
+    {
+      "CatalogId": "SpectreCurrencyItemDefinition:CurrencyID_Xp",
+      "InstanceId": "00000000-0000-0000-0000-000000000000",
+      "Amount": 0
+    },
+    {
+      "CatalogId": "SpectreCurrencyItemDefinition:CurrencyID_DailyQuestCompleted",
+      "InstanceId": "00000000-0000-0000-0000-000000000000",
+      "Amount": 0
+    },
+    {
+      "CatalogId": "SpectreCurrencyItemDefinition:CurrencyID_Fans",
+      "InstanceId": "00000000-0000-0000-0000-000000000000",
+      "Amount": 0
+    }
+  ],
+  "CustomizedInstancedItems": [
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_SMG_Suppressed_Default",
+      "InstanceId": "51b1309f-1f88-4fb6-b9bb-600f3a012eda",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreLiveSceneCaptureItemDef:LSCID_PlayerPortrait_Default",
+      "InstanceId": "483aadfc-8a56-4c4a-9568-cef707f40328",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreSprayItemDef:SprayID_Track_Kit02_District_01",
+      "InstanceId": "fa3765fd-dc25-4b95-a515-86e12af0320e",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Sniper_SemiAuto_Default",
+      "InstanceId": "bf99937b-00b8-4178-9e0a-02b3a7ce3050",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_MG_RapidFire_Default",
+      "InstanceId": "9be5418b-b6d7-41e3-9b33-e28bb1545b96",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemHead:HeadID_Face_001",
+      "InstanceId": "0c5bf407-c7bd-4c94-bc58-7cd3379688bd",
+      "AlterationChannels": [
+        {
+          "ChannelId": "SkinTone",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "Voice",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5"
+          ]
+        },
+        {
+          "ChannelId": "LipColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyebrowColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyeColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_SMG_Tactical_Default",
+      "InstanceId": "7f9b8d30-c0f2-4c24-985e-8bcb74e6c4fb",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_AR_Heavy_Default",
+      "InstanceId": "4a76ccaf-1042-4205-bb77-ff554bcc7f05",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_CyberLord_01",
+      "InstanceId": "4a47cf85-da23-4d36-82cb-2ae96757490f",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_M_Prince",
+      "InstanceId": "461f97c1-9948-4d37-b500-8b03bd1e863e",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemHead:HeadID_Face_007_B",
+      "InstanceId": "f5c3bcd2-14e7-44ce-a009-ee4a4559def4",
+      "AlterationChannels": [
+        {
+          "ChannelId": "SkinTone",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "Voice",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5"
+          ]
+        },
+        {
+          "ChannelId": "LipColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyebrowColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyeColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreSprayItemDef:SprayID_Default_01",
+      "InstanceId": "c50fb72d-5642-4384-bbb6-13e9d244cb65",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_SidePart_01",
+      "InstanceId": "762d2b97-109a-4a5e-8233-769f05baa326",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemHead:HeadID_Face_006",
+      "InstanceId": "c8028599-a783-4d07-9f8f-7f9d32684b89",
+      "AlterationChannels": [
+        {
+          "ChannelId": "SkinTone",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "Voice",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5"
+          ]
+        },
+        {
+          "ChannelId": "LipColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyebrowColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyeColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemOutfit:OutfitID_F_Default",
+      "InstanceId": "24ac3423-f3f7-4439-bedb-37d501805d45",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0010",
+      "InstanceId": "9e277d2e-1808-4944-ae98-7e3b9ac8799c",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemOutfit:OutfitID_Bones",
+      "InstanceId": "7d664175-976c-4e23-be17-b307c63e0645",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemHead:HeadID_Face_005",
+      "InstanceId": "c4bd4f0a-461c-4133-9942-75b8bd1fba66",
+      "AlterationChannels": [
+        {
+          "ChannelId": "SkinTone",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "Voice",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5"
+          ]
+        },
+        {
+          "ChannelId": "LipColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyebrowColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyeColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_004",
+      "InstanceId": "0d950d45-e895-425d-9d60-bdb4f48656c2",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreMultiKillCaptureItemDef:MKC_Default",
+      "InstanceId": "1d36c125-7b93-4fc8-951e-4057ee1cfd51",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Knife_Default",
+      "InstanceId": "5da95518-c80a-4332-90b4-d28c045b6849",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        },
+        {
+          "ChannelId": "VFX",
+          "Alterations": [
+            "Off"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0013",
+      "InstanceId": "4b37360c-a1f3-4e03-8f46-fb556fa36a9a",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreBannerItemDef:BannerID_Track_Kit01_District_01",
+      "InstanceId": "ff01ef00-d0f2-4583-b4a4-cc56a606b404",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_010",
+      "InstanceId": "4f009cf3-c169-4315-be88-bd0df8ebd98e",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0019",
+      "InstanceId": "c5626d66-f19a-47df-aaa6-f83f2591f77a",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0015",
+      "InstanceId": "6cfe1733-b0fe-43bd-b43f-f329568dc381",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0012",
+      "InstanceId": "9244f702-4196-49e5-92ee-7b413e3d4005",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_001",
+      "InstanceId": "eec7f364-69cd-47cd-92d0-e5062769d28c",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreSprayItemDef:SprayID_FoundersPack_01",
+      "InstanceId": "169bda53-f289-4312-afb7-df096783707e",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_SMG_RapidFire_Default",
+      "InstanceId": "cc81fd53-27e9-424c-9bc3-ec74244e98b2",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_008",
+      "InstanceId": "866188bd-3b1d-4b91-9409-35b1dfffed97",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_AR_Burst_Default",
+      "InstanceId": "039108c5-c339-4dc4-84fc-c35d58f15a25",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Shotgun_Heavy_Default",
+      "InstanceId": "85e6b34c-34e0-4e39-b6fa-57445146f6a8",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_005",
+      "InstanceId": "0ab303df-d58d-4db3-8569-2356edcbc041",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemHead:HeadID_Face_002",
+      "InstanceId": "5a5a5d26-5867-4c69-af50-4a114427e731",
+      "AlterationChannels": [
+        {
+          "ChannelId": "SkinTone",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "Voice",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5"
+          ]
+        },
+        {
+          "ChannelId": "LipColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyebrowColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyeColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreBannerItemDef:BannerID_Weapon_Angels_01",
+      "InstanceId": "311de31b-6c3b-4a0d-8445-4923a6cb2603",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemOutfit:OutfitID_F_DefaultAlt",
+      "InstanceId": "6590bd98-9799-49fd-8907-779b033d9501",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HAccessoryID_M_Prince",
+      "InstanceId": "325ca087-46aa-4127-93b1-40ca17605d32",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_011",
+      "InstanceId": "5cd72e07-3ed5-4657-9bbf-26c6e78257bb",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_007",
+      "InstanceId": "fd298b05-7378-42e8-bef5-35fa35642ea9",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_003",
+      "InstanceId": "978630e5-59c5-49ff-9c63-49ceff566c06",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemHead:HeadID_Face_003_B",
+      "InstanceId": "a60cf16b-306d-4874-bd0c-810d664688ac",
+      "AlterationChannels": [
+        {
+          "ChannelId": "SkinTone",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "Voice",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5"
+          ]
+        },
+        {
+          "ChannelId": "LipColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyebrowColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyeColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCharmItemDef:CharmID_Misc_Community_01",
+      "InstanceId": "4f7da835-9464-43d3-b6d7-2010fd421c83",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_AR_Standard_Default",
+      "InstanceId": "d9b438dd-f594-47dd-825b-08523a56883b",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreBannerItemDef:BannerID_Community_01",
+      "InstanceId": "3dbdd78e-617a-492c-8d50-737de232faf8",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemHead:HeadID_Face_004_B",
+      "InstanceId": "80f27cd5-fed5-41c4-afd2-51a07679b495",
+      "AlterationChannels": [
+        {
+          "ChannelId": "SkinTone",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "Voice",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5"
+          ]
+        },
+        {
+          "ChannelId": "LipColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyebrowColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyeColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0017",
+      "InstanceId": "e1c93dad-2462-445d-8a91-bd5701ee3b67",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCharmItemDef:CharmID_Misc_Community_03",
+      "InstanceId": "33bb2462-5f15-4e26-9709-dfd236143530",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_AR_Suppressed_Default",
+      "InstanceId": "9210c48c-1bf8-4234-b3b4-73f2675e92d6",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemHead:HeadID_Face_008_B",
+      "InstanceId": "2b75c78a-5141-489f-a7da-4fb4f768a450",
+      "AlterationChannels": [
+        {
+          "ChannelId": "SkinTone",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "Voice",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5"
+          ]
+        },
+        {
+          "ChannelId": "LipColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyebrowColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyeColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0011",
+      "InstanceId": "24ad976d-1203-4209-943a-cff98ac54f58",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemHead:HeadID_Face_005_B",
+      "InstanceId": "adcda458-3753-4900-91cf-f32fcb4337da",
+      "AlterationChannels": [
+        {
+          "ChannelId": "SkinTone",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "Voice",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5"
+          ]
+        },
+        {
+          "ChannelId": "LipColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyebrowColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyeColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_DutchBraids_01",
+      "InstanceId": "ce02175f-62be-4218-814b-ac06e7459428",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCharmItemDef:CharmID_Store_Angel_01",
+      "InstanceId": "e5853741-6fd0-420c-93c8-e931c8b34362",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_002",
+      "InstanceId": "45fe4b4a-acb5-42e4-adc6-f07663c907bf",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemOutfit:OutfitID_M_Prince",
+      "InstanceId": "4d34a455-f92c-414c-94b0-2e5c65bc338b",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HAccessoryID_CyberLord",
+      "InstanceId": "3aed4ced-e793-46ad-a614-e3fd446d664f",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Pistol_Suppressed_Default",
+      "InstanceId": "d79dbaeb-cc09-487b-be65-93b0bc5eb567",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_009",
+      "InstanceId": "224bb27c-94f8-4451-93cd-5f0149306a37",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreSprayItemDef:SprayID_Weapon_Angel_01",
+      "InstanceId": "2bfa954e-db14-4b68-94e1-09a5e37672df",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0014",
+      "InstanceId": "c4f36ca5-d798-4cdc-bc78-9032762b3def",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HAccessoryID_Bones",
+      "InstanceId": "0c66fac8-d2f6-448c-ad7b-669a05665113",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreSprayItemDef:SprayID_Event_2024_Halloween_01",
+      "InstanceId": "a5e4cee6-ad6d-49b3-b79f-62f12ca7c7e7",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreSprayItemDef:SprayID_Community_01",
+      "InstanceId": "31c3d93d-b02c-4543-b879-3d489de6954c",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemOutfit:OutfitID_CyberLord",
+      "InstanceId": "919e2723-a15b-40fa-a58f-c73eed03feb7",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0016",
+      "InstanceId": "27068364-4be1-4190-8df9-7099ac16f907",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemHead:HeadID_Face_004",
+      "InstanceId": "535cb78c-0a22-4178-80b0-5cf786163fe5",
+      "AlterationChannels": [
+        {
+          "ChannelId": "SkinTone",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "Voice",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5"
+          ]
+        },
+        {
+          "ChannelId": "LipColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyebrowColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyeColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreSprayItemDef:SprayID_Track_Kit01_District_01",
+      "InstanceId": "2f835547-597d-4487-9d8e-45acd6aff0a3",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0018",
+      "InstanceId": "5ea2c205-6a67-427c-92a5-e80af9aeee34",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_AR_Standard_Angel",
+      "InstanceId": "a134a5c9-1d26-4b57-bba3-5f49b541a28d",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        },
+        {
+          "ChannelId": "FiringUpgrades",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "VFX",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "KillCeremony",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCharmItemDef:CharmID_Store_Founders",
+      "InstanceId": "d478d815-5ee1-43ae-8bbf-8bc58f49478f",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_SMG_Suppressed_Angel",
+      "InstanceId": "c5f0d728-563d-4d10-be1c-aee45e98c7bd",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        },
+        {
+          "ChannelId": "FiringUpgrades",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "VFX",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "KillCeremony",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Shotgun_Auto_Default",
+      "InstanceId": "24bc0e97-808c-4361-9399-507cc6e608fe",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Pistol_Auto_Angel",
+      "InstanceId": "1b98ef70-cec6-455f-9e13-a4232176aa79",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        },
+        {
+          "ChannelId": "FiringUpgrades",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "VFX",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "KillCeremony",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_AR_Heavy_Communa",
+      "InstanceId": "cecddd31-4eba-42bc-8910-e6971c010eab",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_AR_SemiAuto_Default",
+      "InstanceId": "d14f3756-6b79-4c13-bb86-8ec7be42aed2",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_Bones",
+      "InstanceId": "3b5eb3a2-1a99-4447-b63c-9a831a3a72bf",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_AR_Tactical_Default",
+      "InstanceId": "3b231ab1-765d-4b93-9d70-0ac8650c0cf3",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0020",
+      "InstanceId": "d2cedf72-1091-4824-a936-5d97f83a0f8e",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCharmItemDef:CharmID_Misc_Community_02",
+      "InstanceId": "385aaac6-c736-4a2d-9ce0-e16e0a1cc736",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Sniper_BoltAction_Default",
+      "InstanceId": "6a9d3951-6885-4b40-a619-1faea35f6fba",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreBannerItemDef:BannerID_Track_Kit02_District_01",
+      "InstanceId": "d0e9d377-6c1b-4087-87f6-ef11c8567de7",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCharmItemDef:CharmID_Track_Kit01_District",
+      "InstanceId": "c56e8862-8e6e-44ce-8d45-a4f78715101b",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemHead:HeadID_Face_002_B",
+      "InstanceId": "5779cd78-07e5-4216-8670-c4e41f506cdd",
+      "AlterationChannels": [
+        {
+          "ChannelId": "SkinTone",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "Voice",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5"
+          ]
+        },
+        {
+          "ChannelId": "LipColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyebrowColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyeColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Sniper_BoltAction_Angel",
+      "InstanceId": "d10e5a1f-a703-4c0a-a415-4cbef6ed94ba",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        },
+        {
+          "ChannelId": "FiringUpgrades",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "VFX",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "KillCeremony",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemOutfit:OutfitID_M_Default",
+      "InstanceId": "3fc190c0-9f2e-4b2e-8cc1-8ace7f227d28",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCharmItemDef:CharmID_Misc_Community_04",
+      "InstanceId": "c53bcf59-013f-47f3-8819-4e7b41ec9c67",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreBannerItemDef:BannerID_FoundersPack_01",
+      "InstanceId": "fcbe0d90-11a9-46ad-b2cd-d5497a3fff6f",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_006",
+      "InstanceId": "4ff1f361-c6ba-41ec-8fb1-e38aeecea9f6",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Pistol_SemiAuto_Default",
+      "InstanceId": "46a9620f-3129-49ed-9c9a-10427ec0043a",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreBannerItemDef:BannerID_Track_Kit01_Kit_01",
+      "InstanceId": "65817c40-5b6b-4c29-b033-1887be15a49f",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0001",
+      "InstanceId": "daae4a3d-f7b4-4ac6-8161-85a41f9b55f9",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemOutfit:OutfitID_M_DefaultAlt",
+      "InstanceId": "1235caf1-da55-4f89-9cc3-4b79eb0bc044",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_MG_HighCal_Default",
+      "InstanceId": "06db77d5-849a-4509-895c-b24f28b800c4",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Pistol_Auto_Default",
+      "InstanceId": "84c59314-02dd-4c23-909d-0245353d86c2",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Pistol_HighCal_Default",
+      "InstanceId": "a83f4964-0532-4c9d-8219-47e9d557c9dc",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreWeaponCharmItemDef:CharmID_Misc_Community_06",
+      "InstanceId": "b291c752-10a2-47d6-84e2-d33736d0c550",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreBannerItemDef:BannerID_Default",
+      "InstanceId": "ff185e9f-8ec4-41cd-83f1-e35275e49d36",
+      "AlterationChannels": [],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemHead:HeadID_Face_003",
+      "InstanceId": "b9910c17-3464-4f60-a43d-82f3ca230265",
+      "AlterationChannels": [
+        {
+          "ChannelId": "SkinTone",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "Voice",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5"
+          ]
+        },
+        {
+          "ChannelId": "LipColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyebrowColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9",
+            "Option10"
+          ]
+        },
+        {
+          "ChannelId": "EyeColor",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemOutfit:OutfitID_F_04",
+      "InstanceId": "aa7b6863-b224-4a52-b7f2-90fce1168f2c",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HAccessoryID_F_04",
+      "InstanceId": "3bd9534d-a89c-4608-b266-c69546994f32",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemOutfit:OutfitID_M_Primal",
+      "InstanceId": "11a44890-fb5a-4989-83b8-394d9a3de78e",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HAccessoryID_M_Primal",
+      "InstanceId": "07f86187-86af-439d-a192-65a840942dc5",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemOutfit:OutfitID_F_5Stars",
+      "InstanceId": "20ca69c1-5e2c-4def-860d-5afaaed60db9",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HStylingID_F_5Stars",
+      "InstanceId": "f9abd9ff-91e1-40f4-8e0a-c413129801e0",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HAccessoryID_F_5Stars",
+      "InstanceId": "1253c396-8e80-44aa-8c1c-b896bb173785",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1"
+          ]
+        }
+      ],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0009",
+      "InstanceId": "1474700b-e411-4338-b6ab-daf8a8cd7e45",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Color",
+          "Alterations": [
+            "Option1",
+            "Option2",
+            "Option3",
+            "Option4",
+            "Option5",
+            "Option6",
+            "Option7",
+            "Option8",
+            "Option9"
+          ]
+        }
+      ],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Knife_Cyberlord",
+      "InstanceId": "930216bb-2e63-488f-9faf-25b7eaa334ca",
+      "AlterationChannels": [
+        {
+          "ChannelId": "Mesh",
+          "Alterations": [
+            "On"
+          ]
+        },
+        {
+          "ChannelId": "VFX",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "KillCeremony",
+          "Alterations": [
+            "Off"
+          ]
+        },
+        {
+          "ChannelId": "Trail",
+          "Alterations": [
+            "On"
+          ]
+        }
+      ],
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreBannerItemDef:BannerID_Track_Kit09_01",
+      "InstanceId": "cb39bad0-5c0e-47f8-96b4-b125b9bbb1dc",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreSprayItemDef:SprayID_Track_Kit09_01",
+      "InstanceId": "ac004e33-bad1-48c4-af5b-f1847880e507",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreWeaponCharmItemDef:CharmID_Track_Kit09_Kit",
+      "InstanceId": "e68aa8e5-0e70-4a61-8c84-1aa5ff3ab35b",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreBannerItemDef:BannerID_Track_Kit09_02",
+      "InstanceId": "e1aa0efc-a32b-437c-a993-562e190f46b6",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreSprayItemDef:SprayID_Track_Kit09_02",
+      "InstanceId": "118963d4-d911-4044-900d-5baf98124ce0",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreWeaponCharmItemDef:CharmID_Track_Kit09_District",
+      "InstanceId": "4a85af6b-8b4a-439e-a3d7-0cedefba9f8a",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreWeaponCharmItemDef:CharmID_Track_Kit02_District",
+      "InstanceId": "e3a1cf67-2726-476c-b7f4-8d634e63e41b",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreBannerItemDef:BannerID_Track_Kit02_Kit_01",
+      "InstanceId": "37763ecd-9e6d-41af-be92-719902124d53",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreSprayItemDef:SprayID_Track_Kit02_Kit_01",
+      "InstanceId": "c756b6a4-f9b1-4b6a-bc6e-3eaffd0ffe1d",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreSprayItemDef:SprayID_Track_Kit01_Kit_01",
+      "InstanceId": "672f91ca-8e14-4106-8dae-5ee5cac396f1",
+      "AlterationChannels": [],
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreWeaponCharmItemDef:CharmID_Track_Kit01_Kit",
+      "InstanceId": "59b0e131-5f83-4ed4-9f3e-884002ab600d",
+      "AlterationChannels": [],
+      "Viewed": false
+    }
+  ],
+  "ProgresionTrackingItems": [
+    {
+      "CatalogId": "SpectreProgressionDataItem:ProgID_Cosmetic_WeaponSkin_Archangel_SuppressedSMG",
+      "InstanceId": "9bc8bf75-fdd6-4ce9-9f22-a3933e2a5641",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreSponsorProgressionItemDef:ProgID_Sponsor_Soldier",
+      "InstanceId": "24b45efd-1ea3-4342-8f71-aac1c8559eb6",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "7800"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 5,
+      "CurrentObjectiveIndex": 5,
+      "IsPremiumUnlocked": false,
+      "LastContribution": {
+        "SourceType": "MATCH",
+        "SourceId": "0304f5ee-f878-411d-9970-ae727b488924"
+      },
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreSponsorProgressionItemDef:ProgID_Sponsor_Momentum",
+      "InstanceId": "25414fb5-c63a-462c-9034-e1716f489e9d",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreProgressionDataItem:ProgID_Cosmetic_Costume_CyberLord",
+      "InstanceId": "e78f791a-2a10-4a16-ab21-135c485eba8d",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreSponsorProgressionItemDef:ProgID_Sponsor_Hacker",
+      "InstanceId": "a2dd5604-2c28-4957-90e1-6992f21cbcda",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "30700"
+      },
+      "AreObjectivesCompleted": true,
+      "CurrentObjectiveId": 6,
+      "CurrentObjectiveIndex": 7,
+      "IsPremiumUnlocked": false,
+      "LastContribution": {
+        "SourceType": "MATCH",
+        "SourceId": "6b405133-40db-4386-8d5f-192165c9d400"
+      },
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 3
+    },
+    {
+      "CatalogId": "SpectreProgressionDataItem:ProgID_Cosmetic_WeaponSkin_Archangel_StandardAR",
+      "InstanceId": "61c71fd8-bf6a-4e0b-920c-cf166bc1c2fa",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreProgressionDataItem:ProgID_Cosmetic_WeaponSkin_Archangel_AutoPistol",
+      "InstanceId": "5221485c-e403-46b3-ab3c-d62f01baba94",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreProgressionDataItem:ProgID_Cosmetic_Costume_Prince",
+      "InstanceId": "1fcb38c7-a37f-41c2-86fe-c986a1b8fce3",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreSponsorProgressionItemDef:ProgID_Sponsor_Vanguard",
+      "InstanceId": "6d4da298-b79d-4ef6-810a-9338cc477fb1",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreSponsorProgressionItemDef:ProgID_Sponsor_AreaControl",
+      "InstanceId": "bcdd181d-8e0c-4ad2-b2db-27bdd657a26a",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreProgressionDataItem:ProgID_Cosmetic_WeaponSkin_Archangel_BoltActionSniper",
+      "InstanceId": "0deb28bf-2bd1-419c-8292-bf5f1f354848",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreSponsorProgressionItemDef:ProgID_Sponsor_Recon",
+      "InstanceId": "4805752e-e1d7-4fba-ae5d-4be536aeca03",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreSponsorProgressionItemDef:ProgID_Sponsor_Lookout",
+      "InstanceId": "1fd194c2-2f30-479f-9b82-26a562080d5b",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_Team_3_Headshots_100",
+      "InstanceId": "b84777ea-739a-49e4-842c-ff54f24487f0",
+      "Viewed": true,
+      "ProgressionByStats": {
+        "playerstat.headshots": "26"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "teamId": "97be4047-e455-37dc-9118-d1ca060471e4",
+      "LastContribution": {
+        "SourceType": "MATCH",
+        "SourceId": "50a47c4e-3eeb-4d13-9035-03384fffea14"
+      },
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreSponsorProgressionItemDef:ProgID_Sponsor_Guardian",
+      "InstanceId": "806a0590-e480-428b-b9c5-110fd575fcd2",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreSponsorProgressionItemDef:ProgID_Sponsor_Remnant",
+      "InstanceId": "2fd1ae0a-05c3-4a82-8494-efa50a4419de",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": true,
+      "CurrentObjectiveId": 6,
+      "CurrentObjectiveIndex": 7,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 7
+    },
+    {
+      "CatalogId": "SpectreProgressionDataItem:ProgID_Cosmetic_Costume_Primal",
+      "InstanceId": "523786bf-347c-4854-ae6a-ea0509403438",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreProgressionDataItem:ProgID_Cosmetic_Costume_FiveStar",
+      "InstanceId": "98ae69ba-285c-45e5-976c-a2921e565f50",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreProgressionDataItem:ProgID_Cosmetic_WeaponSkin_Cyberlord_Knife",
+      "InstanceId": "c6970210-d0c5-4bbe-9f8d-d85868b0224a",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.xp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_01_",
+      "InstanceId": "edd280c1-23e2-436e-8064-8e58d8472e47",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.reloads.ability.status.inactiveavatar.permatch": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_02_",
+      "InstanceId": "21ebd93d-d198-44b5-b1f4-3d655e7634f9",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.kills.withmgorar": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_03_",
+      "InstanceId": "3c30c97c-dd5f-47de-9fa4-cd2c185ff8a2",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.sprayused.permatch": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_04_",
+      "InstanceId": "832b7012-f015-4a5d-9467-dd7f956a2dff",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.firstkills": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_05_",
+      "InstanceId": "31a6367f-f9c8-4171-877a-0685f7fefa56",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.abilitiesused.store.ability.equipmenttertiary": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_06_",
+      "InstanceId": "f60a825e-a6c6-42f9-a365-5fcc4ac64e22",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.totaldamage": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_07_",
+      "InstanceId": "e43f4524-a8aa-4d25-acb0-d55f6a674dac",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.headshots.weapon.pistol": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_08_",
+      "InstanceId": "cc20c03c-ca97-44ee-a883-a40841dc36e1",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.matchplayed.district.communa": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_09_",
+      "InstanceId": "cc142edf-9caa-4d9f-be6f-b0551e4fbcc7",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.crewscoreearned": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_10_",
+      "InstanceId": "c76c176e-fca9-4410-9e77-4dfd9a4e2a0c",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.bombplantsdefuses.ability.status.inactiveavatar": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_11_",
+      "InstanceId": "4af55781-9054-466d-9688-e68fd3bacc62",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.weapondamage.item.status.dropped": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_12_",
+      "InstanceId": "09ef0cb5-b8fc-4a44-8361-a9306446393a",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.abilitiespurchased": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_13_",
+      "InstanceId": "090f3cba-eb0d-4316-87cd-3fca527cbf62",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.redeploy.ability.recalling.accelerated.permatch": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_14_",
+      "InstanceId": "03469cca-c2b3-44e7-af6d-3d031ca7a3f1",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.matchplayed.district.fivestars": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_15_",
+      "InstanceId": "e29e8331-4885-49a4-8806-ab064207c879",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.kills.weapon.ar": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_16_",
+      "InstanceId": "b0e9a99c-de6f-453b-a024-f55d57f58dd1",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.roundswithakillwithbothbodies": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_17_",
+      "InstanceId": "af59afa2-e570-4410-b739-d733ffb5c539",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.weapondamage.m25orcyclone": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_18_",
+      "InstanceId": "c91b626a-8f30-4376-9c90-f2e32bfd7c2a",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.roundsplayed": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_19_",
+      "InstanceId": "d5d4c087-d622-44a0-8712-7595ba110a6b",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.kills.weapon.reaverorblackout": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_20_",
+      "InstanceId": "abbeedbd-4ebd-4360-8016-cf537030b62b",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.matchplayed.withcreworpartymember": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_21_",
+      "InstanceId": "58f794c6-bc6c-451c-93e5-da1f00959032",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.weapondamage": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_22_",
+      "InstanceId": "53623e28-1eb8-414a-9ce7-91bf74752381",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.weapondamage.weapon.mg": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_23_",
+      "InstanceId": "78a69f4b-991e-4203-8d48-9d7830d1fdae",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.crewscoreearned": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_BattlePass_24_",
+      "InstanceId": "4d4ed3eb-0626-4cce-a23b-290587821f15",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.moneyearned": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_Daily_1_Headshots_5",
+      "InstanceId": "0316ec70-5402-46b5-9b57-756cdb90fc99",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.headshots": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_Daily_3_UseUtility_50",
+      "InstanceId": "074c229a-a011-4e8e-867c-97d8250609ef",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.abilitiesused": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_Daily_3_PlantDefuse_12_dupe",
+      "InstanceId": "2dcf361e-029b-4afe-ad75-e9a5d4b1aa63",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.teambombplantsdefuses": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_Weekly_1_Quests_7",
+      "InstanceId": "139062b4-6b5b-469f-870f-3f1b7886d581",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.dailyquestcompleted": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_Weekly_2_CrewScore_50",
+      "InstanceId": "4a2dee78-2558-4f7d-a28e-4da722817dd2",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.crewscoreearned": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreQuestItemDef:Quest_Weekly_3_Headshots_80",
+      "InstanceId": "f6d199c4-29d0-4d90-b47a-a03a55831899",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.headshots": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": false,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    },
+    {
+      "CatalogId": "SpectreBattlePassProgressionItemDef:ProgID_BattlePass_Season1",
+      "InstanceId": "75ac14f3-d418-4607-8bce-142dbad20608",
+      "Viewed": false,
+      "ProgressionByStats": {
+        "playerstat.bpxp": "0"
+      },
+      "AreObjectivesCompleted": false,
+      "CurrentObjectiveId": 0,
+      "CurrentObjectiveIndex": 0,
+      "IsPremiumUnlocked": true,
+      "IsBundlePurchased": false,
+      "NumLevelsPurchased": 0
+    }
+  ],
+  "SponsorUnlockItems": [
+    {
+      "CatalogId": "SpectreSponsorUnlockItemDefinition:SponsorUnlock_AreaControl",
+      "InstanceId": "5ce9d963-4548-4347-9064-0c5064dd3244",
+      "SponsorName": "Area Control",
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreSponsorUnlockItemDefinition:SponsorUnlock_Guardian",
+      "InstanceId": "124402d2-fcaa-457e-828e-a76818c9a046",
+      "SponsorName": "Bloom Technologies",
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreSponsorUnlockItemDefinition:SponsorUnlock_Lookout",
+      "InstanceId": "acc1cc52-36f8-4fde-979d-e558c489bc4d",
+      "SponsorName": "Lookout",
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreSponsorUnlockItemDefinition:SponsorUnlock_Soldier",
+      "InstanceId": "132cc530-c525-4050-b223-6175be43f29d",
+      "SponsorName": "Soldier",
+      "Viewed": true
+    },
+    {
+      "CatalogId": "SpectreSponsorUnlockItemDefinition:SponsorUnlock_Remnant",
+      "InstanceId": "5a23751f-8ea5-4651-976c-35c88611c4bb",
+      "SponsorName": "Monark",
+      "Viewed": false
+    },
+    {
+      "CatalogId": "SpectreSponsorUnlockItemDefinition:SponsorUnlock_Hacker",
+      "InstanceId": "8709f91d-d4cb-41d5-b63c-7679d34bafae",
+      "SponsorName": "Ghostlink Collective",
+      "Viewed": true
+    }
+  ]
+}

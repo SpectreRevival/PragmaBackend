@@ -165,7 +165,7 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
 public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<ProgressionTrackingItem, Guid>, IEquatable<ProgressionTrackingItem>
 {
     [SetsRequiredMembers]
-    public ProgressionTrackingItem(Guid owningPlayerId, string catalogId, Guid instanceId, bool viewed, Dictionary<string, string> progressionByStats, bool areObjectivesCompleted, Guid currentObjectiveId, int currentObjectiveIndex, bool isPremiumUnlocked, Guid? teamId, ObjectiveContribution? lastContribution, bool isBundlePurchased, int numLevelsPurchased) : base(owningPlayerId, catalogId, instanceId, viewed)
+    public ProgressionTrackingItem(Guid owningPlayerId, string catalogId, Guid instanceId, bool viewed, Dictionary<string, string> progressionByStats, bool areObjectivesCompleted, int currentObjectiveId, int currentObjectiveIndex, bool isPremiumUnlocked, Guid? teamId, ObjectiveContribution? lastContribution, bool isBundlePurchased, int numLevelsPurchased) : base(owningPlayerId, catalogId, instanceId, viewed)
     {
         ProgressionByStats = progressionByStats ?? throw new ArgumentNullException(nameof(progressionByStats));
         AreObjectivesCompleted = areObjectivesCompleted;
@@ -180,7 +180,7 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
 
     public required Dictionary<string,string> ProgressionByStats { get; set; }
     public required bool AreObjectivesCompleted { get; set; }
-    public required Guid CurrentObjectiveId { get; set; }
+    public required Int32 CurrentObjectiveId { get; set; }
     public required Int32 CurrentObjectiveIndex { get; set; }
     public required bool IsPremiumUnlocked { get; set; }
     public Guid? TeamId { get; set; }
@@ -204,7 +204,7 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
             await reader.GetFieldValueAsync<bool>(3),
             await reader.GetFieldValueAsync<Dictionary<string,string>>(4),
             await reader.GetFieldValueAsync<bool>(5),
-            await reader.GetFieldValueAsync<Guid>(6),
+            await reader.GetFieldValueAsync<int>(6),
             await reader.GetFieldValueAsync<Int32>(7),
             await reader.GetFieldValueAsync<bool>(8),
             await reader.GetFieldValueAsync<Guid?>(9),
@@ -231,8 +231,8 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
         cmd.Parameters.AddWithValue("current_objective_id", CurrentObjectiveId);
         cmd.Parameters.AddWithValue("current_objective_index", CurrentObjectiveIndex);
         cmd.Parameters.AddWithValue("is_premium_unlocked", IsPremiumUnlocked);
-        cmd.Parameters.AddWithValue("team_id", TeamId);
-        cmd.Parameters.AddWithValue("last_contribution", LastContribution);
+        cmd.Parameters.AddWithValue("team_id", (object?)TeamId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("last_contribution", (object?)LastContribution ?? DBNull.Value);
         cmd.Parameters.AddWithValue("is_bundle_purchased", IsBundlePurchased);
         cmd.Parameters.AddWithValue("num_levels_purchased", NumLevelsPurchased);
         await cmd.ExecuteNonQueryAsync();

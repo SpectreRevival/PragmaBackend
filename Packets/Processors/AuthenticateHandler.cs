@@ -130,10 +130,108 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         return new Guid(guidBytes);
     }
 
+    private static void FixupOutfitData(Model.OutfitData data, Guid playerId)
+    {
+        NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
+        cmd.Parameters.AddWithValue("player_id", playerId);
+        cmd.Parameters.AddWithValue("catalog_id", data.ItemCatalogId);
+        using var reader = cmd.ExecuteReader();
+        if (!reader.Read())
+        {
+            throw new InvalidDataException($"The player with id {playerId} doesn't own an item with catalog id {data.ItemCatalogId}");
+        }
+        data.ItemInstanceId = reader.GetGuid(0);
+    }
+
+    private static void FixupOutfitLoadout(Model.OutfitLoadout loadout, Guid playerId)
+    {
+        FixupOutfitData(loadout.Outfit, playerId);
+        FixupOutfitData(loadout.Hair, playerId);
+        FixupOutfitData(loadout.FaceStyle, playerId);
+        FixupOutfitData(loadout.FaceAccessory, playerId);
+        FixupOutfitData(loadout.Head, playerId);
+    }
+
+    private static void FixupWeaponData(Model.WeaponData data, Guid playerId)
+    {
+        NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
+        cmd.Parameters.AddWithValue("player_id", playerId);
+        cmd.Parameters.AddWithValue("catalog_id", data.ItemCatalogId);
+        using var reader = cmd.ExecuteReader();
+        if (!reader.Read())
+        {
+            throw new InvalidDataException($"The player with id {playerId} doesn't own an item with catalog id {data.ItemCatalogId}");
+        }
+        data.ItemInstanceId = reader.GetGuid(0);
+        if (data.Attachment != null)
+        {
+            NpgsqlCommand attachmentCmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
+            attachmentCmd.Parameters.AddWithValue("player_id", playerId);
+            attachmentCmd.Parameters.AddWithValue("catalog_id", data.Attachment.AttachmentItemCatalogId);
+            using var attachmentReader = attachmentCmd.ExecuteReader();
+            if (!attachmentReader.Read())
+            {
+                throw new InvalidDataException($"The player with id {playerId} doesn't own an item with catalog id {data.Attachment.AttachmentItemCatalogId}");
+            }
+            data.Attachment.AttachmentItemInstanceId = reader.GetGuid(0);
+        }
+    }
+
+    private static void FixupWeaponLoadout(Model.WeaponLoadout loadout, Guid playerId)
+    {
+        FixupWeaponData(loadout.SemiAutoPistol, playerId);
+        FixupWeaponData(loadout.SuppressedPistol, playerId);
+        FixupWeaponData(loadout.AutoPistol, playerId);
+        FixupWeaponData(loadout.HighcalPistol, playerId);
+        FixupWeaponData(loadout.HeavyShotgun, playerId);
+        FixupWeaponData(loadout.AutoShotgun, playerId);
+        FixupWeaponData(loadout.TacticalSMG, playerId);
+        FixupWeaponData(loadout.RapidfireSMG, playerId);
+        FixupWeaponData(loadout.SuppressedSMG, playerId);
+        FixupWeaponData(loadout.StandardAR, playerId);
+        FixupWeaponData(loadout.SemiAutoAR, playerId);
+        FixupWeaponData(loadout.BurstAR, playerId);
+        FixupWeaponData(loadout.TacticalAR, playerId);
+        FixupWeaponData(loadout.SuppressedAR, playerId);
+        FixupWeaponData(loadout.HeavyAR, playerId);
+        FixupWeaponData(loadout.HighcalMG, playerId);
+        FixupWeaponData(loadout.RapidfireMG, playerId);
+        FixupWeaponData(loadout.SemiAutoSniper, playerId);
+        FixupWeaponData(loadout.BoltActionSniper, playerId);
+        FixupWeaponData(loadout.Melee, playerId);
+    }
+
     private static async Task<Model.ProfileData> CreateNewPlayerFromSteamId(string steamId)
     {
         Guid playerId = PlayerIdFromSteamId(steamId);
-
+        DefaultInventory defaultInv = JsonSerializer.Deserialize<DefaultInventory>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "Inventory.json")), new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+        foreach (var stackableItem in defaultInv.StackableItems)
+        {
+            stackableItem.InstanceId = Guid.NewGuid();
+            stackableItem.OwningPlayerId = playerId;
+            await stackableItem.SyncToDatabase();
+        }
+        foreach (var customizedInstancedItem in defaultInv.CustomizedInstancedItems)
+        {
+            customizedInstancedItem.InstanceId = Guid.NewGuid();
+            customizedInstancedItem.OwningPlayerId = playerId;
+            await customizedInstancedItem.SyncToDatabase();
+        }
+        foreach (var progressionTrackerItem in defaultInv.ProgresionTrackingItems)
+        {
+            progressionTrackerItem.InstanceId = Guid.NewGuid();
+            progressionTrackerItem.OwningPlayerId = playerId;
+            await progressionTrackerItem.SyncToDatabase();
+        }
+        foreach (var sponsorTrackerItem in defaultInv.SponsorUnlockItems)
+        {
+            sponsorTrackerItem.InstanceId = Guid.NewGuid();
+            sponsorTrackerItem.OwningPlayerId = playerId;
+            await sponsorTrackerItem.SyncToDatabase();
+        }
         Model.BattlepassData bpData = Model.BattlepassData.CreateDefault(playerId);
         await bpData.SyncToDatabase();
         Model.ColorVisionConfig colorVisionConfig = Model.ColorVisionConfig.CreateDefault(playerId);
@@ -158,12 +256,16 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         Model.GamepadConfig gamepadCfg = Model.GamepadConfig.CreateDefault(playerId);
         await gamepadCfg.SyncToDatabase();
         Model.OutfitLoadout attackerOutfitLoadout = Model.OutfitLoadout.CreateDefault(playerId);
+        FixupOutfitLoadout(attackerOutfitLoadout, playerId);
         await attackerOutfitLoadout.SyncToDatabase();
         Model.OutfitLoadout defenderOutfitLoadout = Model.OutfitLoadout.CreateDefault(playerId);
+        FixupOutfitLoadout(defenderOutfitLoadout, playerId);
         await defenderOutfitLoadout.SyncToDatabase();
         Model.WeaponLoadout attackerWeaponLoadout = Model.WeaponLoadout.CreateDefault(playerId);
+        FixupWeaponLoadout(attackerWeaponLoadout, playerId);
         await attackerWeaponLoadout.SyncToDatabase();
         Model.WeaponLoadout defenderWeaponLoadout = Model.WeaponLoadout.CreateDefault(playerId);
+        FixupWeaponLoadout(defenderWeaponLoadout, playerId);
         await defenderWeaponLoadout.SyncToDatabase();
         Model.SubtitleUserSettings subtitleSettings = Model.SubtitleUserSettings.CreateDefault(playerId);
         await subtitleSettings.SyncToDatabase();

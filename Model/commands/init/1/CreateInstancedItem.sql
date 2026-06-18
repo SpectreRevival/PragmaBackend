@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS instanced_items (
     sponsor_name TEXT,
     progression_by_stats HSTORE,
     are_objectives_completed BOOL,
-    current_objective_id UUID,
+    current_objective_id INT,
     current_objective_index INT,
     is_premium_unlocked BOOL,
     team_id UUID,
@@ -37,10 +37,6 @@ CREATE TABLE IF NOT EXISTS instanced_items (
             AND is_bundle_purchased IS NOT NULL
             AND num_levels_purchased IS NOT NULL
         )
-    ),
-    CONSTRAINT team_id_plus_obj_contrib CHECK (
-        (last_contribution IS NULL AND team_id IS NULL)
-        OR (last_contribution IS NOT NULL AND team_id IS NOT NULL)
     ),
     CONSTRAINT ext_exclusivity CHECK (
         (

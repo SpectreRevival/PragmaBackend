@@ -1,5 +1,6 @@
 ﻿using NpgsqlTypes;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace Model;
 
@@ -35,6 +36,7 @@ public record class ObjectiveContribution : IEquatable<ObjectiveContribution>
     }
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ObjectiveContributionSourceType
 {
     [PgName("MATCH")]

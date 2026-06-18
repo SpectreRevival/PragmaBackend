@@ -131,6 +131,11 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         return Get().GetRaw().CreateCommand(sqlCommandText);
     }
 
+    public static NpgsqlCommand CreateCommand(string cmd)
+    {
+        return Get().GetRaw().CreateCommand(cmd);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if(_dataSource != null)
