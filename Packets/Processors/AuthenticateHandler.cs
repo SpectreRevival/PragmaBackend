@@ -201,6 +201,19 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         FixupWeaponData(loadout.Melee, playerId);
     }
 
+    private static Guid GetInstanceIdByCatalogId(string catalogId, Guid owningPlayerId)
+    {
+        NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM instanced_items WHERE catalog_id=@catalog_id AND owning_player_id=@player_id");
+        cmd.Parameters.AddWithValue("catalog_id", catalogId);
+        cmd.Parameters.AddWithValue("player_id", owningPlayerId);
+        using var reader = cmd.ExecuteReader();
+        if (!reader.Read())
+        {
+            throw new InvalidDataException($"No item found with catalog id {catalogId} and owning player id {owningPlayerId}");
+        }
+        return reader.GetGuid(0);
+    }
+
     private static async Task<Model.ProfileData> CreateNewPlayerFromSteamId(string steamId)
     {
         Guid playerId = PlayerIdFromSteamId(steamId);
@@ -281,6 +294,10 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         playerProfile.LastLogin = DateTimeOffset.UtcNow;
         playerProfile.LastUpdated = DateTimeOffset.UtcNow;
         playerProfile.ProviderAccountId = steamId;
+        playerProfile.PreSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
+        playerProfile.MatchSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
+        playerProfile.PostSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
+        playerProfile.BannerItemId = GetInstanceIdByCatalogId("SpectreBannerItemDef:BannerID_Track_Kit01_District_01", playerId);
         // TODO instantiate the display name from the steam ID given to resolve persona name using the steam API
         await playerProfile.SyncToDatabase();
         return playerProfile;

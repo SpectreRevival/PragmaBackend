@@ -39,6 +39,7 @@ public class GetBulkProfileDataProcessor : WebsocketPacketProcessor, IWebsocketP
                 throw new InvalidDataException($"Couldn't find CustomizedInstancedItem associated with bannerItemId in profile data {profileData.BannerItemId}");
             }
             bannerItem.ItemCatalogId = bannerFullItem.CatalogId;
+            packet.Banner = bannerItem;
             res.BulkProfileData.Add(packet);
         }
         return SpectreWebsocketMessage.From(res);
