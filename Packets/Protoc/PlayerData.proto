@@ -270,3 +270,7 @@ message PlayerMatchmakingData {
 message PlayerServiceData {
 	repeated string tags = 1;
 }
+
+message PlayerClientData {
+	PlayerData data = 1;
+}

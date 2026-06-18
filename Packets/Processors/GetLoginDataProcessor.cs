@@ -41,7 +41,7 @@ public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketP
         return packet;
     }
 
-    private static async Task<FlatInstancedItem> BannerConvert(Guid instanceId)
+    private static async Task<FlatInstancedItem> GetFlatInstancedItem(Guid instanceId)
     {
         Model.CustomizedInstancedItem item = await Model.CustomizedInstancedItem.RetrieveFromDatabase(instanceId);
         FlatInstancedItem packet = new();
@@ -72,10 +72,10 @@ public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketP
         playerData.ServerData = "{}";
         Model.PlayerMatchmakingData mmData = await Model.PlayerMatchmakingData.RetrieveFromDatabase(ConnectionHandler.PlayerId);
         playerData.MatchmakingData = MatchmakingDataConvert(mmData);
-        playerData.Banner = await BannerConvert(profileData.BannerItemId);
-        playerData.PreSpray = await BannerConvert(profileData.PreSprayItemId);
-        playerData.MatchSpray = await BannerConvert(profileData.MatchSprayItemId);
-        playerData.PostSpray = await BannerConvert(profileData.PostSprayItemId);
+        playerData.Banner = await GetFlatInstancedItem(profileData.BannerItemId);
+        playerData.PreSpray = await GetFlatInstancedItem(profileData.PreSprayItemId);
+        playerData.MatchSpray = await GetFlatInstancedItem(profileData.MatchSprayItemId);
+        playerData.PostSpray = await GetFlatInstancedItem(profileData.PostSprayItemId);
         PlayerServiceData playerServiceData = new();
         playerData.PlayerServiceData = playerServiceData;
         ext.PlayerData = playerData;
