@@ -6,7 +6,7 @@ COPY --parents ../**/*.csproj ./
 RUN dotnet restore
 
 # env.json shouldn't be included in the build as it contains secrets
-COPY --exclude=**/env.json ../ ./
+COPY ../ ./
 RUN dotnet publish -c Release -o out
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
