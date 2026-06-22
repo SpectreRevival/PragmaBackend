@@ -99,7 +99,7 @@ pipeline {
             }
         }
         stage("Run tests"){
-            agent { label 'docker-linux' }
+            agent { label 'docker-linux-dind' }
             steps {
                 checkout scm
                 sh 'dotnet restore'
