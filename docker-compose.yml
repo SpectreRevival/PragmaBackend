@@ -24,7 +24,7 @@ services:
       retries: 10
   backend:
     build:
-      context: ..
+      context: .
       dockerfile: ./Backend.dockerfile
     image: pragmabackend:latest
     container_name: pragmabackend
@@ -46,7 +46,7 @@ services:
     networks:
       - pragmabackend_net
     volumes:
-      - ../BackendServer/resources/docker.env.json:/app/resources/env.json:ro
+      - ./BackendServer/resources/docker.env.json:/app/resources/env.json:ro
 volumes:
   pragmabackend_data:
 networks:

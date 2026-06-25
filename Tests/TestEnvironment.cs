@@ -28,7 +28,7 @@ public class TestEnvironment
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
         string backendDockerFile = Path.Combine(slnDir, "Backend.dockerfile");
         string pgDockerFile = Path.Combine(slnDir, "Postgres.dockerfile");
-        BuildImage(slnDir, "pragmabackend", backendDockerFile, "..");
+        BuildImage(slnDir, "pragmabackend", backendDockerFile, ".");
         BuildImage(slnDir, "pragmabackend-pgdb", pgDockerFile, ".");
         RunDockerCommand("compose down -v", slnDir);
     }
