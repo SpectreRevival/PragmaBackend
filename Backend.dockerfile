@@ -6,7 +6,10 @@ COPY --parents ./**/*.csproj ./
 RUN dotnet restore
 
 # env.json shouldn't be included in the build as it contains secrets
-COPY . .
+COPY ./BackendServer/**/* ./BackendServer
+COPY ./Model/**/* ./Model
+COPY ./Packets/**/* ./Packets
+COPY ./Tests/**/* ./Tests
 RUN dotnet publish -c Release -o out
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
