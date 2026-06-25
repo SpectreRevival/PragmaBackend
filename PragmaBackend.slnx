@@ -10,4 +10,9 @@
   <Folder Name="/Docs/">
 	  <File Path="README.md" />
   </Folder>
+  <Folder Name="/Containerization/" >
+  	<File Path="Postgres.dockerfile" />
+	<File Path="Backend.dockerfile" />
+	<File Path="docker-compose.yml" />
+   </Folder>
 </Solution>

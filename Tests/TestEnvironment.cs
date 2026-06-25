@@ -26,20 +26,18 @@ public class TestEnvironment
     {
         // base directory is .../PragmaBackend/Proj/bin/Debug/dotnetver/, just walk all the way back up to PragmaBackend and get the path of that dir
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
-        string dockerDir = Path.Combine(slnDir, "Docker");
-        string backendDockerFile = Path.Combine(dockerDir, "Backend.dockerfile");
-        string pgDockerFile = Path.Combine(dockerDir, "Postgres.dockerfile");
-        BuildImage(dockerDir, "pragmabackend", backendDockerFile, "..");
-        BuildImage(dockerDir, "pragmabackend-pgdb", pgDockerFile, ".");
-        RunDockerCommand("compose down -v", dockerDir);
+        string backendDockerFile = Path.Combine(slnDir, "Backend.dockerfile");
+        string pgDockerFile = Path.Combine(slnDir, "Postgres.dockerfile");
+        BuildImage(slnDir, "pragmabackend", backendDockerFile, "..");
+        BuildImage(slnDir, "pragmabackend-pgdb", pgDockerFile, ".");
+        RunDockerCommand("compose down -v", slnDir);
     }
 
     [GlobalTestInitialize]
     public static void InitializeEnvironment(TestContext _)
     {
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
-        string dockerDir = Path.Combine(slnDir, "Docker");
-        RunDockerCommand("compose up -d", dockerDir);
+        RunDockerCommand("compose up -d", slnDir);
         while (true)
         {
             var output = RunDockerCommand("inspect --format='{{.State.Health.Status}}' pragmabackend");
@@ -55,7 +53,8 @@ public class TestEnvironment
     public static void CleanupEnvironment(TestContext _)
     {
         PostgresDatabase.Get().ShutdownConnection();
-        RunDockerCommand("compose down -v");
+        string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
+        RunDockerCommand("compose down -v", slnDir);
     }
 
     [AssemblyCleanup]
@@ -65,7 +64,8 @@ public class TestEnvironment
         {
             PostgresDatabase.Get().ShutdownConnection();
         }
-        RunDockerCommand("compose down -v");
+        string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
+        RunDockerCommand("compose down -v", slnDir);
     }
 
     private static (int ExitCode, string Output, string Error) RunDockerCommand(string arguments, string? workingDir = null)

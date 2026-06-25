@@ -60,18 +60,16 @@ pipeline {
             agent { label 'docker-linux' }
             steps {
                 checkout scm
-                dir("Docker"){
-                    sh "docker build -t pragmabackend:latest -f Backend.dockerfile .."
-                    script {
-                        if (env.BRANCH_NAME == 'master'){
-                            sh "docker tag pragmabackend:latest registry.bgfamily.ca/pragmabackend:latest"
-                            sh "docker push registry.bgfamily.ca/pragmabackend:latest"
-                            sh "docker tag pragmabackend:latest ohmivr/pragmabackend:latest"
-                            withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]){
-                                sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
-                                sh "docker push ohmivr/pragmabackend:latest"
-                                sh "docker logout"
-                            }
+                sh "docker build -t pragmabackend:latest -f Backend.dockerfile .."
+                script {
+                    if (env.BRANCH_NAME == 'master'){
+                        sh "docker tag pragmabackend:latest registry.bgfamily.ca/pragmabackend:latest"
+                        sh "docker push registry.bgfamily.ca/pragmabackend:latest"
+                        sh "docker tag pragmabackend:latest ohmivr/pragmabackend:latest"
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]){
+                            sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                            sh "docker push ohmivr/pragmabackend:latest"
+                            sh "docker logout"
                         }
                     }
                 }
@@ -81,18 +79,16 @@ pipeline {
             agent { label 'docker-linux' }
             steps {
                 checkout scm
-                dir("Docker"){
-                    sh "docker build -t pragmabackend-pgdb:latest -f Postgres.dockerfile ."
-                    script {
-                        if (env.BRANCH_NAME == 'master'){
-                            sh "docker tag pragmabackend-pgdb:latest registry.bgfamily.ca/pragmabackend-pgdb:latest"
-                            sh "docker push registry.bgfamily.ca/pragmabackend-pgdb:latest"
-                            sh "docker tag pragmabackend-pgdb:latest ohmivr/pragmabackend-pgdb:latest"
-                            withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]){
-                                sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
-                                sh "docker push ohmivr/pragmabackend-pgdb:latest"
-                                sh "docker logout"
-                            }
+                sh "docker build -t pragmabackend-pgdb:latest -f Postgres.dockerfile ."
+                script {
+                    if (env.BRANCH_NAME == 'master'){
+                        sh "docker tag pragmabackend-pgdb:latest registry.bgfamily.ca/pragmabackend-pgdb:latest"
+                        sh "docker push registry.bgfamily.ca/pragmabackend-pgdb:latest"
+                        sh "docker tag pragmabackend-pgdb:latest ohmivr/pragmabackend-pgdb:latest"
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]){
+                            sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                            sh "docker push ohmivr/pragmabackend-pgdb:latest"
+                            sh "docker logout"
                         }
                     }
                 }
