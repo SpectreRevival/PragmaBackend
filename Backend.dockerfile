@@ -2,14 +2,17 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build-env
 WORKDIR /app
 
 COPY ./PragmaBackend.slnx ./
-COPY --parents ./**/*.csproj ./
+COPY ./BackendServer/BackendServer.csproj ./BackendServer/
+COPY ./Model/Model.csproj ./Model/
+COPY ./Packets/Packets.csproj ./Packets/
+COPY ./Tests/Tests.csproj ./Tests/
 RUN dotnet restore
 
 # env.json shouldn't be included in the build as it contains secrets
-COPY --parents ./BackendServer/**/* ./
-COPY --parents ./Model/**/* ./
-COPY --parents ./Packets/**/* ./
-COPY --parents ./Tests/**/* ./
+COPY ./BackendServer ./BackendServer
+COPY ./Model/ ./Model
+COPY ./Packets ./Packets
+COPY ./Tests ./Tests
 RUN dotnet publish ./BackendServer/BackendServer.csproj -c Release -o out
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
