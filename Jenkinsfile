@@ -60,7 +60,7 @@ pipeline {
             agent { label 'docker-linux' }
             steps {
                 checkout scm
-                sh "docker build -t pragmabackend:latest -f Backend.dockerfile .."
+                sh "docker build -t pragmabackend:latest -f Backend.dockerfile ."
                 script {
                     if (env.BRANCH_NAME == 'master'){
                         sh "docker tag pragmabackend:latest registry.bgfamily.ca/pragmabackend:latest"
