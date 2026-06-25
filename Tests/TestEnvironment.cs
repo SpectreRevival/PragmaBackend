@@ -28,8 +28,19 @@ public class TestEnvironment
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
         string backendDockerFile = Path.Combine(slnDir, "Backend.dockerfile");
         string pgDockerFile = Path.Combine(slnDir, "Postgres.dockerfile");
-        BuildImage(slnDir, "pragmabackend", backendDockerFile, ".");
-        BuildImage(slnDir, "pragmabackend-pgdb", pgDockerFile, ".");
+        Console.WriteLine("Building pragmabackend docker image");
+        bool backendBuilt = BuildImage(slnDir, "pragmabackend", backendDockerFile, ".");
+        if (!backendBuilt)
+        {
+            throw new Exception("Failed to build pragmabackend image");
+        }
+        Console.WriteLine("Building pragmabackend-pgdb docker image");
+        bool dbBuilt = BuildImage(slnDir, "pragmabackend-pgdb", pgDockerFile, ".");
+        if (!dbBuilt)
+        {
+            throw new Exception("Failed to built pragmabackend-pgdb image");
+        }
+        Console.WriteLine("Finished building images, tearing down old compose setup");
         RunDockerCommand("compose down -v", slnDir);
     }
 
@@ -37,6 +48,7 @@ public class TestEnvironment
     public static void InitializeEnvironment(TestContext _)
     {
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
+        Console.WriteLine("Starting up backend compose...");
         RunDockerCommand("compose up -d", slnDir);
         while (true)
         {
@@ -45,15 +57,20 @@ public class TestEnvironment
             {
                 break;
             }
+            Console.WriteLine("Backend not healthy yet, waiting...");
         }
+        Console.WriteLine("got healthy status, initializing connection to test db");
         PostgresDatabase.InstantiateDatabase(config);
+        Console.WriteLine("db connection established, running test");
     }
 
     [GlobalTestCleanup]
     public static void CleanupEnvironment(TestContext _)
     {
+        Console.WriteLine("Shutting down connection to db");
         PostgresDatabase.Get().ShutdownConnection();
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
+        Console.WriteLine("Tearing down compose...");
         RunDockerCommand("compose down -v", slnDir);
     }
 
@@ -62,8 +79,10 @@ public class TestEnvironment
     {
         if (PostgresDatabase.IsInstantiated())
         {
+            Console.WriteLine("Shutting down connection to db");
             PostgresDatabase.Get().ShutdownConnection();
         }
+        Console.WriteLine("Tearing down compose...");
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
         RunDockerCommand("compose down -v", slnDir);
     }
