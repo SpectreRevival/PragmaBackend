@@ -124,10 +124,9 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
     private static Guid PlayerIdFromSteamId(string steamId)
     {
         // Creates a new GUID using steamId as the seed so the same steamId will always yield the same playerId;
-        var rand = new Random(steamId.GetHashCode());
-        byte[] guidBytes = new byte[16];
-        rand.NextBytes(guidBytes);
-        return new Guid(guidBytes);
+        byte[] steamIdBytes = Encoding.UTF8.GetBytes(steamId);
+        byte[] hashBytes = SHA256.HashData(steamIdBytes);
+        return new Guid(hashBytes.AsSpan(0, 16));
     }
 
     private static void FixupOutfitData(Model.OutfitData data, Guid playerId)

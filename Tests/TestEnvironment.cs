@@ -70,6 +70,13 @@ public class TestEnvironment
         Console.WriteLine("Shutting down connection to db");
         PostgresDatabase.Get().ShutdownConnection();
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
+        Console.WriteLine("Fetching logs...");
+        var logcmdOutput = RunDockerCommand("logs pragmabackend");
+        var dblogcmdOutput = RunDockerCommand("logs pragmabackend-pgdb");
+        Console.WriteLine("Backend log:");
+        Console.WriteLine(logcmdOutput.Output);
+        Console.WriteLine("Database log:");
+        Console.WriteLine(dblogcmdOutput.Output);
         Console.WriteLine("Tearing down compose...");
         RunDockerCommand("compose down -v", slnDir);
     }

@@ -366,17 +366,18 @@ public class GetPlayerClientData : WebsocketPacketProcessor, IWebsocketPacketPro
             new JsonFormatter.Settings(true)
             .WithFormatDefaultValues(true)
             .WithFormatEnumsAsIntegers(true)
-            .WithIndentation("")
             .WithPreserveProtoFieldNames(true)
         );
         string playerConfigJsonString = outFormatter.Format(res.Data);
+        playerConfigJsonString = playerConfigJsonString.Replace(" ", "");
         string jsonString = outFormatter.Format(finalRes);
-        string[] strings1 = jsonString.Split("\"data\": {\r\n\"unlockAll"); // strings1[0] contains everything before the data property
+        jsonString = jsonString.Replace(" ", "");
+        string[] strings1 = jsonString.Split("\"data\":{\"unlockAll"); // strings1[0] contains everything before the data property
         string[] afterstring = strings1[1].Split("\"matchmakingData\""); //afterstring[1] contains everything after the data property
         playerConfigJsonString = playerConfigJsonString.Replace("\r", "");
         playerConfigJsonString = playerConfigJsonString.Replace("\n", "");
         playerConfigJsonString = playerConfigJsonString.Replace("\"", "\\\"");
-        string finalString = strings1[0] + $"\"data\": \"{playerConfigJsonString}\"," + "\"matchmakingData\"" + afterstring[1];
+        string finalString = strings1[0] + $"\"data\":\"{playerConfigJsonString}\"," + "\"matchmakingData\"" + afterstring[1];
         return SpectreWebsocketMessage.From(finalString);
     }
 }
