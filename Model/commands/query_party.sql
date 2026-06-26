@@ -1,1 +1,19 @@
-SELECT * FROM parties WHERE party_id = @party_id LIMIT 1;
+SELECT
+	party_id,
+	members,
+	invite_code,
+	queue_pool,
+	lobby_mode,
+	chat_id,
+	use_team_mmr,
+	party_version,
+	party_ext_version,
+	region,
+	tag,
+	profile,
+	has_acceptable_region,
+	preferred_game_server_zones,
+	standard,
+	custom_json,
+	crossplay_platform
+FROM parties WHERE party_id = @party_id LIMIT 1;

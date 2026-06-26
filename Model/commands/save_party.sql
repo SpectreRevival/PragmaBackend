@@ -6,7 +6,16 @@ INSERT INTO parties (
 	lobby_mode,
 	chat_id,
 	use_team_mmr,
-	party_version
+	party_version,
+	party_ext_version,
+	region,
+	tag,
+	profile,
+	has_acceptable_region,
+	preferred_game_server_zones,
+	standard,
+	custom_json,
+	crossplay_platform
 ) VALUES (
 	@party_id,
 	@members,
@@ -15,7 +24,16 @@ INSERT INTO parties (
 	@lobby_mode,
 	@chat_id,
 	@use_team_mmr,
-	@version
+	@version,
+	@party_ext_version,
+	@region,
+	@tag,
+	@profile,
+	@has_acceptable_region,
+	@preferred_game_server_zones,
+	@standard,
+	@custom_json,
+	@crossplay_platform
 ) ON CONFLICT (party_id)
 DO UPDATE SET
 	members = EXCLUDED.members,
@@ -24,4 +42,13 @@ DO UPDATE SET
 	lobby_mode = EXCLUDED.lobby_mode,
 	chat_id = EXCLUDED.chat_id,
 	use_team_mmr = EXCLUDED.use_team_mmr,
-	party_version = EXCLUDED.party_version;
+	party_version = EXCLUDED.party_version,
+	party_ext_version = EXCLUDED.party_ext_version,
+	region = EXCLUDED.region,
+	tag = EXCLUDED.tag,
+	profile = EXCLUDED.profile,
+	has_acceptable_region = EXCLUDED.has_acceptable_region,
+	preferred_game_server_zones = EXCLUDED.preferred_game_server_zones,
+	standard = EXCLUDED.standard,
+	custom_json = EXCLUDED.custom_json,
+	crossplay_platform = EXCLUDED.crossplay_platform;

@@ -8,6 +8,8 @@ RETURNS BOOLEAN AS $$
 		OR unpacked_member.is_leader IS NULL
 		OR unpacked_member.preferred_team IS NULL
 		OR unpacked_member.ranked_mode_unlocked IS NULL
+		OR unpacked_member.party_member_version IS NULL
+		OR unpacked_member.region IS NULL
 	);
 $$ LANGUAGE sql IMMUTABLE;
 
@@ -29,6 +31,15 @@ CREATE TABLE IF NOT EXISTS parties (
     chat_id TEXT NOT NULL,
     use_team_mmr BOOL NOT NULL,
 	party_version BIGINT NOT NULL,
+	party_ext_version TEXT NOT NULL DEFAULT '173322',
+	region TEXT NOT NULL DEFAULT '',
+	tag TEXT NOT NULL DEFAULT '',
+	profile TEXT NOT NULL DEFAULT '',
+	has_acceptable_region BOOL NOT NULL DEFAULT TRUE,
+	preferred_game_server_zones TEXT[] NOT NULL DEFAULT ARRAY['uscentral-1']::TEXT[],
+	standard HSTORE NOT NULL DEFAULT hstore('mode', 'Standard'),
+	custom_json TEXT NOT NULL DEFAULT '',
+	crossplay_platform TEXT NOT NULL DEFAULT 'CROSS_PLAY_PLATFORM_PC',
 
     CONSTRAINT verify_party_members CHECK (
         all_party_members_nonnull(members)
