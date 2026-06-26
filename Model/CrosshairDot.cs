@@ -1,9 +1,11 @@
 ﻿using NpgsqlTypes;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
 public record class CrosshairDot
 {
+    [SetsRequiredMembers]
     public CrosshairDot(double thickness, double opacity, int colorIndex, RGBAColor customColor, bool outlineEnabled, RGBAColor customOutlineColor, double outlineOpacity, double outlineThickness)
     {
         Thickness = thickness;
@@ -14,6 +16,11 @@ public record class CrosshairDot
         CustomOutlineColor = customOutlineColor;
         OutlineOpacity = outlineOpacity;
         OutlineThickness = outlineThickness;
+    }
+
+    public CrosshairDot()
+    {
+
     }
 
     [PgName("thickness")]
