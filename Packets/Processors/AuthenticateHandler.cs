@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Model;
 using Npgsql;
 using Persistence;
+using Serilog;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
@@ -13,6 +15,9 @@ namespace Packets.Processors;
 
 public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleton
 {
+    // short timeout so a slow/down steam web api can't hang the auth request; we fall back to the stored name.
+    private static readonly HttpClient SteamHttpClient = new() { Timeout = TimeSpan.FromSeconds(5) };
+
     [SetsRequiredMembers]
     public AuthenticateHandler(HttpMethod method, string route) : base(method, route)
     {
@@ -61,6 +66,22 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
             Guid playerId = await reader.GetFieldValueAsync<Guid>(0);
             await reader.DisposeAsync();
             playerProfile = await Model.ProfileData.RetrieveFromDatabase(playerId);
+        }
+
+        // the jwt carries displayName, so the steam persona name has to be resolved and persisted before we build it.
+        string? steamApiKey = Request.RequestServices.GetRequiredService<IConfiguration>()["STEAM_WEB_API_KEY"];
+        if (!string.IsNullOrWhiteSpace(steamApiKey))
+        {
+            string? personaName = await ResolveSteamPersonaName(ticket.SteamId64, steamApiKey);
+            if (!string.IsNullOrEmpty(personaName) && personaName != playerProfile.DisplayName.PlayerName)
+            {
+                playerProfile.DisplayName.PlayerName = personaName;
+                await playerProfile.SyncToDatabase();
+            }
+        }
+        else
+        {
+            Log.Warning("STEAM_WEB_API_KEY not configured; using stored display name");
         }
 
         return Results.Json(new AuthenticateHandlerResponse(new PragmaTokenPair(
@@ -119,6 +140,34 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
             .Replace("+", "-")
             .Replace("/", "_")
             .TrimEnd('=');
+    }
+
+    private static async Task<string?> ResolveSteamPersonaName(string steamId64, string apiKey)
+    {
+        try
+        {
+            string url = $"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={apiKey}&steamids={steamId64}";
+            using HttpResponseMessage resp = await SteamHttpClient.GetAsync(url);
+            if (!resp.IsSuccessStatusCode)
+            {
+                Log.Warning($"Steam GetPlayerSummaries returned {(int)resp.StatusCode} for steamId {steamId64}");
+                return null;
+            }
+            using Stream stream = await resp.Content.ReadAsStreamAsync();
+            using JsonDocument doc = await JsonDocument.ParseAsync(stream);
+            JsonElement players = doc.RootElement.GetProperty("response").GetProperty("players");
+            if (players.GetArrayLength() == 0)
+            {
+                Log.Warning($"Steam returned no summary for steamId {steamId64}");
+                return null;
+            }
+            return players[0].GetProperty("personaname").GetString();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Failed to resolve steam persona name for {steamId64}: {ex.Message}");
+            return null;
+        }
     }
 
     private static Guid PlayerIdFromSteamId(string steamId)
@@ -297,7 +346,6 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         playerProfile.MatchSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
         playerProfile.PostSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
         playerProfile.BannerItemId = GetInstanceIdByCatalogId("SpectreBannerItemDef:BannerID_Track_Kit01_District_01", playerId);
-        // TODO instantiate the display name from the steam ID given to resolve persona name using the steam API
         await playerProfile.SyncToDatabase();
         return playerProfile;
     }
