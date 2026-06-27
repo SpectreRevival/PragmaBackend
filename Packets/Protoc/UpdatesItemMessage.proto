@@ -1,8 +1,0 @@
-syntax = "proto3";
-import "ItemUpdate.proto";
-package Packets;
-
-message UpdatesItemMessage {
-	repeated InstancedItemUpdate instancedItemUpdates = 1;
-	repeated StackedItemUpdate stackedItemUpdates = 2;
-}

@@ -1,4 +1,6 @@
 syntax = "proto3";
+import "InstancedItem.proto";
+import "StackableItem.proto";
 package Packets;
 
 message InstancedItemUpdate {
@@ -21,4 +23,44 @@ message ProgressionTrackerUpdate {
 message StackedItemUpdate {
 	string instanceId = 1;
 	string newAmount = 2;
+}
+
+message UpdateItemsRequest {
+	repeated InstancedItemUpdate instancedItemUpdates = 1;
+	repeated StackedItemUpdate stackableItemsUpdates = 2;
+}
+
+message UpdateItemsResponse {
+	InventorySegment segment = 1;
+	InventoryDelta delta = 2;
+}
+
+message InventorySegment {
+	repeated string removedStackables = 1;
+	repeated string removedInstanced = 2;
+	string previousVersion = 3;
+	string version = 4;
+	repeated StackableItem stackables = 5;
+	repeated InstancedItem instanced = 6;
+}
+
+message InventoryDelta {
+	repeated StackableDelta stackables = 1;
+	repeated InstancedDelta instanced = 2;
+}
+
+message StackableDelta {
+	string catalogId = 1;
+	repeated string tags = 2;
+	string operation = 3;
+	StackableItem initial = 4;
+	StackableItem final = 5;
+}
+
+message InstancedDelta {
+	string catalogId = 1;
+	repeated string tags = 2;
+	string operation = 3;
+	InstancedItem initial = 4;
+	InstancedItem final = 5;
 }
