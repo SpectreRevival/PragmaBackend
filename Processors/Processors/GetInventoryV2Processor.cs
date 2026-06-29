@@ -32,6 +32,7 @@ public class GetInventoryV2Processor : WebsocketPacketProcessor, IWebsocketPacke
             res.Stackables.Add(item.ToPacket());
         }
         NpgsqlCommand customizedInstancedCmd = PostgresDatabase.LoadCommandFromFile("get_all_customized_instanced_for_player.sql");
+        customizedInstancedCmd.Parameters.AddWithValue("player_id", ConnectionHandler.PlayerId);
         using var customizedInstancedReader = await customizedInstancedCmd.ExecuteReaderAsync();
         while (await customizedInstancedReader.ReadAsync())
         {
@@ -40,6 +41,7 @@ public class GetInventoryV2Processor : WebsocketPacketProcessor, IWebsocketPacke
             res.Instanced.Add(item.ToPacket());
         }
         NpgsqlCommand progTrackingCmd = PostgresDatabase.LoadCommandFromFile("get_all_progression_tracking_items.sql");
+        progTrackingCmd.Parameters.AddWithValue("player_id", ConnectionHandler.PlayerId);
         using var progTrackingReader = await progTrackingCmd.ExecuteReaderAsync();
         while (await progTrackingReader.ReadAsync())
         {
@@ -48,6 +50,7 @@ public class GetInventoryV2Processor : WebsocketPacketProcessor, IWebsocketPacke
             res.Instanced.Add(item.ToPacket());
         }
         NpgsqlCommand sponsorTrackingCmd = PostgresDatabase.LoadCommandFromFile("get_all_sponsor_tracking_items.sql");
+        sponsorTrackingCmd.Parameters.AddWithValue("player_id", ConnectionHandler.PlayerId);
         using var sponsorTrackingReader = await sponsorTrackingCmd.ExecuteReaderAsync();
         while (await sponsorTrackingReader.ReadAsync())
         {

@@ -235,8 +235,8 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
             await reader.GetFieldValueAsync<int>(6),
             await reader.GetFieldValueAsync<int>(7),
             await reader.GetFieldValueAsync<bool>(8),
-            await reader.GetFieldValueAsync<Guid?>(9),
-            await reader.GetFieldValueAsync<ObjectiveContribution?>(10),
+            await reader.IsDBNullAsync(9) ? null : await reader.GetFieldValueAsync<Guid>(9),
+            await reader.IsDBNullAsync(10) ? null : await reader.GetFieldValueAsync<ObjectiveContribution>(10),
             await reader.GetFieldValueAsync<bool>(11),
             await reader.GetFieldValueAsync<int>(12)
         );
