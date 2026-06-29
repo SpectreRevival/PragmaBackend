@@ -1,18 +1,19 @@
 <Solution>
   <Folder Name="/Solution Items/" />
-  <Project Path="BackendServer/BackendServer.csproj" />
-  <Project Path="Model/Model.csproj" />
-  <Project Path="Packets/Packets.csproj" />
-  <Project Path="Tests/Tests.csproj" Id="43ac737b-5311-4b42-af36-72dd57158279" />
   <Folder Name="/Automation/">
 	  <File Path="Jenkinsfile" />
   </Folder>
   <Folder Name="/Docs/">
 	  <File Path="README.md" />
   </Folder>
-  <Folder Name="/Containerization/" >
+  <Folder Name="/Containerization/">
   	<File Path="Postgres.dockerfile" />
 	<File Path="Backend.dockerfile" />
 	<File Path="docker-compose.yml" />
    </Folder>
+  <Project Path="BackendServer/BackendServer.csproj" />
+  <Project Path="Model/Model.csproj" />
+  <Project Path="Packets/Packets.csproj" />
+  <Project Path="Processors/Processors.csproj" Id="48df179f-9f23-4100-bfcb-7138188efa30" />
+  <Project Path="Tests/Tests.csproj" Id="43ac737b-5311-4b42-af36-72dd57158279" />
 </Solution>

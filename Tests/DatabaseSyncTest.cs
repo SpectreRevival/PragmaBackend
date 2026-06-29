@@ -1,8 +1,6 @@
 ﻿using Model;
 using System.Collections;
-using System.ComponentModel;
 using System.Reflection;
-using System.Text;
 
 namespace Tests;
 
@@ -11,7 +9,7 @@ public class DatabaseSyncTest()
 {
     public static IEnumerable<object[]> GetClassesToTest()
     {
-        var interfaceType = typeof(IDatabaseSyncable<,>);
+        Type interfaceType = typeof(IDatabaseSyncable<,>);
         List<Type> implementingTypes = interfaceType.Assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract)
             .Where(t => t.GetInterfaces()
@@ -29,25 +27,42 @@ public class DatabaseSyncTest()
     public static object? CreateArgument(Type t)
     {
         if (t == typeof(Guid))
+        {
             return Guid.NewGuid();
+        }
 
         if (t == typeof(int))
+        {
             return Random.Shared.Next();
+        }
+
         if (t == typeof(long))
-            return (long)Random.Shared.Next() << 32 | (long)Random.Shared.Next();
+        {
+            return ((long)Random.Shared.Next() << 32) | (long)Random.Shared.Next();
+        }
+
         if (t == typeof(double))
+        {
             return Random.Shared.NextDouble();
+        }
+
         if (t == typeof(float))
+        {
             return (float)Random.Shared.NextDouble();
+        }
+
         if (t == typeof(bool))
+        {
             return Random.Shared.Next(2) == 0;
+        }
+
         if (t == typeof(byte))
         {
             return (byte)Random.Shared.Next(256);
         }
         if (t == typeof(DateTimeOffset))
         {
-            var utcNow = DateTimeOffset.UtcNow;
+            DateTimeOffset utcNow = DateTimeOffset.UtcNow;
             return utcNow.AddMinutes(Random.Shared.Next(0, 1440));
         }
         if (t == typeof(string))
@@ -63,27 +78,32 @@ public class DatabaseSyncTest()
         }
 
         if (t.IsValueType)
+        {
             return CreateFromConstructor(t);
+        }
 
         if (t.IsArray)
         {
-            var elementType = t.GetElementType();
-            if(elementType == typeof(PartyMember))
+            Type? elementType = t.GetElementType();
+            if (elementType == typeof(PartyMember))
             {
-                var members = Array.CreateInstance(typeof(PartyMember), 1);
+                Array members = Array.CreateInstance(typeof(PartyMember), 1);
                 members.SetValue(new PartyMember(Guid.NewGuid(), (bool)CreateArgument(typeof(bool)), true, (string)CreateArgument(typeof(string)), (bool)CreateArgument(typeof(bool)), (long)CreateArgument(typeof(long))), 0);
                 return members;
             }
-            var arr = Array.CreateInstance(elementType, 3);
+            Array arr = Array.CreateInstance(elementType, 3);
             for (int i = 0; i < arr.Length; i++)
+            {
                 arr.SetValue(CreateArgument(elementType), i);
+            }
+
             return arr;
         }
         if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>))
         {
             Type keyType = t.GenericTypeArguments[0];
             Type valueType = t.GenericTypeArguments[1];
-            var dict = (IDictionary)Activator.CreateInstance(t);
+            IDictionary? dict = (IDictionary)Activator.CreateInstance(t);
             for (int i = 0; i < Random.Shared.Next(5); i++)
             {
                 object instKey = CreateArgument(keyType);
@@ -94,23 +114,22 @@ public class DatabaseSyncTest()
         }
         if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
         {
-            var list = (IList)Activator.CreateInstance(t);
-            var elementType = t.GetGenericArguments()[0];
+            IList? list = (IList)Activator.CreateInstance(t);
+            Type elementType = t.GetGenericArguments()[0];
 
             int count = Random.Shared.Next(1, 4);
             for (int i = 0; i < count; i++)
+            {
                 list.Add(CreateArgument(elementType));
+            }
 
             return list;
         }
 
         if (t.IsSealed)
         {
-            var ctor = t.GetConstructor(Type.EmptyTypes);
-            if (ctor != null)
-                return Activator.CreateInstance(t);
-
-            return null;
+            ConstructorInfo? ctor = t.GetConstructor(Type.EmptyTypes);
+            return ctor != null ? Activator.CreateInstance(t) : null;
         }
 
         return CreateFromConstructor(t);
@@ -118,9 +137,9 @@ public class DatabaseSyncTest()
 
     public static object CreateFromConstructor(Type classToConstruct)
     {
-        var ctor = classToConstruct.GetConstructors().OrderByDescending(c => c.GetParameters().Length).First();
-        var args = new List<object>();
-        foreach (var param in ctor.GetParameters())
+        ConstructorInfo ctor = classToConstruct.GetConstructors().OrderByDescending(c => c.GetParameters().Length).First();
+        List<object> args = [];
+        foreach (ParameterInfo param in ctor.GetParameters())
         {
             args.Add(CreateArgument(param.ParameterType));
         }
@@ -131,7 +150,7 @@ public class DatabaseSyncTest()
     {
         if (data != null && data.Length > 0 && data[0] is string typeName)
         {
-            var shortName = typeName.Split(',')[0].Split('.').Last();
+            string shortName = typeName.Split(',')[0].Split('.').Last();
             return $"{methodInfo.Name}_{shortName}";
         }
         return methodInfo.Name;
@@ -142,22 +161,22 @@ public class DatabaseSyncTest()
     public async Task TestDatabaseSyncClass(string syncableClassName)
     {
         Type syncableClass = Type.GetType(syncableClassName);
-        var obj1 = CreateFromConstructor(syncableClass);
-        var obj2 = CreateFromConstructor(syncableClass);
-        var obj3 = CreateFromConstructor(syncableClass);
-        var syncMethod = obj1.GetType().GetMethod("SyncToDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        var syncTask = (Task)syncMethod.Invoke(obj1, new object[] {});
-        var syncTask2 = (Task)syncMethod.Invoke(obj2, new object[] { });
-        var syncTask3 = (Task)syncMethod.Invoke(obj3, new object[] { });
+        object obj1 = CreateFromConstructor(syncableClass);
+        object obj2 = CreateFromConstructor(syncableClass);
+        object obj3 = CreateFromConstructor(syncableClass);
+        MethodInfo? syncMethod = obj1.GetType().GetMethod("SyncToDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        Task? syncTask = (Task)syncMethod.Invoke(obj1, new object[] { });
+        Task? syncTask2 = (Task)syncMethod.Invoke(obj2, new object[] { });
+        Task? syncTask3 = (Task)syncMethod.Invoke(obj3, new object[] { });
         await syncTask;
         await syncTask2;
         await syncTask3;
-        var keyMethod = obj1.GetType().GetMethod("GetKey", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        var key = keyMethod.Invoke(obj1, new object[] { });
-        var fetchMethod = obj1.GetType().GetMethod("RetrieveFromDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+        MethodInfo? keyMethod = obj1.GetType().GetMethod("GetKey", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        object? key = keyMethod.Invoke(obj1, new object[] { });
+        MethodInfo? fetchMethod = obj1.GetType().GetMethod("RetrieveFromDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
 
         dynamic task = fetchMethod.Invoke(null, new object[] { key });
-        var fetched = await task;
+        dynamic fetched = await task;
         Assert.AreEqual(fetched, obj1);
         Assert.AreNotEqual(fetched, obj2);
         Assert.AreNotEqual(fetched, obj3);

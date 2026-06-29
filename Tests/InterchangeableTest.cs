@@ -5,11 +5,28 @@ using System.Reflection;
 namespace Tests;
 
 [TestClass]
-public class DefaultInitializationTest()
+public class InterchangeableTest()
 {
-    public static IEnumerable<object[]> GetClassesToTest()
+    public static IEnumerable<object[]> GetInterchangeableClasses()
     {
-        Type interfaceType = typeof(IDatabaseSyncableDefault<,>);
+        Type interfaceType = typeof(IInterchangeable<,>);
+        List<Type> implementingTypes = interfaceType.Assembly.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract)
+            .Where(t => t.GetInterfaces()
+            .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType))
+            .ToList();
+        foreach (Type implementingType in implementingTypes)
+        {
+            yield return new object[]
+            {
+                implementingType.AssemblyQualifiedName!
+            };
+        }
+    }
+
+    public static IEnumerable<object[]> GetInterchangeableKeyedClasses()
+    {
+        Type interfaceType = typeof(IInterchangeableKeyed<,,>);
         List<Type> implementingTypes = interfaceType.Assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract)
             .Where(t => t.GetInterfaces()
@@ -38,7 +55,7 @@ public class DefaultInitializationTest()
 
         if (t == typeof(long))
         {
-            return ((long)Random.Shared.Next() << 32) | (long)Random.Shared.Next();
+            return (long)Random.Shared.Next();
         }
 
         if (t == typeof(double))
@@ -85,10 +102,10 @@ public class DefaultInitializationTest()
         if (t.IsArray)
         {
             Type? elementType = t.GetElementType();
-            if (elementType == typeof(PartyMember))
+            if (elementType == typeof(Model.PartyMember))
             {
-                Array members = Array.CreateInstance(typeof(PartyMember), 1);
-                members.SetValue(new PartyMember(Guid.NewGuid(), (bool)CreateArgument(typeof(bool)), true, (string)CreateArgument(typeof(string)), (bool)CreateArgument(typeof(bool)), (long)CreateArgument(typeof(long))), 0);
+                Array members = Array.CreateInstance(typeof(Model.PartyMember), 1);
+                members.SetValue(new Model.PartyMember(Guid.NewGuid(), (bool)CreateArgument(typeof(bool)), true, (string)CreateArgument(typeof(string)), (bool)CreateArgument(typeof(bool)), (long)CreateArgument(typeof(long))), 0);
                 return members;
             }
             Array arr = Array.CreateInstance(elementType, 3);
@@ -157,15 +174,44 @@ public class DefaultInitializationTest()
     }
 
     [TestMethod]
-    [DynamicData(nameof(GetClassesToTest), DynamicDataDisplayName = nameof(GetCustomTestName))]
-    public async Task TestDefaultInitialization(string syncableClassName)
+    [DynamicData(nameof(GetInterchangeableClasses), DynamicDataDisplayName = nameof(GetCustomTestName))]
+    public async Task TestInterchangeableClass(string modelClassName)
     {
-        Type syncableClass = Type.GetType(syncableClassName);
-        MethodInfo? defaultCreateMethod = syncableClass.GetMethod("CreateDefault", BindingFlags.Static | BindingFlags.Public);
-        object? key = CreateArgument(defaultCreateMethod.GetParameters().First().ParameterType);
-        object? obj1 = defaultCreateMethod.Invoke(null, new object[] { key });
-        MethodInfo? syncMethod = obj1.GetType().GetMethod("SyncToDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        Task? syncTask = (Task)syncMethod.Invoke(obj1, new object[] { });
-        await syncTask;
+        Type modelClass = Type.GetType(modelClassName);
+        Type interfaceType = typeof(IInterchangeable<,>);
+        Type packetClass = modelClass.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType).First().GetGenericArguments().Last();
+        Assert.AreNotEqual(packetClass, modelClass);
+        object modelobj1 = CreateFromConstructor(modelClass);
+        object modelobj2 = CreateFromConstructor(modelClass);
+        Assert.AreEqual(modelobj1, modelobj1);
+        Assert.AreNotEqual(modelobj1, modelobj2);
+        MethodInfo? toPacketMethod = modelClass.GetMethod("ToPacket", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        MethodInfo? fromPacketMethod = modelClass.GetMethod("FromPacket", BindingFlags.Public | BindingFlags.Static);
+        object? packetObj1 = toPacketMethod.Invoke(modelobj1, new object[] { });
+        object? recreatedObj1 = fromPacketMethod.Invoke(null, new object[] { packetObj1 });
+        Assert.AreEqual(modelobj1, recreatedObj1);
+        Assert.AreNotEqual(modelobj2, recreatedObj1);
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(GetInterchangeableKeyedClasses), DynamicDataDisplayName = nameof(GetCustomTestName))]
+    public async Task TestInterchangeableKeyedClass(string modelClassName)
+    {
+        Type modelClass = Type.GetType(modelClassName);
+        Type interfaceType = typeof(IInterchangeableKeyed<,,>);
+        Type packetClass = modelClass.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType).First().GetGenericArguments()[1];
+        Assert.AreNotEqual(packetClass, modelClass);
+        object modelobj1 = CreateFromConstructor(modelClass);
+        object modelobj2 = CreateFromConstructor(modelClass);
+        Assert.AreEqual(modelobj1, modelobj1);
+        Assert.AreNotEqual(modelobj1, modelobj2);
+        MethodInfo? toPacketMethod = modelClass.GetMethod("ToPacket", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        MethodInfo? fromPacketMethod = modelClass.GetMethod("FromPacket", BindingFlags.Public | BindingFlags.Static);
+        MethodInfo? getKeyMethod = modelClass.GetMethod("GetKey", BindingFlags.Public | BindingFlags.Instance);
+        object? key = getKeyMethod.Invoke(modelobj1, new object[] { });
+        object? packetObj1 = toPacketMethod.Invoke(modelobj1, new object[] { });
+        object? recreatedObj1 = fromPacketMethod.Invoke(null, new object[] { packetObj1, key });
+        Assert.AreEqual(modelobj1, recreatedObj1);
+        Assert.AreNotEqual(modelobj2, recreatedObj1);
     }
 }

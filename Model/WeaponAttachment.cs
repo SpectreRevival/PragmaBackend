@@ -19,16 +19,13 @@ public record class WeaponAttachment : IEquatable<WeaponAttachment>
 
     public virtual bool Equals(WeaponAttachment? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return AttachmentItemCatalogId == other.AttachmentItemCatalogId
-            && AttachmentItemInstanceId == other.AttachmentItemInstanceId;
+        return other is not null && (ReferenceEquals(this, other) || (AttachmentItemCatalogId == other.AttachmentItemCatalogId
+            && AttachmentItemInstanceId == other.AttachmentItemInstanceId));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(AttachmentItemInstanceId);
         hash.Add(AttachmentItemCatalogId);
         return hash.ToHashCode();

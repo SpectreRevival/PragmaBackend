@@ -1,15 +1,13 @@
-﻿using Google.Protobuf.WellKnownTypes;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using Packets;
-using Packets.Processors;
-using Persistence;
+using Model.Persistence;
+using Processors;
+using Processors.Processors;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
-using System.Net;
+using System.Net.WebSockets;
 
 string AppDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
 
@@ -35,14 +33,14 @@ IConfiguration config = new ConfigurationBuilder()
         .Build();
 PostgresDatabase.InstantiateDatabase(config);
 
-var builder = WebApplication.CreateBuilder();
+WebApplicationBuilder builder = WebApplication.CreateBuilder();
 builder.Configuration.SetBasePath(AppContext.BaseDirectory);
 builder.Configuration.AddJsonFile(Path.Combine("resources", "env.json"), optional: false, reloadOnChange: true);
 builder.WebHost.ConfigureKestrel(opts =>
 {
     opts.Configure(builder.Configuration.GetSection("Kestrel"));
 });
-var backendApp = builder.Build();
+WebApplication backendApp = builder.Build();
 backendApp.UseWebSockets(new WebSocketOptions
 {
     KeepAliveInterval = TimeSpan.FromSeconds(30)
@@ -53,8 +51,8 @@ backendApp.Map("{*path}", async (HttpContext context, string? path) =>
     if (context.WebSockets.IsWebSocketRequest)
     {
         Log.Information($"Upgrading websocket request from {context.Connection.RemoteIpAddress}:{context.Connection.RemotePort}");
-        using var ws = await context.WebSockets.AcceptWebSocketAsync();
-        var spectreWS = new SpectreWebsocket(context, ws);
+        using WebSocket ws = await context.WebSockets.AcceptWebSocketAsync();
+        SpectreWebsocket spectreWS = new(context, ws);
         await spectreWS.HandleAsync();
     }
     HttpMethod method = new(context.Request.Method);

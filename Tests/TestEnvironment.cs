@@ -1,6 +1,5 @@
-﻿using Docker.DotNet;
-using Microsoft.Extensions.Configuration;
-using Persistence;
+﻿using Microsoft.Extensions.Configuration;
+using Model.Persistence;
 using System.Diagnostics;
 using System.Text;
 
@@ -16,9 +15,8 @@ public class TestEnvironment
     public static bool BuildImage(string workingDirectory, string imageName, string dockerfilePath, string contextDir)
     {
         string arguments = $"build -t {imageName}:latest -f \"{dockerfilePath}\" \"{contextDir}\"";
-
-        var result = RunDockerCommand(arguments, workingDirectory);
-        return result.ExitCode == 0;
+        (int ExitCode, _, _) = RunDockerCommand(arguments, workingDirectory);
+        return ExitCode == 0;
     }
 
     [AssemblyInitialize]
@@ -52,8 +50,8 @@ public class TestEnvironment
         RunDockerCommand("compose up -d", slnDir);
         while (true)
         {
-            var output = RunDockerCommand("inspect --format='{{.State.Health.Status}}' pragmabackend");
-            if (output.Output.Contains("healthy"))
+            (int _, string Output, string _) = RunDockerCommand("inspect --format='{{.State.Health.Status}}' pragmabackend");
+            if (Output.Contains("healthy"))
             {
                 break;
             }
@@ -71,10 +69,10 @@ public class TestEnvironment
         PostgresDatabase.Get().ShutdownConnection();
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
         Console.WriteLine("Fetching logs...");
-        var logcmdOutput = RunDockerCommand("logs pragmabackend");
-        var dblogcmdOutput = RunDockerCommand("logs pragmabackend-pgdb");
+        (int _, string Output, string _) = RunDockerCommand("logs pragmabackend");
+        (int ExitCode, string Output, string Error) dblogcmdOutput = RunDockerCommand("logs pragmabackend-pgdb");
         Console.WriteLine("Backend log:");
-        Console.WriteLine(logcmdOutput.Output);
+        Console.WriteLine(Output);
         Console.WriteLine("Database log:");
         Console.WriteLine(dblogcmdOutput.Output);
         Console.WriteLine("Tearing down compose...");
@@ -96,7 +94,7 @@ public class TestEnvironment
 
     private static (int ExitCode, string Output, string Error) RunDockerCommand(string arguments, string? workingDir = null)
     {
-        var psi = new ProcessStartInfo
+        ProcessStartInfo psi = new()
         {
             FileName = "docker",
             Arguments = arguments,
@@ -111,13 +109,13 @@ public class TestEnvironment
             psi.WorkingDirectory = workingDir;
         }
 
-        using var process = new Process { StartInfo = psi };
+        using Process process = new() { StartInfo = psi };
 
-        var outputBuilder = new StringBuilder();
-        var errorBuilder = new StringBuilder();
+        StringBuilder outputBuilder = new();
+        StringBuilder errorBuilder = new();
 
-        process.OutputDataReceived += (s, e) => { if (e.Data != null) outputBuilder.AppendLine(e.Data); };
-        process.ErrorDataReceived += (s, e) => { if (e.Data != null) errorBuilder.AppendLine(e.Data); };
+        process.OutputDataReceived += (s, e) => { if (e.Data != null) { outputBuilder.AppendLine(e.Data); } };
+        process.ErrorDataReceived += (s, e) => { if (e.Data != null) { errorBuilder.AppendLine(e.Data); } };
 
         process.Start();
         process.BeginOutputReadLine();

@@ -1,7 +1,8 @@
 ﻿using Model;
+using Packets;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Packets.Processors;
+namespace Processors.Processors;
 
 public class UpdateItemsProcessor : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
@@ -15,17 +16,21 @@ public class UpdateItemsProcessor : WebsocketPacketProcessor, IWebsocketPacketPr
         return new SpectreRpcType("InventoryRpc.UpdateItemsV0Request");
     }
 
-    private static InstancedItem ConvertCustomizedInstanced(CustomizedInstancedItem item)
+    private static Packets.InstancedItem ConvertCustomizedInstanced(CustomizedInstancedItem item)
     {
-        InstancedItem ret = new();
-        ret.InstanceId = item.InstanceId.ToString();
-        ret.CatalogId = item.CatalogId;
+        Packets.InstancedItem ret = new()
+        {
+            InstanceId = item.InstanceId.ToString(),
+            CatalogId = item.CatalogId
+        };
         ret.Ext.Viewed = item.Viewed;
         InstancedCustomizationData altData = new();
-        foreach(var altChannel in item.AlterationChannels)
+        foreach (Model.AlterationChannel altChannel in item.AlterationChannels)
         {
-            var newChannel = new AlterationChannel();
-            newChannel.ChannelId = altChannel.ChannelId;
+            Packets.AlterationChannel newChannel = new()
+            {
+                ChannelId = altChannel.ChannelId
+            };
             newChannel.OwnedAlterations.AddRange(altChannel.Alterations);
             altData.InstancedAlterationChannels.Add(newChannel);
         }
@@ -33,51 +38,57 @@ public class UpdateItemsProcessor : WebsocketPacketProcessor, IWebsocketPacketPr
         return ret;
     }
 
-    private static async Task<BattlepassData> ConvertAndCreateBpTrackerItem(Guid playerId)
+    private static async Task<Packets.BattlepassData> ConvertAndCreateBpTrackerItem(Guid playerId)
     {
         Model.BattlepassData bpData = await Model.BattlepassData.RetrieveFromDatabase(playerId);
-        BattlepassData packet = new();
-        foreach(var activePass in bpData.ActiveBattlePasses)
+        Packets.BattlepassData packet = new();
+        foreach (Guid activePass in bpData.ActiveBattlePasses)
         {
             packet.ActiveBattlePasses.Add(activePass.ToString());
         }
-        foreach(var quest in bpData.BattlepassQuests)
+        foreach (Guid quest in bpData.BattlepassQuests)
         {
             packet.BpQuests.Add(quest.ToString());
         }
-        foreach(var activeQuest in bpData.ActiveBattlepassQuests)
+        foreach (Guid activeQuest in bpData.ActiveBattlepassQuests)
         {
             packet.ActiveBpQuests.Add(activeQuest.ToString());
         }
         packet.DebugSeasonOffsetMillis = "0";
         Model.SeasonEntry entry = await Model.SeasonEntry.RetrieveFromDatabase(1);
-        SeasonEntry itemEntry = new();
-        itemEntry.SeasonNumber = entry.SeasonNumber;
-        itemEntry.StartTimestampMillis = entry.StartTime.ToUnixTimeMilliseconds().ToString();
-        itemEntry.EndTimestampMillis = entry.EndTime.ToUnixTimeMilliseconds().ToString();
-        itemEntry.LastWeekEndTimestampMillis = entry.LastWeekEnd.ToUnixTimeMilliseconds().ToString();
-        itemEntry.FirstWeekStartTimestampMillis = entry.FirstWeekStart.ToUnixTimeMilliseconds().ToString();
-        itemEntry.NumberOfWeeksInSeason = entry.NumberOfWeeksInSeason;
+        Packets.SeasonEntry itemEntry = new()
+        {
+            SeasonNumber = entry.SeasonNumber,
+            StartTimestampMillis = entry.StartTime.ToUnixTimeMilliseconds().ToString(),
+            EndTimestampMillis = entry.EndTime.ToUnixTimeMilliseconds().ToString(),
+            LastWeekEndTimestampMillis = entry.LastWeekEnd.ToUnixTimeMilliseconds().ToString(),
+            FirstWeekStartTimestampMillis = entry.FirstWeekStart.ToUnixTimeMilliseconds().ToString(),
+            NumberOfWeeksInSeason = entry.NumberOfWeeksInSeason
+        };
         packet.SeasonEntry = itemEntry;
         return packet;
     }
 
-    private static async Task<InstancedItem> ConvertIndividualProg(IndividualTrackedProgression prog)
+    private static async Task<Packets.InstancedItem> ConvertIndividualProg(IndividualTrackedProgression prog)
     {
-        InstancedItem ret = new();
-        ret.InstanceId = prog.PlayerId.ToString();
-        ret.CatalogId = "MtnManualItem:ProgressionTracker";
-        TrackedProgression itemProg = new();
-        itemProg.ActiveEndorsement = prog.ActiveEndorsement.ToString();
-        foreach(var daily in prog.ActiveDailyQuests)
+        Packets.InstancedItem ret = new()
+        {
+            InstanceId = prog.PlayerId.ToString(),
+            CatalogId = "MtnManualItem:ProgressionTracker"
+        };
+        Packets.TrackedProgression itemProg = new()
+        {
+            ActiveEndorsement = prog.ActiveEndorsement.ToString()
+        };
+        foreach (Guid daily in prog.ActiveDailyQuests)
         {
             itemProg.ActiveDailyQuests.Add(daily.ToString());
         }
-        foreach(var weekly in prog.ActiveWeeklyQuests)
+        foreach (Guid weekly in prog.ActiveWeeklyQuests)
         {
             itemProg.ActiveWeeklyQuests.Add(weekly.ToString());
         }
-        foreach(var ev in prog.ActiveEventQuests)
+        foreach (Guid ev in prog.ActiveEventQuests)
         {
             itemProg.ActiveEventQuests.Add(ev.ToString());
         }
@@ -86,13 +97,15 @@ public class UpdateItemsProcessor : WebsocketPacketProcessor, IWebsocketPacketPr
         ret.Ext.TrackedProgression = itemProg;
         return ret;
     }
-   
-    private static StackableItem ConvertStackableItem(Model.StackableItem item)
+
+    private static Packets.StackableItem ConvertStackableItem(Model.StackableItem item)
     {
-        StackableItem ret = new();
-        ret.Amount = item.Amount.ToString();
-        ret.InstanceId = item.InstanceId.ToString();
-        ret.CatalogId = item.CatalogId;
+        Packets.StackableItem ret = new()
+        {
+            Amount = item.Amount.ToString(),
+            InstanceId = item.InstanceId.ToString(),
+            CatalogId = item.CatalogId
+        };
         return ret;
     }
 
@@ -104,17 +117,19 @@ public class UpdateItemsProcessor : WebsocketPacketProcessor, IWebsocketPacketPr
         InventoryDelta delta = new();
         res.Segment = segment;
         res.Delta = delta;
-        foreach(var instancedItemUpdate in req.InstancedItemUpdates)
+        foreach (InstancedItemUpdate? instancedItemUpdate in req.InstancedItemUpdates)
         {
             if (instancedItemUpdate.Ext.ProgressionTrackerUpdate != null)
             {
                 IndividualTrackedProgression prog = await IndividualTrackedProgression.RetrieveFromDatabase(ConnectionHandler.PlayerId);
-                InstancedItem init = await ConvertIndividualProg(prog);
-                InstancedDelta itemDelta = new();
-                itemDelta.Initial = init;
+                Packets.InstancedItem init = await ConvertIndividualProg(prog);
+                InstancedDelta itemDelta = new()
+                {
+                    Initial = init
+                };
                 prog.ActiveEndorsement = Guid.Parse(instancedItemUpdate.Ext.ProgressionTrackerUpdate.NewActiveEndorsement);
                 await prog.SyncToDatabase();
-                InstancedItem final = await ConvertIndividualProg(prog);
+                Packets.InstancedItem final = await ConvertIndividualProg(prog);
                 segment.Instanced.Add(final);
                 itemDelta.CatalogId = "MtnManualItem:ProgressionTracker";
                 itemDelta.Operation = "UPDATED";
@@ -124,11 +139,13 @@ public class UpdateItemsProcessor : WebsocketPacketProcessor, IWebsocketPacketPr
             else if (instancedItemUpdate.Ext.SetViewed)
             {
                 CustomizedInstancedItem item = await CustomizedInstancedItem.RetrieveFromDatabase(Guid.Parse(instancedItemUpdate.InstanceId));
-                InstancedDelta itemDelta = new();
-                itemDelta.Initial = ConvertCustomizedInstanced(item);
+                InstancedDelta itemDelta = new()
+                {
+                    Initial = ConvertCustomizedInstanced(item)
+                };
                 item.Viewed = true;
                 await item.SyncToDatabase();
-                InstancedItem final = ConvertCustomizedInstanced(item);
+                Packets.InstancedItem final = ConvertCustomizedInstanced(item);
                 segment.Instanced.Add(final);
                 itemDelta.CatalogId = item.CatalogId;
                 itemDelta.Operation = "UPDATED";
@@ -136,15 +153,17 @@ public class UpdateItemsProcessor : WebsocketPacketProcessor, IWebsocketPacketPr
                 delta.Instanced.Add(itemDelta);
             }
         }
-        foreach(var stackableItemUpdate in req.StackableItemsUpdates)
+        foreach (StackedItemUpdate? stackableItemUpdate in req.StackableItemsUpdates)
         {
             Model.StackableItem item = await Model.StackableItem.RetrieveFromDatabase(Guid.Parse(stackableItemUpdate.InstanceId));
-            StackableItem init = ConvertStackableItem(item);
-            StackableDelta itemDelta = new();
-            itemDelta.Initial = init;
+            Packets.StackableItem init = ConvertStackableItem(item);
+            StackableDelta itemDelta = new()
+            {
+                Initial = init
+            };
             item.Amount = long.Parse(stackableItemUpdate.NewAmount);
             await item.SyncToDatabase();
-            StackableItem final = ConvertStackableItem(item);
+            Packets.StackableItem final = ConvertStackableItem(item);
             segment.Stackables.Add(final);
             itemDelta.CatalogId = item.CatalogId;
             itemDelta.Final = final;

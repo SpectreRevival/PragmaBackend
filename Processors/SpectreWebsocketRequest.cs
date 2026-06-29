@@ -3,13 +3,13 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace Packets;
+namespace Processors;
 
 public record class SpectreWebsocketRequest
 {
     public required SpectreRpcType RpcType { get; init; }
     public required JsonObject RequestPayload { get; init; }
-    public required Int32 RequestId { get; init; }
+    public required int RequestId { get; init; }
 
     [SetsRequiredMembers]
     public SpectreWebsocketRequest(JsonDocument fullRequest)
@@ -30,7 +30,7 @@ public record class SpectreWebsocketRequest
 
     public T GetPayloadAsMessage<T>() where T : class, IMessage<T>, new()
     {
-        var parser = new JsonParser(JsonParser.Settings.Default);
+        JsonParser parser = new(JsonParser.Settings.Default);
         return parser.Parse<T>(RequestPayload.ToJsonString());
     }
 }

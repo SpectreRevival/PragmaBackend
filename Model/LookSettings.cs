@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class LookSettings : IEquatable<LookSettings>
+public record class LookSettings : IEquatable<LookSettings>, IInterchangeable<LookSettings, Packets.LookSettings>
 {
     [SetsRequiredMembers]
     public LookSettings(double yawRate, double pitchScale, double turnAccelYawBonus, double turnAccelPitchBonus, double turnAccelDelaySeconds, double turnAccelTimeToMax)
@@ -29,22 +29,24 @@ public record class LookSettings : IEquatable<LookSettings>
     [PgName("turn_accel_time_to_max")]
     public required double TurnAccelTimeToMax { get; set; }
 
+    public static LookSettings FromPacket(Packets.LookSettings inst)
+    {
+        return new LookSettings(inst.YawRate, inst.PitchScale, inst.TurnAccelYawBonus, inst.TurnAccelPitchBonus, inst.TurnAccelDelaySeconds, inst.TurnAccelTimeToMax);
+    }
+
     public virtual bool Equals(LookSettings? other)
     {
-        if (other is null) return false;
-        if(ReferenceEquals(this, other)) return true;
-
-        return YawRate == other.YawRate
+        return other is not null && (ReferenceEquals(this, other) || (YawRate == other.YawRate
             && PitchScale == other.PitchScale
             && TurnAccelYawBonus == other.TurnAccelYawBonus
             && TurnAccelPitchBonus == other.TurnAccelPitchBonus
             && TurnAccelDelaySeconds == other.TurnAccelDelaySeconds
-            && TurnAccelTimeToMax == other.TurnAccelTimeToMax;
+            && TurnAccelTimeToMax == other.TurnAccelTimeToMax));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(YawRate);
         hash.Add(PitchScale);
         hash.Add(TurnAccelYawBonus);
@@ -52,5 +54,19 @@ public record class LookSettings : IEquatable<LookSettings>
         hash.Add(TurnAccelDelaySeconds);
         hash.Add(TurnAccelTimeToMax);
         return hash.ToHashCode();
+    }
+
+    public Packets.LookSettings ToPacket()
+    {
+        Packets.LookSettings packet = new()
+        {
+            YawRate = YawRate,
+            PitchScale = PitchScale,
+            TurnAccelYawBonus = TurnAccelYawBonus,
+            TurnAccelPitchBonus = TurnAccelPitchBonus,
+            TurnAccelDelaySeconds = TurnAccelDelaySeconds,
+            TurnAccelTimeToMax = TurnAccelTimeToMax
+        };
+        return packet;
     }
 }

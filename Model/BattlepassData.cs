@@ -1,5 +1,5 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -22,23 +22,21 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
     public required Guid[] ActiveBattlePasses { get; set; }
     public required Guid[] BattlepassQuests { get; set; }
     public required Guid[] ActiveBattlepassQuests { get; set; }
-    public required Int32 BattlepassLevel { get; set; }
+    public required int BattlepassLevel { get; set; }
 
-    public async static Task<BattlepassData?> RetrieveFromDatabase(Guid key)
+    public static async Task<BattlepassData?> RetrieveFromDatabase(Guid key)
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_battlepass_data.sql");
         cmd.Parameters.AddWithValue("playerid", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if(!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new BattlepassData(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new BattlepassData(
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<Guid[]>(1),
             await reader.GetFieldValueAsync<Guid[]>(2),
             await reader.GetFieldValueAsync<Guid[]>(3),
-            await reader.GetFieldValueAsync<Int32>(4)
+            await reader.GetFieldValueAsync<int>(4)
         );
     }
 
@@ -60,8 +58,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
 
     public virtual bool Equals(BattlepassData? other)
     {
-        if (other is null) return false;
-        return PlayerId == other.PlayerId && BattlepassLevel == other.BattlepassLevel
+        return other is not null && PlayerId == other.PlayerId && BattlepassLevel == other.BattlepassLevel
             && ActiveBattlePasses.SequenceEqual(other.ActiveBattlePasses)
             && BattlepassQuests.SequenceEqual(other.BattlepassQuests)
             && ActiveBattlepassQuests.SequenceEqual(other.ActiveBattlepassQuests);
@@ -69,7 +66,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(BattlepassLevel);
         hash.Add(ActiveBattlePasses);
@@ -80,7 +77,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
 
     public static BattlepassData CreateDefault(Guid playerId)
     {
-        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "BattlepassData.json")));
+        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "BattlepassData.json")));
         defaultJson[nameof(PlayerId)] = playerId;
         return defaultJson.Deserialize<BattlepassData>();
     }

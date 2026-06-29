@@ -1,15 +1,16 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
+using Packets;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<CrosshairConfig, Guid>, IEquatable<CrosshairConfig>
+public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<CrosshairConfig, Guid>, IEquatable<CrosshairConfig>, IInterchangeableKeyed<CrosshairConfig, Packets.CrosshairConfig, Guid>
 {
     [SetsRequiredMembers]
-    public CrosshairConfig(Guid playerId, int colorIndex, bool advancedCrosshairSettings, RGBAColor customColor, bool fireAccuracyFade, bool followRecoil, bool showOutlines, double outlineThickness, double outlineOpacity, bool showCenterDot, bool useADSSettings, CrosshairDot centerDot, CrosshairDot centerDotADS, CrosshairDot sniperDot, PipConfig innerPip, PipConfig outerPip, Int64 version) : base(version)
+    public CrosshairConfig(Guid playerId, int colorIndex, bool advancedCrosshairSettings, RGBAColor customColor, bool fireAccuracyFade, bool followRecoil, bool showOutlines, double outlineThickness, double outlineOpacity, bool showCenterDot, bool useADSSettings, CrosshairDot centerDot, CrosshairDot centerDotADS, CrosshairDot sniperDot, PipConfig innerPip, PipConfig outerPip, long version) : base(version)
     {
         PlayerId = playerId;
         ColorIndex = colorIndex;
@@ -30,7 +31,7 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
     }
 
     public required Guid PlayerId { get; set; }
-    public required Int32 ColorIndex { get; set; }
+    public required int ColorIndex { get; set; }
     public required bool AdvancedCrosshairSettings { get; set; }
     public required RGBAColor CustomColor { get; set; }
     public required bool FireAccuracyFade { get; set; }
@@ -50,14 +51,12 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_crosshair_config.sql");
         cmd.Parameters.AddWithValue("player_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new CrosshairConfig (
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new CrosshairConfig(
             await reader.GetFieldValueAsync<Guid>(0),
-            await reader.GetFieldValueAsync<Int32>(1),
+            await reader.GetFieldValueAsync<int>(1),
             await reader.GetFieldValueAsync<bool>(2),
             await reader.GetFieldValueAsync<RGBAColor>(3),
             await reader.GetFieldValueAsync<bool>(4),
@@ -72,7 +71,7 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
             await reader.GetFieldValueAsync<CrosshairDot>(13),
             await reader.GetFieldValueAsync<PipConfig>(14),
             await reader.GetFieldValueAsync<PipConfig>(15),
-            await reader.GetFieldValueAsync<Int64>(16)
+            await reader.GetFieldValueAsync<long>(16)
         );
     }
 
@@ -106,10 +105,7 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
 
     public virtual bool Equals(CrosshairConfig? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && ColorIndex == other.ColorIndex
             && AdvancedCrosshairSettings == other.AdvancedCrosshairSettings
             && CustomColor.Equals(other.CustomColor)
@@ -124,12 +120,12 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
             && SniperDot.Equals(other.SniperDot)
             && InnerPip.Equals(other.InnerPip)
             && OuterPip.Equals(other.OuterPip)
-            && Version == other.Version;
+            && Version == other.Version));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(ColorIndex);
         hash.Add(AdvancedCrosshairSettings);
@@ -151,12 +147,51 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
 
     public static CrosshairConfig CreateDefault(Guid playerId)
     {
-        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "CrosshairConfig.json")));
+        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "CrosshairConfig.json")));
         defaultJson[nameof(PlayerId)] = playerId;
-        var options = new JsonSerializerOptions
+        JsonSerializerOptions options = new()
         {
             PropertyNameCaseInsensitive = true
         };
         return defaultJson.Deserialize<CrosshairConfig>(options);
+    }
+
+    public static CrosshairConfig FromPacket(Packets.CrosshairConfig inst, Guid id)
+    {
+        return new CrosshairConfig(id, inst.ColorIndex, inst.BAdvancedCrosshairSettings, RGBAColor.FromPacket(inst.CustomColor), inst.BFireAccuracyFade, inst.BFollowRecoil, inst.BShowOutlines, inst.OutlineThickness, inst.OutlineOpacity, inst.BShowCenterDot, inst.BUseADSSettings, CrosshairDot.FromPacket(inst.CenterDotConfig), CrosshairDot.FromPacket(inst.CenterDotConfigADS), CrosshairDot.FromPacket(inst.SniperDotConfig), PipConfig.FromPacket(inst.PipConfigs.Inner), PipConfig.FromPacket(inst.PipConfigs.Outer), inst.Version);
+    }
+
+    public Packets.CrosshairConfig ToPacket()
+    {
+        Packets.CrosshairConfig packet = new()
+        {
+            Version = (int)Version,
+            ColorIndex = ColorIndex,
+            BAdvancedCrosshairSettings = AdvancedCrosshairSettings
+        };
+        Packets.RGBAColor customColor = new()
+        {
+            R = CustomColor.R,
+            G = CustomColor.G,
+            B = CustomColor.B,
+            A = CustomColor.A
+        };
+        packet.CustomColor = customColor;
+        packet.BFireAccuracyFade = FireAccuracyFade;
+        packet.BFollowRecoil = FollowRecoil;
+        packet.BShowOutlines = ShowOutlines;
+        packet.OutlineThickness = OutlineThickness;
+        packet.OutlineOpacity = OutlineOpacity;
+        packet.BShowCenterDot = ShowCenterDot;
+        packet.BUseADSSettings = UseADSSettings;
+        packet.CenterDotConfig = CenterDot.ToPacket();
+        packet.CenterDotConfigADS = CenterDotADS.ToPacket();
+        packet.SniperDotConfig = SniperDot.ToPacket();
+        packet.PipConfigs = new PipConfigs()
+        {
+            Outer = OuterPip.ToPacket(),
+            Inner = InnerPip.ToPacket()
+        };
+        return packet;
     }
 }

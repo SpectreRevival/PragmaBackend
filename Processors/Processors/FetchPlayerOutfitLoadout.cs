@@ -1,8 +1,9 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
+using Packets;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Packets.Processors;
+namespace Processors.Processors;
 
 public class FetchPlayerOutfitLoadout : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
@@ -16,14 +17,16 @@ public class FetchPlayerOutfitLoadout : WebsocketPacketProcessor, IWebsocketPack
         return new SpectreRpcType("MtnLoadoutServiceRpc.FetchPlayerOutfitLoadoutsV1Request");
     }
 
-    private static OutfitData OutfitDataFromModel(Model.OutfitData model)
+    private static Packets.OutfitData OutfitDataFromModel(Model.OutfitData model)
     {
-        OutfitData ret = new();
+        Packets.OutfitData ret = new();
         foreach (Model.ActiveAlterationData alt in model.AlterationData)
         {
-            ActiveAlterationData packetAlt = new();
-            packetAlt.AlterationId = alt.AlterationId;
-            packetAlt.ChannelId = alt.ChannelId;
+            Packets.ActiveAlterationData packetAlt = new()
+            {
+                AlterationId = alt.AlterationId,
+                ChannelId = alt.ChannelId
+            };
             ret.AlterationData.Add(packetAlt);
         }
         ret.ItemInstanceId = model.ItemInstanceId.ToString();
@@ -36,20 +39,22 @@ public class FetchPlayerOutfitLoadout : WebsocketPacketProcessor, IWebsocketPack
         FetchLoadoutsRequest req = Packet.GetPayloadAsMessage<FetchLoadoutsRequest>();
         NpgsqlCommand cmd = PostgresDatabase.Get().GetRaw().CreateCommand("SELECT loadout_id FROM outfit_loadouts WHERE player_id = @player_id");
         cmd.Parameters.AddWithValue("player_id", Guid.Parse(req.PlayerId));
-        await using var reader = await cmd.ExecuteReaderAsync();
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
         OutfitLoadouts responseData = new();
         while (await reader.ReadAsync())
         {
             Guid loadoutId = reader.GetGuid(0);
             Model.OutfitLoadout curLoadout = await Model.OutfitLoadout.RetrieveFromDatabase(loadoutId);
-            OutfitLoadout packetLoadout = new();
-            packetLoadout.LoadoutId = loadoutId.ToString();
-            packetLoadout.PlayerId = ConnectionHandler.PlayerId.ToString();
-            packetLoadout.FaceAccessoryData = OutfitDataFromModel(curLoadout.FaceAccessory);
-            packetLoadout.FaceStyleData = OutfitDataFromModel(curLoadout.FaceStyle);
-            packetLoadout.HeadData = OutfitDataFromModel(curLoadout.Head);
-            packetLoadout.HairData = OutfitDataFromModel(curLoadout.Hair);
-            packetLoadout.OutfitData = OutfitDataFromModel(curLoadout.Outfit);
+            Packets.OutfitLoadout packetLoadout = new()
+            {
+                LoadoutId = loadoutId.ToString(),
+                PlayerId = ConnectionHandler.PlayerId.ToString(),
+                FaceAccessoryData = OutfitDataFromModel(curLoadout.FaceAccessory),
+                FaceStyleData = OutfitDataFromModel(curLoadout.FaceStyle),
+                HeadData = OutfitDataFromModel(curLoadout.Head),
+                HairData = OutfitDataFromModel(curLoadout.Hair),
+                OutfitData = OutfitDataFromModel(curLoadout.Outfit)
+            };
             responseData.Loadouts.Add(packetLoadout);
         }
         responseData.Message.Add($"Loadouts: {responseData.Loadouts.Count}");

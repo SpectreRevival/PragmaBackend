@@ -1,7 +1,7 @@
 ﻿using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Packets;
+namespace Processors;
 
 public class SteamAuthTicket
 {
@@ -17,7 +17,7 @@ public class SteamAuthTicket
     {
         int headerBytes = GC_TOKEN_LENGTH_FIELD_SIZE + GC_TOKEN_SIZE;
         int requiredHexChars = headerBytes * 2;
-        if(authTicket.Length < requiredHexChars)
+        if (authTicket.Length < requiredHexChars)
         {
             throw new InvalidDataException("Auth ticket does not appear to be valid");
         }
@@ -45,7 +45,7 @@ public class SteamAuthTicket
         {
             throw new InvalidDataException("Steam ID was not valid");
         }
-        if(((steamId >> 52) & 0xFU) != 1)
+        if (((steamId >> 52) & 0xFU) != 1)
         {
             throw new InvalidDataException("Steam ID was not valid");
         }
@@ -55,9 +55,6 @@ public class SteamAuthTicket
 
     private static int HexNibble(char c)
     {
-        if (c >= '0' && c <= '9') return c - '0';
-        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-        return -1;
+        return c is >= '0' and <= '9' ? c - '0' : c is >= 'A' and <= 'F' ? c - 'A' + 10 : c is >= 'a' and <= 'f' ? c - 'a' + 10 : -1;
     }
 }

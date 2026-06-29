@@ -1,14 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
-namespace Packets.Processors;
+namespace Processors.Processors;
 
 public class StaticHTTPResponder : HTTPPacketHandler
 {
     private readonly string _responseData;
-    private static readonly List<StaticHTTPResponder> responders = new();
+    private static readonly List<StaticHTTPResponder> responders = [];
 
     [SetsRequiredMembers]
     public StaticHTTPResponder(HttpMethod method, string route, string responseFilePath) : base(method, route)

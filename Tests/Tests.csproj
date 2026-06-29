@@ -19,6 +19,7 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\Model\Model.csproj" />
 	  <ProjectReference Include="..\Packets\Packets.csproj" />
+	  <ProjectReference Include="..\Processors\Processors.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="testrequests\**\*" CopyToOutputDirectory="PreserveNewest"></None>

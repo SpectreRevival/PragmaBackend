@@ -1,13 +1,13 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class FriendsList : VersionedData, IDatabaseSyncableDefault<FriendsList, Guid>, IEquatable<FriendsList>
+public record class FriendsList : VersionedData, IDatabaseSyncableDefault<FriendsList, Guid>, IEquatable<FriendsList>, IInterchangeableKeyed<FriendsList, Packets.FriendsList, Guid>
 {
     [SetsRequiredMembers]
-    public FriendsList(Guid playerId, bool acceptingFriendInvites, Guid[] friends, Guid[] blocked, Guid[] sentFriendInvites, Guid[] receivedFriendInvites, Int64 version) : base(version)
+    public FriendsList(Guid playerId, bool acceptingFriendInvites, Guid[] friends, Guid[] blocked, Guid[] sentFriendInvites, Guid[] receivedFriendInvites, long version) : base(version)
     {
         PlayerId = playerId;
         AcceptingFriendInvites = acceptingFriendInvites;
@@ -28,19 +28,17 @@ public record class FriendsList : VersionedData, IDatabaseSyncableDefault<Friend
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_friends_list.sql");
         cmd.Parameters.AddWithValue("player_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new FriendsList(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new FriendsList(
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<bool>(1),
             await reader.GetFieldValueAsync<Guid[]>(2),
             await reader.GetFieldValueAsync<Guid[]>(3),
             await reader.GetFieldValueAsync<Guid[]>(4),
             await reader.GetFieldValueAsync<Guid[]>(5),
-            await reader.GetFieldValueAsync<Int64>(6)
+            await reader.GetFieldValueAsync<long>(6)
         );
     }
 
@@ -64,21 +62,18 @@ public record class FriendsList : VersionedData, IDatabaseSyncableDefault<Friend
 
     public virtual bool Equals(FriendsList? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && AcceptingFriendInvites == other.AcceptingFriendInvites
             && Friends.SequenceEqual(other.Friends)
             && Blocked.SequenceEqual(other.Blocked)
             && SentFriendInvites.SequenceEqual(other.SentFriendInvites)
             && ReceivedFriendInvites.SequenceEqual(other.ReceivedFriendInvites)
-            && Version == other.Version;
+            && Version == other.Version));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(AcceptingFriendInvites);
         hash.Add(Friends);
@@ -92,5 +87,39 @@ public record class FriendsList : VersionedData, IDatabaseSyncableDefault<Friend
     public static FriendsList CreateDefault(Guid key)
     {
         return new FriendsList(key, true, [], [], [], [], 0);
+    }
+
+    public static FriendsList FromPacket(Packets.FriendsList inst, Guid id)
+    {
+        return id == null
+            ? throw new ArgumentNullException(nameof(id))
+            : new FriendsList(id, inst.AcceptNewFriendInvites, inst.Friends.Select(id => Guid.Parse(id)).ToArray(), inst.Blocked.Select(id => Guid.Parse(id)).ToArray(), inst.SentInvites.Select(id => Guid.Parse(id)).ToArray(), inst.ReceivedInvites.Select(id => Guid.Parse(id)).ToArray(), long.Parse(inst.Version));
+    }
+
+    public Packets.FriendsList ToPacket()
+    {
+        Packets.FriendsList packet = new()
+        {
+            AcceptNewFriendInvites = AcceptingFriendInvites,
+            Version = Version.ToString()
+        };
+
+        foreach (Guid friend in Friends)
+        {
+            packet.Friends.Add(friend.ToString());
+        }
+        foreach (Guid blocked in Blocked)
+        {
+            packet.Blocked.Add(blocked.ToString());
+        }
+        foreach (Guid sent in SentFriendInvites)
+        {
+            packet.SentInvites.Add(sent.ToString());
+        }
+        foreach (Guid recv in ReceivedFriendInvites)
+        {
+            packet.ReceivedInvites.Add(recv.ToString());
+        }
+        return packet;
     }
 }

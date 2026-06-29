@@ -1,10 +1,10 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData, Guid>, IEquatable<LegacySeasonData>
+public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData, Guid>, IEquatable<LegacySeasonData>, IInterchangeableKeyed<LegacySeasonData, Packets.LegacySeasonData, Guid>
 {
     [SetsRequiredMembers]
     public LegacySeasonData(Guid playerId, long soloRankedPoints, long currentSoloRank)
@@ -15,22 +15,20 @@ public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData
     }
 
     public required Guid PlayerId { get; set; }
-    public required Int64 SoloRankedPoints { get; set; }
-    public required Int64 CurrentSoloRank { get; set; } // TODO make enum
+    public required long SoloRankedPoints { get; set; }
+    public required long CurrentSoloRank { get; set; } // TODO make enum
 
     public static async Task<LegacySeasonData?> RetrieveFromDatabase(Guid key)
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_legacy_season_data.sql");
         cmd.Parameters.AddWithValue("player_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new LegacySeasonData(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new LegacySeasonData(
             await reader.GetFieldValueAsync<Guid>(0),
-            await reader.GetFieldValueAsync<Int64>(1),
-            await reader.GetFieldValueAsync<Int64>(2)
+            await reader.GetFieldValueAsync<long>(1),
+            await reader.GetFieldValueAsync<long>(2)
         );
     }
 
@@ -50,17 +48,12 @@ public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData
 
     public virtual bool Equals(LegacySeasonData? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
-            && SoloRankedPoints == other.SoloRankedPoints
-            && CurrentSoloRank == other.CurrentSoloRank;
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId && SoloRankedPoints == other.SoloRankedPoints && CurrentSoloRank == other.CurrentSoloRank));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(SoloRankedPoints);
         hash.Add(CurrentSoloRank);
@@ -70,5 +63,19 @@ public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData
     public static LegacySeasonData CreateDefault(Guid key)
     {
         return new LegacySeasonData(key, 0, 0);
+    }
+
+    public static LegacySeasonData FromPacket(Packets.LegacySeasonData inst, Guid id)
+    {
+        return new LegacySeasonData(id, (long)inst.SoloRankPoints, (long)inst.CurrentSoloRank);
+    }
+
+    public Packets.LegacySeasonData ToPacket()
+    {
+        return new Packets.LegacySeasonData()
+        {
+            SoloRankPoints = SoloRankedPoints,
+            CurrentSoloRank = CurrentSoloRank
+        };
     }
 }

@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class WeaponData : IEquatable<WeaponData>
+public record class WeaponData : IEquatable<WeaponData>, IInterchangeable<WeaponData, Packets.WeaponData>
 {
     [SetsRequiredMembers]
     public WeaponData(Guid itemInstanceId, ActiveAlterationData[] alterationData, WeaponAttachment? attachment, string itemCatalogId)
@@ -23,28 +23,53 @@ public record class WeaponData : IEquatable<WeaponData>
     [PgName("item_catalog_id")]
     public required string ItemCatalogId { get; set; }
 
+    public static WeaponData FromPacket(Packets.WeaponData inst)
+    {
+        WeaponAttachment? attachment = null;
+        if (inst.AttachmentItemInstanceId != "" && inst.AttachmentItemCatalogId != "")
+        {
+            attachment = new WeaponAttachment(Guid.Parse(inst.AttachmentItemInstanceId), inst.AttachmentItemCatalogId);
+        }
+        return new WeaponData(Guid.Parse(inst.ItemInstanceId), inst.AlterationData.Select(altData => ActiveAlterationData.FromPacket(altData)).ToArray(), attachment, inst.ItemCatalogId);
+    }
+
     public virtual bool Equals(WeaponData? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-        if (Attachment == null && other.Attachment != null) return false;
-
-        return ItemInstanceId == other.ItemInstanceId
+        return other is not null && (ReferenceEquals(this, other) || ((Attachment != null || other.Attachment == null) && ItemInstanceId == other.ItemInstanceId
             && AlterationData.SequenceEqual(other.AlterationData)
             && (Attachment == null || Attachment.Equals(other.Attachment))
-            && ItemCatalogId == other.ItemCatalogId;
+            && ItemCatalogId == other.ItemCatalogId));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(ItemInstanceId);
         hash.Add(ItemCatalogId);
         hash.Add(AlterationData);
-        if(Attachment != null)
+        if (Attachment != null)
         {
             hash.Add(Attachment);
         }
         return hash.ToHashCode();
+    }
+
+    public Packets.WeaponData ToPacket()
+    {
+        Packets.WeaponData packet = new()
+        {
+            ItemInstanceId = ItemInstanceId.ToString(),
+            ItemCatalogId = ItemCatalogId,
+        };
+        if (Attachment != null)
+        {
+            packet.AttachmentItemInstanceId = Attachment.AttachmentItemInstanceId.ToString();
+            packet.AttachmentItemCatalogId = Attachment.AttachmentItemCatalogId;
+        }
+        foreach (ActiveAlterationData alt in AlterationData)
+        {
+            packet.AlterationData.Add(alt.ToPacket());
+        }
+        return packet;
     }
 }

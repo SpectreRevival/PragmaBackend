@@ -5,12 +5,12 @@ namespace Model;
 public record class VersionedData
 {
     [SetsRequiredMembers]
-    public VersionedData(Int64 version)
+    public VersionedData(long version)
     {
         Version = version;
     }
 
-    public required Int64 Version { get; set; }
+    public required long Version { get; set; }
     public void IncrementVersion()
     {
         Version++;

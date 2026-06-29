@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public struct RGBAColor 
+public struct RGBAColor : IInterchangeable<RGBAColor, Packets.RGBAColor>
 {
     [SetsRequiredMembers]
     public RGBAColor(byte r, byte g, byte b, byte a)
@@ -22,4 +22,20 @@ public struct RGBAColor
     public required byte B { get; set; }
     [PgName("a")]
     public required byte A { get; set; }
+
+    public static RGBAColor FromPacket(Packets.RGBAColor inst)
+    {
+        return new RGBAColor((byte)inst.R, (byte)inst.G, (byte)inst.B, (byte)inst.A);
+    }
+
+    public Packets.RGBAColor ToPacket()
+    {
+        return new Packets.RGBAColor()
+        {
+            R = R,
+            G = G,
+            B = B,
+            A = A
+        };
+    }
 }

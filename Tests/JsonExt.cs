@@ -6,17 +6,20 @@ public static class JsonNodeExtensions
 {
     public static void ReplaceToken(this JsonNode? node, string tokenToFind, string replacementValue)
     {
-        if (node == null) return;
+        if (node == null)
+        {
+            return;
+        }
 
         // Case 1: The node is a JSON Object
         if (node is JsonObject jsonObject)
         {
             // Materialize keys to an array to avoid modifying the collection while iterating
-            var keys = jsonObject.Select(p => p.Key).ToArray();
+            string[] keys = jsonObject.Select(p => p.Key).ToArray();
 
-            foreach (var key in keys)
+            foreach (string? key in keys)
             {
-                var childNode = jsonObject[key];
+                JsonNode? childNode = jsonObject[key];
 
                 if (childNode is JsonValue jsonValue && jsonValue.TryGetValue(out string? stringValue))
                 {
@@ -26,10 +29,10 @@ public static class JsonNodeExtensions
                         jsonObject[key] = JsonValue.Create(replacementValue);
                     }
                 }
-                else if (childNode != null)
+                else
                 {
                     // Recurse deeper into child objects or arrays
-                    childNode.ReplaceToken(tokenToFind, replacementValue);
+                    childNode?.ReplaceToken(tokenToFind, replacementValue);
                 }
             }
         }
@@ -38,7 +41,7 @@ public static class JsonNodeExtensions
         {
             for (int i = 0; i < jsonArray.Count; i++)
             {
-                var childNode = jsonArray[i];
+                JsonNode? childNode = jsonArray[i];
 
                 if (childNode is JsonValue jsonValue && jsonValue.TryGetValue(out string? stringValue))
                 {
@@ -47,10 +50,10 @@ public static class JsonNodeExtensions
                         jsonArray[i] = JsonValue.Create(replacementValue);
                     }
                 }
-                else if (childNode != null)
+                else
                 {
                     // Recurse deeper into objects or nested arrays
-                    childNode.ReplaceToken(tokenToFind, replacementValue);
+                    childNode?.ReplaceToken(tokenToFind, replacementValue);
                 }
             }
         }

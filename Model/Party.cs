@@ -1,5 +1,5 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
@@ -7,7 +7,7 @@ namespace Model;
 public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEquatable<Party>
 {
     [SetsRequiredMembers]
-    public Party(Guid partyId, PartyMember[] members, string inviteCode, string queuePool, string lobbyMode, string chatId, bool useTeamMMR, Int64 version) : base(version)
+    public Party(Guid partyId, PartyMember[] members, string inviteCode, string queuePool, string lobbyMode, string chatId, bool useTeamMMR, long version) : base(version)
     {
         PartyId = partyId;
         Members = members ?? throw new ArgumentNullException(nameof(members));
@@ -30,12 +30,10 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_party.sql");
         cmd.Parameters.AddWithValue("party_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new Party(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new Party(
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<PartyMember[]>(1),
             await reader.GetFieldValueAsync<string>(2),
@@ -43,7 +41,7 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
             await reader.GetFieldValueAsync<string>(4),
             await reader.GetFieldValueAsync<string>(5),
             await reader.GetFieldValueAsync<bool>(6),
-            await reader.GetFieldValueAsync<Int64>(7)
+            await reader.GetFieldValueAsync<long>(7)
         );
     }
 
@@ -68,22 +66,19 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
 
     public virtual bool Equals(Party? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PartyId == other.PartyId
+        return other is not null && (ReferenceEquals(this, other) || (PartyId == other.PartyId
             && Members.SequenceEqual(other.Members)
             && InviteCode == other.InviteCode
             && QueuePool == other.QueuePool
             && LobbyMode == other.LobbyMode
             && ChatId == other.ChatId
             && UseTeamMMR == other.UseTeamMMR
-            && Version == other.Version;
+            && Version == other.Version));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PartyId);
         hash.Add(Members);
         hash.Add(InviteCode);

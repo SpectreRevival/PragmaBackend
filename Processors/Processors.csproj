@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Model\Model.csproj"></ProjectReference>
+		<ProjectReference Include="..\Packets\Packets.csproj"></ProjectReference>
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="staticws\**\*" CopyToOutputDirectory="PreserveNewest"></None>
+		<None Include="httpstatic\**\*" CopyToOutputDirectory="PreserveNewest"></None>
+	</ItemGroup>
+	
+
+</Project>

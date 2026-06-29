@@ -1,7 +1,8 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 
-namespace Packets;
+namespace Processors;
 
 public record class HTTPRoutingIdentifier
 {
@@ -18,7 +19,7 @@ public record class HTTPRoutingIdentifier
 
 public abstract class HTTPPacketHandler
 {
-    private static readonly Dictionary<HTTPRoutingIdentifier, HTTPPacketHandler> _handlers = new();
+    private static readonly Dictionary<HTTPRoutingIdentifier, HTTPPacketHandler> _handlers = [];
 
     [SetsRequiredMembers]
     protected HTTPPacketHandler(HttpMethod method, string route)
@@ -34,23 +35,15 @@ public abstract class HTTPPacketHandler
 
     public static HTTPPacketHandler? GetHandlerForRoute(HttpMethod method, string route)
     {
-        if(_handlers.TryGetValue(new HTTPRoutingIdentifier(method, route), out HTTPPacketHandler? handler))
-        {
-            return handler;
-        }
-        return null;
+        return _handlers.TryGetValue(new HTTPRoutingIdentifier(method, route), out HTTPPacketHandler? handler) ? handler : null;
     }
 
     public static HTTPPacketHandler? GetHandlerForRoute(HTTPRoutingIdentifier id)
     {
-        if(_handlers.TryGetValue(id, out HTTPPacketHandler? handler))
-        {
-            return handler;
-        }
-        return null;
+        return _handlers.TryGetValue(id, out HTTPPacketHandler? handler) ? handler : null;
     }
 
-    private static readonly List<HTTPPacketHandler> singletons = new();
+    private static readonly List<HTTPPacketHandler> singletons = [];
 
     public static void InstantiateSingletons()
     {
@@ -60,13 +53,13 @@ public abstract class HTTPPacketHandler
             .Where(t => t.GetInterfaces()
             .Any(i => i == singletonInterface)
             ).ToList();
-        foreach(Type singletonClass in singletonClasses)
+        foreach (Type singletonClass in singletonClasses)
         {
-            var httpMethodGetter = singletonClass.GetMethod("GetMethod", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-            var httpRouteGetter = singletonClass.GetMethod("GetRoute", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-            var httpMethod = httpMethodGetter.Invoke(null, new object[] { });
-            var httpRoute = httpRouteGetter.Invoke(null, new object[] { });
-            var ctor = singletonClass.GetConstructors().First();
+            MethodInfo? httpMethodGetter = singletonClass.GetMethod("GetMethod", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            MethodInfo? httpRouteGetter = singletonClass.GetMethod("GetRoute", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            object? httpMethod = httpMethodGetter.Invoke(null, new object[] { });
+            object? httpRoute = httpRouteGetter.Invoke(null, new object[] { });
+            ConstructorInfo ctor = singletonClass.GetConstructors().First();
             singletons.Add((HTTPPacketHandler)ctor.Invoke(new object[]
             {
                 httpMethod, httpRoute

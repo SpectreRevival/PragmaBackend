@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace Packets.Processors;
+namespace Processors.Processors;
 
 public class GetBeaconEndpointsProcessor : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
@@ -21,12 +21,6 @@ public class GetBeaconEndpointsProcessor : WebsocketPacketProcessor, IWebsocketP
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
         string type = Packet.RequestPayload["type"]!.ToString();
-        if(type == "hathora")
-        {
-            return SpectreWebsocketMessage.From(hathoraResponse);
-        } else
-        {
-            return SpectreWebsocketMessage.From(hathoraUdpResponse);
-        }
+        return type == "hathora" ? SpectreWebsocketMessage.From(hathoraResponse) : SpectreWebsocketMessage.From(hathoraUdpResponse);
     }
 }

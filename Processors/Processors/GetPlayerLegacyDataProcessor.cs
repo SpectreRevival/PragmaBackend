@@ -1,6 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using Packets;
+using System.Diagnostics.CodeAnalysis;
 
-namespace Packets.Processors;
+namespace Processors.Processors;
 
 public class GetPlayerLegacyDataProcessor : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
@@ -16,23 +17,25 @@ public class GetPlayerLegacyDataProcessor : WebsocketPacketProcessor, IWebsocket
 
     private static LegacyStatsData ConvertLegacyStatsData(Model.LegacyStatsData data)
     {
-        LegacyStatsData ret = new();
-        ret.KillCount = data.KillCount;
-        ret.DeathCount = data.DeathCount;
-        ret.AceCount = data.AceCount;
-        ret.DualityKillCount = data.DualityKillCount;
-        ret.FirstKillCount = data.FirstKillCount;
-        ret.FirstDeathCount = data.FirstDeathCount;
-        ret.Kast = data.KAST;
-        ret.DualityRating = data.DualityRating;
-        ret.ImpactCount = data.ImpactCount;
-        ret.TotalMatchesPlayedCount = data.TotalMatchesPlayedCount;
-        ret.FanCount = data.FanCount;
-        ret.WinCount = data.WinCount;
-        ret.TotalRoundsPlayedCount = data.TotalRoundsPlayedCount;
-        ret.HeadshotsCount = data.HeadshotsCount;
-        ret.TotalDamagingShotsCount = data.TotalDamagingShotsCount;
-        ret.TotalDamageCount = data.TotalDamageCount;
+        LegacyStatsData ret = new()
+        {
+            KillCount = data.KillCount,
+            DeathCount = data.DeathCount,
+            AceCount = data.AceCount,
+            DualityKillCount = data.DualityKillCount,
+            FirstKillCount = data.FirstKillCount,
+            FirstDeathCount = data.FirstDeathCount,
+            Kast = data.KAST,
+            DualityRating = data.DualityRating,
+            ImpactCount = data.ImpactCount,
+            TotalMatchesPlayedCount = data.TotalMatchesPlayedCount,
+            FanCount = data.FanCount,
+            WinCount = data.WinCount,
+            TotalRoundsPlayedCount = data.TotalRoundsPlayedCount,
+            HeadshotsCount = data.HeadshotsCount,
+            TotalDamagingShotsCount = data.TotalDamagingShotsCount,
+            TotalDamageCount = data.TotalDamageCount
+        };
         foreach (string sponsor in data.TopSponsors)
         {
             ret.Sponsors.Add(sponsor);
@@ -52,9 +55,11 @@ public class GetPlayerLegacyDataProcessor : WebsocketPacketProcessor, IWebsocket
         Model.LegacyStatsData teamData = await Model.LegacyStatsData.RetrieveFromDatabase(new Model.LegacyStatsDataKey(ConnectionHandler.PlayerId, Model.LegacyStatsType.Team));
 
         LegacyPlayerData res = new();
-        LegacySeasonData packetSeason = new();
-        packetSeason.CurrentSoloRank = seasonData.CurrentSoloRank;
-        packetSeason.SoloRankPoints = seasonData.SoloRankedPoints;
+        LegacySeasonData packetSeason = new()
+        {
+            CurrentSoloRank = seasonData.CurrentSoloRank,
+            SoloRankPoints = seasonData.SoloRankedPoints
+        };
         res.SeasonData = packetSeason;
         res.Rank = ConvertLegacyStatsData(rankedData);
         res.Casual = ConvertLegacyStatsData(casualData);

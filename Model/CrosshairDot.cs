@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class CrosshairDot
+public record class CrosshairDot : IInterchangeable<CrosshairDot, Packets.CrosshairDot>
 {
     [SetsRequiredMembers]
     public CrosshairDot(double thickness, double opacity, int colorIndex, RGBAColor customColor, bool outlineEnabled, RGBAColor customOutlineColor, double outlineOpacity, double outlineThickness)
@@ -28,7 +28,7 @@ public record class CrosshairDot
     [PgName("opacity")]
     public required double Opacity { get; set; }
     [PgName("color_index")]
-    public required Int32 ColorIndex { get; set; }
+    public required int ColorIndex { get; set; }
     [PgName("custom_color")]
     public required RGBAColor CustomColor { get; set; }
     [PgName("outline_enabled")]
@@ -39,4 +39,39 @@ public record class CrosshairDot
     public required double OutlineOpacity { get; set; }
     [PgName("outline_thickness")]
     public required double OutlineThickness { get; set; }
+
+    public static CrosshairDot FromPacket(Packets.CrosshairDot inst)
+    {
+        return new CrosshairDot(inst.Thickness, inst.Opacity, inst.ColorIndex, RGBAColor.FromPacket(inst.CustomColor), inst.BOutlineEnabled, RGBAColor.FromPacket(inst.CustomOutlineColor), inst.OutlineOpacity, inst.OutlineThickness);
+    }
+
+    public Packets.CrosshairDot ToPacket()
+    {
+        Packets.CrosshairDot packet = new()
+        {
+            Thickness = Thickness,
+            Opacity = Opacity,
+            ColorIndex = ColorIndex
+        };
+        Packets.RGBAColor customColor = new()
+        {
+            R = CustomColor.R,
+            G = CustomColor.G,
+            B = CustomColor.B,
+            A = CustomColor.A
+        };
+        packet.CustomColor = customColor;
+        packet.BOutlineEnabled = OutlineEnabled;
+        Packets.RGBAColor outlineColor = new()
+        {
+            R = CustomOutlineColor.R,
+            G = CustomOutlineColor.G,
+            B = CustomOutlineColor.B,
+            A = CustomOutlineColor.A
+        };
+        packet.CustomOutlineColor = outlineColor;
+        packet.OutlineOpacity = OutlineOpacity;
+        packet.OutlineThickness = OutlineThickness;
+        return packet;
+    }
 }

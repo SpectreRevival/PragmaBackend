@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class AlterationChannel : IEquatable<AlterationChannel>
+public record class AlterationChannel : IEquatable<AlterationChannel>, IInterchangeable<AlterationChannel, Packets.AlterationChannel>
 {
     [SetsRequiredMembers]
     public AlterationChannel(string channelId, string[] alterations)
@@ -18,19 +18,32 @@ public record class AlterationChannel : IEquatable<AlterationChannel>
     [PgName("alterations")]
     public required string[] Alterations { get; set; }
 
+    public static AlterationChannel FromPacket(Packets.AlterationChannel inst)
+    {
+        return new AlterationChannel(inst.ChannelId, inst.OwnedAlterations.ToArray());
+    }
+
     public virtual bool Equals(AlterationChannel? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return ChannelId == other.ChannelId
-             && Alterations.SequenceEqual(other.Alterations);
+        return other is not null && (ReferenceEquals(this, other) || (ChannelId == other.ChannelId
+             && Alterations.SequenceEqual(other.Alterations)));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(ChannelId);
         hash.Add(Alterations);
         return hash.ToHashCode();
+    }
+
+    public Packets.AlterationChannel ToPacket()
+    {
+        Packets.AlterationChannel ret = new()
+        {
+            ChannelId = ChannelId
+        };
+        ret.OwnedAlterations.AddRange(Alterations);
+        return ret;
     }
 }

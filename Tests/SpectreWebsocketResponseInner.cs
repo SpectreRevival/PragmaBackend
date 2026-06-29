@@ -4,7 +4,7 @@ namespace Tests;
 
 public record class SpectreWebsocketResponseInner
 {
-    public required Int32 requestId { get; set; }
+    public required int requestId { get; set; }
     public required string type { get; set; }
     public required JsonObject payload { get; set; }
 }

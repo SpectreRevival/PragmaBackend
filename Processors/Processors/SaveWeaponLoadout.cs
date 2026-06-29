@@ -1,8 +1,9 @@
 ﻿using Model;
+using Packets;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Nodes;
 
-namespace Packets.Processors;
+namespace Processors.Processors;
 
 public class SaveWeaponLoadout : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
@@ -16,15 +17,15 @@ public class SaveWeaponLoadout : WebsocketPacketProcessor, IWebsocketPacketProce
         return new SpectreRpcType("MtnLoadoutServiceRpc.SaveWeaponLoadoutV1Request");
     }
 
-    private static Model.WeaponData ConvertWeaponData(WeaponData packet)
+    private static Model.WeaponData ConvertWeaponData(Packets.WeaponData packet)
     {
         WeaponAttachment? attachment = null;
         if (packet.AttachmentItemInstanceId != "")
         {
             attachment = new WeaponAttachment(Guid.Parse(packet.AttachmentItemInstanceId), packet.AttachmentItemCatalogId);
         }
-        List<Model.ActiveAlterationData> altData = new();
-        foreach (var alteration in packet.AlterationData)
+        List<Model.ActiveAlterationData> altData = [];
+        foreach (Packets.ActiveAlterationData? alteration in packet.AlterationData)
         {
             altData.Add(new Model.ActiveAlterationData(
                 alteration.ChannelId,
@@ -62,9 +63,11 @@ public class SaveWeaponLoadout : WebsocketPacketProcessor, IWebsocketPacketProce
             ConvertWeaponData(req.WeaponLoadoutData.MeleeData)
         );
         await saved.SyncToDatabase();
-        JsonObject resJson = new();
-        resJson["success"] = true;
-        resJson["savedLoadoutId"] = saved.LoadoutId;
+        JsonObject resJson = new()
+        {
+            ["success"] = true,
+            ["savedLoadoutId"] = saved.LoadoutId
+        };
         return SpectreWebsocketMessage.From(resJson);
     }
 }

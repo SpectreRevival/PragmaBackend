@@ -1,7 +1,7 @@
-﻿using Model;
+﻿using Packets;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Packets.Processors;
+namespace Processors.Processors;
 
 public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
@@ -15,17 +15,19 @@ public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketP
         return new SpectreRpcType("GameDataRpc.GetLoginDataV3Request");
     }
 
-    private static PlayerMatchmakingData MatchmakingDataConvert(Model.PlayerMatchmakingData mm)
+    private static Packets.PlayerMatchmakingData MatchmakingDataConvert(Model.PlayerMatchmakingData mm)
     {
-        PlayerMatchmakingData packet = new();
-        packet.PlayerId = mm.PlayerId.ToString();
-        packet.CasualMmr = mm.CasualMMR;
-        packet.RankedMmr = mm.RankedMMR;
-        packet.SoloRankPoints = mm.SoloRankPoints;
-        packet.CasualMatchesPlayedCount = mm.CasualMatchesPlayed;
-        packet.RankedMatchesPlayedCount = mm.RankedMatchesPlayed;
-        packet.CasualMatchesPlayedSeasonCount = mm.CasualMatchesPlayedSeasonal;
-        packet.RankedMatchesPlayedSeasonCount = mm.RankedMatchesPlayedSeasonal;
+        Packets.PlayerMatchmakingData packet = new()
+        {
+            PlayerId = mm.PlayerId.ToString(),
+            CasualMmr = mm.CasualMMR,
+            RankedMmr = mm.RankedMMR,
+            SoloRankPoints = mm.SoloRankPoints,
+            CasualMatchesPlayedCount = mm.CasualMatchesPlayed,
+            RankedMatchesPlayedCount = mm.RankedMatchesPlayed,
+            CasualMatchesPlayedSeasonCount = mm.CasualMatchesPlayedSeasonal,
+            RankedMatchesPlayedSeasonCount = mm.RankedMatchesPlayedSeasonal
+        };
         foreach (string placementMatch in mm.RankedPlacementMatches)
         {
             packet.RankedPlacementMatches.Add(placementMatch);
@@ -44,9 +46,11 @@ public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketP
     private static async Task<FlatInstancedItem> GetFlatInstancedItem(Guid instanceId)
     {
         Model.CustomizedInstancedItem item = await Model.CustomizedInstancedItem.RetrieveFromDatabase(instanceId);
-        FlatInstancedItem packet = new();
-        packet.ItemInstanceId = item.InstanceId.ToString();
-        packet.ItemCatalogId = item.CatalogId;
+        FlatInstancedItem packet = new()
+        {
+            ItemInstanceId = item.InstanceId.ToString(),
+            ItemCatalogId = item.CatalogId
+        };
         return packet;
     }
 
@@ -54,11 +58,13 @@ public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketP
     {
         LoginDataResponse res = new();
         LoginData loginData = new();
-        LoginDataExt ext = new();
-        ext.CrewAutomationInProcess = false;
-        ext.CurrentServiceTimestampMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
-        ext.NoCrew = -1.0d;
-        ext.NextCrewAutomationDate = DateTimeOffset.MinValue.ToString("yyyy-MM-ddTHH:mm");
+        LoginDataExt ext = new()
+        {
+            CrewAutomationInProcess = false,
+            CurrentServiceTimestampMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(),
+            NoCrew = -1.0d,
+            NextCrewAutomationDate = DateTimeOffset.MinValue.ToString("yyyy-MM-ddTHH:mm")
+        };
         PlayerData playerData = new();
         Model.ProfileData profileData = await Model.ProfileData.RetrieveFromDatabase(ConnectionHandler.PlayerId);
         playerData.PlayerId = ConnectionHandler.PlayerId.ToString();

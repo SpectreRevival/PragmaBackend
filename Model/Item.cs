@@ -1,5 +1,5 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
@@ -22,27 +22,25 @@ public abstract record class Item
 public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>, IEquatable<StackableItem>
 {
     [SetsRequiredMembers]
-    public StackableItem(Guid owningPlayerId, string catalogId, Guid instanceId, Int64 amount) : base(owningPlayerId, catalogId, instanceId)
+    public StackableItem(Guid owningPlayerId, string catalogId, Guid instanceId, long amount) : base(owningPlayerId, catalogId, instanceId)
     {
         Amount = amount;
     }
 
-    public required Int64 Amount { get; set; }
+    public required long Amount { get; set; }
 
     public static async Task<StackableItem?> RetrieveFromDatabase(Guid key)
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_stackable_item.sql");
         cmd.Parameters.AddWithValue("instance_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new StackableItem(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new StackableItem(
             await reader.GetFieldValueAsync<Guid>(3),
             await reader.GetFieldValueAsync<string>(1),
             await reader.GetFieldValueAsync<Guid>(0),
-            await reader.GetFieldValueAsync<Int64>(2)
+            await reader.GetFieldValueAsync<long>(2)
         );
     }
 
@@ -63,18 +61,15 @@ public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>
 
     public virtual bool Equals(StackableItem? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return OwningPlayerId == other.OwningPlayerId
+        return other is not null && (ReferenceEquals(this, other) || (OwningPlayerId == other.OwningPlayerId
             && CatalogId == other.CatalogId
             && InstanceId == other.InstanceId
-            && Amount == other.Amount;
+            && Amount == other.Amount));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(OwningPlayerId);
         hash.Add(CatalogId);
         hash.Add(InstanceId);
@@ -108,12 +103,10 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_customized_instanced_item.sql");
         cmd.Parameters.AddWithValue("instance_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new CustomizedInstancedItem(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new CustomizedInstancedItem(
             await reader.GetFieldValueAsync<Guid>(2),
             await reader.GetFieldValueAsync<string>(1),
             await reader.GetFieldValueAsync<Guid>(0),
@@ -140,19 +133,16 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
 
     public virtual bool Equals(CustomizedInstancedItem? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return InstanceId == other.InstanceId
+        return other is not null && (ReferenceEquals(this, other) || (InstanceId == other.InstanceId
             && CatalogId == other.CatalogId
             && OwningPlayerId == other.OwningPlayerId
             && AlterationChannels.SequenceEqual(other.AlterationChannels)
-            && Viewed == other.Viewed;
+            && Viewed == other.Viewed));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(InstanceId);
         hash.Add(CatalogId);
         hash.Add(OwningPlayerId);
@@ -178,39 +168,37 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
         NumLevelsPurchased = numLevelsPurchased;
     }
 
-    public required Dictionary<string,string> ProgressionByStats { get; set; }
+    public required Dictionary<string, string> ProgressionByStats { get; set; }
     public required bool AreObjectivesCompleted { get; set; }
-    public required Int32 CurrentObjectiveId { get; set; }
-    public required Int32 CurrentObjectiveIndex { get; set; }
+    public required int CurrentObjectiveId { get; set; }
+    public required int CurrentObjectiveIndex { get; set; }
     public required bool IsPremiumUnlocked { get; set; }
     public Guid? TeamId { get; set; }
     public ObjectiveContribution? LastContribution { get; set; }
     public required bool IsBundlePurchased { get; set; }
-    public required Int32 NumLevelsPurchased { get; set; }
+    public required int NumLevelsPurchased { get; set; }
 
     public static async Task<ProgressionTrackingItem?> RetrieveFromDatabase(Guid key)
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_progression_tracking_item.sql");
         cmd.Parameters.AddWithValue("instance_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new ProgressionTrackingItem(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new ProgressionTrackingItem(
             await reader.GetFieldValueAsync<Guid>(2),
             await reader.GetFieldValueAsync<string>(1),
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<bool>(3),
-            await reader.GetFieldValueAsync<Dictionary<string,string>>(4),
+            await reader.GetFieldValueAsync<Dictionary<string, string>>(4),
             await reader.GetFieldValueAsync<bool>(5),
             await reader.GetFieldValueAsync<int>(6),
-            await reader.GetFieldValueAsync<Int32>(7),
+            await reader.GetFieldValueAsync<int>(7),
             await reader.GetFieldValueAsync<bool>(8),
             await reader.GetFieldValueAsync<Guid?>(9),
             await reader.GetFieldValueAsync<ObjectiveContribution?>(10),
             await reader.GetFieldValueAsync<bool>(11),
-            await reader.GetFieldValueAsync<Int32>(12)
+            await reader.GetFieldValueAsync<int>(12)
         );
     }
 
@@ -240,10 +228,7 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
 
     public virtual bool Equals(ProgressionTrackingItem? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return InstanceId == other.InstanceId
+        return other is not null && (ReferenceEquals(this, other) || (InstanceId == other.InstanceId
             && CatalogId == other.CatalogId
             && OwningPlayerId == other.OwningPlayerId
             && Viewed == other.Viewed
@@ -254,15 +239,15 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
             && CurrentObjectiveIndex == other.CurrentObjectiveIndex
             && IsPremiumUnlocked == other.IsPremiumUnlocked
             && TeamId == other.TeamId
-            && (LastContribution is null && other.LastContribution is null)
-|| (LastContribution is not null && LastContribution.Equals(other.LastContribution))
+            && LastContribution is null && other.LastContribution is null)
+|| (LastContribution is not null && LastContribution.Equals(other.LastContribution)
             && IsBundlePurchased == other.IsBundlePurchased
-            && NumLevelsPurchased == other.NumLevelsPurchased;
+            && NumLevelsPurchased == other.NumLevelsPurchased));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(InstanceId);
         hash.Add(CatalogId);
         hash.Add(OwningPlayerId);
@@ -293,12 +278,10 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_sponsor_unlock_tracker_item.sql");
         cmd.Parameters.AddWithValue("instance_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new SponsorUnlockTrackerItem(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new SponsorUnlockTrackerItem(
             await reader.GetFieldValueAsync<Guid>(2),
             await reader.GetFieldValueAsync<string>(1),
             await reader.GetFieldValueAsync<Guid>(0),
@@ -325,19 +308,16 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
 
     public virtual bool Equals(SponsorUnlockTrackerItem? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return InstanceId == other.InstanceId
+        return other is not null && (ReferenceEquals(this, other) || (InstanceId == other.InstanceId
             && CatalogId == other.CatalogId
             && OwningPlayerId == other.OwningPlayerId
             && Viewed == other.Viewed
-            && SponsorName == other.SponsorName;
+            && SponsorName == other.SponsorName));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(InstanceId);
         hash.Add(CatalogId);
         hash.Add(OwningPlayerId);

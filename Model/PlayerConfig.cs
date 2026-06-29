@@ -1,5 +1,6 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
+using Packets;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -9,7 +10,7 @@ namespace Model;
 public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<PlayerConfig, Guid>, IEquatable<PlayerConfig>
 {
     [SetsRequiredMembers]
-    public PlayerConfig(Guid playerId, bool unlockAllPlayModes, bool unlockAllMenuTabs, bool unlockAllSponsors, bool bypassUnlockAllSponsorsOverride, bool bypassProgressionOverrides, bool bypassTeamSizeOverrides, bool bypassRegionSelectOverride, bool bypassCurrencyPurchasingOverride, bool disableDevMapSelector, bool showDebugInfoPanel, bool showPlatformInfoPanel, bool showMatchmakingCounters, bool forceChatEnabled, int mostRecentLobbyMode, Guid mostRecentPartyId, int endUserLicenseAcceptedVersion, int endUserLicenseAcceptedVersionPlayStation, int endUserLicenseAcceptedVersionXbox, int termsOfServiceAcceptedVersion, int termsOfServiceAcceptedVersionPlayStation, int termsOfServiceAcceptedVersionXbox, int nonDisclosureAgreementAcceptedVersion, int nonDisclosureAgreementAcceptedVersionPlayStation, int nonDisclosureAgreementAcceptedVersionXbox, int seizureWarningAcknowledgedVersion, int seizureWarningAcknowledgedVersionPlayStation, int seizureWarningAcknowledgedVersionXbox, int battlepassSeasonLoggedOn, double battlepassPurchasePopupLastTime, string nonDisclosureAgreementUserSignature, string nonDisclosureAgreementUserSignaturePlayStation, string nonDisclosureAgreementUserSignatureXbox, string nonDisclosureAgreementUserEmail, string nonDisclosureAgreementUserEmailPlayStation, string nonDisclosureAgreementUserEmailXbox, string lastVersionShownInDriversWarningDialog, int minSpecWarningDialogTimesDisplayed, int pingWarningDialogTimesDisplayed, bool hasCompletedLaunchSettingsFlow, bool isUsingManualMatchmakingRegionSelection, string[] manualMatchmakingRegionSelections, string[] rotatingNewsViewedMessages, double inkQuality, double mouseSensitivityADSScale, double mouseSensitivity, double minimapScale, double minimapSize, double minimapMaskOpacity, bool invertedYAxis, bool toggleCrouch, bool toggleWalk, bool toggleADS, string recoilBehavior, bool leftHandedEnabled, bool recoilPitchCorrectionEnabled, bool isTeamLaserEnabled, bool isHudMinimapRotationEnabled, bool isHudMinimapCenteredOnPlayer, bool isHudMinimapCircle, bool isHudMinimapMaskHighContrastEnabled, bool isHudSnapMinimapWithScoreboardEnabled, bool isDamageCameraEffectEnabled, bool streamerModeEnabled, bool hideLobbyCode, double aDSTracerRatio, double aDSTracerIntensity, double opticHitConfirmIntensity, bool anonymousMode, bool anonymizePlayerNames, bool streamerModeDisableIncomingVoiceChat, bool streamerModeDisableIncomingTextChat, bool isTextChatSoundEffectsEnabled, bool subtitlesEnabled, string verboseVoLevel, bool isBloodFXEnabled, string[] overrideKeymaps, string voiceChatInputAudioDevice, string voiceChatOutputAudioDevice, bool voiceChatTeamEnabled, string voiceChatConsoleMode, bool voiceChatPartyEnabled, bool voiceChatPartyEnabledInGames, bool voiceChatTeamPushToTalk, bool voiceChatPartyPushToTalk, string[] enabledTextStats, string[] enabledGraphStats, string[] mutedChatContexts, int inputBindingsVersion, Int64 version) : base(version)
+    public PlayerConfig(Guid playerId, bool unlockAllPlayModes, bool unlockAllMenuTabs, bool unlockAllSponsors, bool bypassUnlockAllSponsorsOverride, bool bypassProgressionOverrides, bool bypassTeamSizeOverrides, bool bypassRegionSelectOverride, bool bypassCurrencyPurchasingOverride, bool disableDevMapSelector, bool showDebugInfoPanel, bool showPlatformInfoPanel, bool showMatchmakingCounters, bool forceChatEnabled, int mostRecentLobbyMode, Guid mostRecentPartyId, int endUserLicenseAcceptedVersion, int endUserLicenseAcceptedVersionPlayStation, int endUserLicenseAcceptedVersionXbox, int termsOfServiceAcceptedVersion, int termsOfServiceAcceptedVersionPlayStation, int termsOfServiceAcceptedVersionXbox, int nonDisclosureAgreementAcceptedVersion, int nonDisclosureAgreementAcceptedVersionPlayStation, int nonDisclosureAgreementAcceptedVersionXbox, int seizureWarningAcknowledgedVersion, int seizureWarningAcknowledgedVersionPlayStation, int seizureWarningAcknowledgedVersionXbox, int battlepassSeasonLoggedOn, double battlepassPurchasePopupLastTime, string nonDisclosureAgreementUserSignature, string nonDisclosureAgreementUserSignaturePlayStation, string nonDisclosureAgreementUserSignatureXbox, string nonDisclosureAgreementUserEmail, string nonDisclosureAgreementUserEmailPlayStation, string nonDisclosureAgreementUserEmailXbox, string lastVersionShownInDriversWarningDialog, int minSpecWarningDialogTimesDisplayed, int pingWarningDialogTimesDisplayed, bool hasCompletedLaunchSettingsFlow, bool isUsingManualMatchmakingRegionSelection, string[] manualMatchmakingRegionSelections, string[] rotatingNewsViewedMessages, double inkQuality, double mouseSensitivityADSScale, double mouseSensitivity, double minimapScale, double minimapSize, double minimapMaskOpacity, bool invertedYAxis, bool toggleCrouch, bool toggleWalk, bool toggleADS, string recoilBehavior, bool leftHandedEnabled, bool recoilPitchCorrectionEnabled, bool isTeamLaserEnabled, bool isHudMinimapRotationEnabled, bool isHudMinimapCenteredOnPlayer, bool isHudMinimapCircle, bool isHudMinimapMaskHighContrastEnabled, bool isHudSnapMinimapWithScoreboardEnabled, bool isDamageCameraEffectEnabled, bool streamerModeEnabled, bool hideLobbyCode, double aDSTracerRatio, double aDSTracerIntensity, double opticHitConfirmIntensity, bool anonymousMode, bool anonymizePlayerNames, bool streamerModeDisableIncomingVoiceChat, bool streamerModeDisableIncomingTextChat, bool isTextChatSoundEffectsEnabled, bool subtitlesEnabled, string verboseVoLevel, bool isBloodFXEnabled, string[] overrideKeymaps, string voiceChatInputAudioDevice, string voiceChatOutputAudioDevice, bool voiceChatTeamEnabled, string voiceChatConsoleMode, bool voiceChatPartyEnabled, bool voiceChatPartyEnabledInGames, bool voiceChatTeamPushToTalk, bool voiceChatPartyPushToTalk, string[] enabledTextStats, string[] enabledGraphStats, string[] mutedChatContexts, int inputBindingsVersion, long version) : base(version)
     {
         PlayerId = playerId;
         UnlockAllPlayModes = unlockAllPlayModes;
@@ -116,21 +117,21 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
     public required bool ShowPlatformInfoPanel { get; set; }
     public required bool ShowMatchmakingCounters { get; set; }
     public required bool ForceChatEnabled { get; set; }
-    public required Int32 MostRecentLobbyMode { get; set; } // TODO ENUMIFY
+    public required int MostRecentLobbyMode { get; set; } // TODO ENUMIFY
     public required Guid MostRecentPartyId { get; set; }
-    public required Int32 EndUserLicenseAcceptedVersion { get; set; }
-    public required Int32 EndUserLicenseAcceptedVersionPlayStation { get; set; }
-    public required Int32 EndUserLicenseAcceptedVersionXbox { get; set; }
-    public required Int32 TermsOfServiceAcceptedVersion { get; set; }
-    public required Int32 TermsOfServiceAcceptedVersionPlayStation { get; set; }
-    public required Int32 TermsOfServiceAcceptedVersionXbox { get; set; }
-    public required Int32 NonDisclosureAgreementAcceptedVersion { get; set; }
-    public required Int32 NonDisclosureAgreementAcceptedVersionPlayStation { get; set; }
-    public required Int32 NonDisclosureAgreementAcceptedVersionXbox { get; set; }
-    public required Int32 SeizureWarningAcknowledgedVersion { get; set; }
-    public required Int32 SeizureWarningAcknowledgedVersionPlayStation { get; set; }
-    public required Int32 SeizureWarningAcknowledgedVersionXbox { get; set; }
-    public required Int32 BattlepassSeasonLoggedOn { get; set; }
+    public required int EndUserLicenseAcceptedVersion { get; set; }
+    public required int EndUserLicenseAcceptedVersionPlayStation { get; set; }
+    public required int EndUserLicenseAcceptedVersionXbox { get; set; }
+    public required int TermsOfServiceAcceptedVersion { get; set; }
+    public required int TermsOfServiceAcceptedVersionPlayStation { get; set; }
+    public required int TermsOfServiceAcceptedVersionXbox { get; set; }
+    public required int NonDisclosureAgreementAcceptedVersion { get; set; }
+    public required int NonDisclosureAgreementAcceptedVersionPlayStation { get; set; }
+    public required int NonDisclosureAgreementAcceptedVersionXbox { get; set; }
+    public required int SeizureWarningAcknowledgedVersion { get; set; }
+    public required int SeizureWarningAcknowledgedVersionPlayStation { get; set; }
+    public required int SeizureWarningAcknowledgedVersionXbox { get; set; }
+    public required int BattlepassSeasonLoggedOn { get; set; }
     public required double BattlepassPurchasePopupLastTime { get; set; }
     public required string NonDisclosureAgreementUserSignature { get; set; }
     public required string NonDisclosureAgreementUserSignaturePlayStation { get; set; }
@@ -139,8 +140,8 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
     public required string NonDisclosureAgreementUserEmailPlayStation { get; set; }
     public required string NonDisclosureAgreementUserEmailXbox { get; set; }
     public required string LastVersionShownInDriversWarningDialog { get; set; }
-    public required Int32 MinSpecWarningDialogTimesDisplayed { get; set; }
-    public required Int32 PingWarningDialogTimesDisplayed { get; set; }
+    public required int MinSpecWarningDialogTimesDisplayed { get; set; }
+    public required int PingWarningDialogTimesDisplayed { get; set; }
     public required bool HasCompletedLaunchSettingsFlow { get; set; }
     public required bool IsUsingManualMatchmakingRegionSelection { get; set; }
     public required string[] ManualMatchmakingRegionSelections { get; set; }
@@ -190,18 +191,16 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
     public required string[] EnabledTextStats { get; set; }
     public required string[] EnabledGraphStats { get; set; }
     public required string[] MutedChatContexts { get; set; }
-    public required Int32 InputBindingsVersion { get; set; }
+    public required int InputBindingsVersion { get; set; }
 
     public static async Task<PlayerConfig?> RetrieveFromDatabase(Guid key)
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_player_config.sql");
         cmd.Parameters.AddWithValue("player_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new PlayerConfig(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new PlayerConfig(
         playerId: await reader.GetFieldValueAsync<Guid>(reader.GetOrdinal("player_id")),
         unlockAllPlayModes: await reader.GetFieldValueAsync<bool>(reader.GetOrdinal("unlock_all_play_modes")),
         unlockAllMenuTabs: await reader.GetFieldValueAsync<bool>(reader.GetOrdinal("unlock_all_menu_tabs")),
@@ -397,10 +396,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
 
     public virtual bool Equals(PlayerConfig? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && UnlockAllPlayModes == other.UnlockAllPlayModes
             && UnlockAllMenuTabs == other.UnlockAllMenuTabs
             && UnlockAllSponsors == other.UnlockAllSponsors
@@ -488,12 +484,12 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
             && EnabledGraphStats.SequenceEqual(other.EnabledGraphStats)
             && MutedChatContexts.SequenceEqual(other.MutedChatContexts)
             && InputBindingsVersion == other.InputBindingsVersion
-            && Version == other.Version;
+            && Version == other.Version));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(UnlockAllPlayModes);
         hash.Add(UnlockAllMenuTabs);
@@ -588,12 +584,151 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
 
     public static PlayerConfig CreateDefault(Guid playerId)
     {
-        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "PlayerConfig.json")));
+        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "PlayerConfig.json")));
         defaultJson[nameof(PlayerId)] = playerId;
-        var options = new JsonSerializerOptions
+        JsonSerializerOptions options = new()
         {
             PropertyNameCaseInsensitive = true
         };
         return defaultJson.Deserialize<PlayerConfig>(options);
+    }
+
+    public static PlayerConfig FromPacket(Packets.PlayerConfig inst, Guid? id = null)
+    {
+        return id is null
+            ? throw new ArgumentNullException(nameof(id))
+            : new PlayerConfig((Guid)id, inst.UnlockAllPlayModes, inst.UnlockAllMenuTabs, inst.UnlockAllSponsors, inst.BypassUnlockAllSponsorsOverride,
+            inst.BypassProgressionOverrides, inst.BypassTeamSizeOverrides, inst.BypassRegionSelectOverride, inst.BypassCurrencyPurchasingOverride, inst.DisableDevMapSelector,
+            inst.ShowDebugInfoPanel, inst.ShowPlatformInfoPanel, inst.ShowMatchmakingCounters, inst.ForceChatEnabled, inst.MostRecentLobbyMode, Guid.Parse(inst.MostRecentPartyId), inst.EndUserLicenseAcceptedVersion,
+            inst.EndUserLicenseAcceptedVersionPlayStation, inst.EndUserLicenseAcceptedVersionXbox, inst.TermsOfServiceAcceptedVersion, inst.TermsOfServiceAcceptedVersionPlayStation, inst.TermsOfServiceAcceptedVersionXbox, inst.NonDisclosureAgreementAcceptedVersion, inst.NonDisclosureAgreementAcceptedVersionPlayStation, inst.NonDisclosureAgreementAcceptedVersionXbox,
+            inst.SeizureWarningAcknowledgedVersion, inst.SeizureWarningAcknowledgedVersionPlayStation, inst.SeizureWarningAcknowledgedVersionXbox, inst.BattlepassSeasonLoggedOn, inst.BattlepassPurchasePopupLastTime, inst.NonDisclosureAgreementUserSignature, inst.NonDisclosureAgreementUserSignaturePlayStation, inst.NonDisclosureAgreementUserSignatureXbox,
+            inst.NonDisclosureAgreementUserEmail, inst.NonDisclosureAgreementUserEmailPlayStation, inst.NonDisclosureAgreementUserEmailXbox, inst.LastVersionShownInDriversWarningDialog, inst.MinSpecWarningDialogTimesDisplayed, inst.PingWarningDialogTimesDisplayed,
+            inst.HasCompletedLaunchSettingsFlow, inst.IsUsingManualMatchmakingRegionSelection, inst.ManualMatchmakingRegionSelections.ToArray(),
+            inst.RotatingNewsViewedMessages.ToArray(), inst.InkQuality, inst.MouseSensitivityADSScale, inst.MouseSensitivity, inst.MinimapScale, inst.MinimapSize, inst.MinimapMaskOpacity, inst.BInvertedYAxis, inst.BToggleCrouch,
+            inst.BToggleWalk, inst.BToggleADS, inst.RecoilBehavior, inst.BLeftHandedEnabled, inst.BRecoilPitchCorrectionEnabled, inst.BIsTeamLaserEnabled, inst.BIsHudMinimapRotationEnabled, inst.BIsHudMinimapCenteredOnPlayer, inst.BIsHudMinimapCircle,
+            inst.BIsHudMinimapMaskHighContrastEnabled, inst.BIsHudSnapMinimapWithScoreboardEnabled, inst.BIsDamageCameraEffectEnabled, inst.BStreamerModeEnabled,
+            inst.BHideLobbyCode, inst.ADSTracerRatio, inst.ADSTracerIntensity, inst.OpticHitConfirmIntensity, inst.BAnonymousMode, inst.BAnonymizePlayerNames, inst.BStreamerModeDisableIncomingVoiceChat,
+            inst.BStreamerModeDisableIncomingTextChat, inst.BIsTextChatSoundEffectsEnabled, inst.BSubtitles, inst.VerboseVoLevel, inst.BIsBloodFXEnabled, inst.OverrideKeymaps.Overrides.ToArray(), inst.VoiceChatInputAudioDevice, inst.VoiceChatOutputAudioDevice,
+            inst.BVoiceChatTeamEnabled, inst.VoiceChatConsoleMode, inst.BVoiceChatPartyEnabled, inst.BVoiceChatPartyEnabledInGames, inst.BVoiceChatTeamPushToTalk, inst.BVoiceChatPartyPushToTalk, inst.EnabledTextStats.ToArray(), inst.EnabledGraphStats.ToArray(), inst.MutedChatContexts.ToArray(), inst.InputBindingsVersion, inst.Version);
+    }
+
+    public async Task<Packets.PlayerConfig> ToPacketFull(Guid playerId)
+    {
+        Packets.PlayerConfig packet = new()
+        {
+            UnlockAllPlayModes = UnlockAllPlayModes,
+            UnlockAllMenuTabs = UnlockAllMenuTabs,
+            UnlockAllSponsors = UnlockAllSponsors,
+            BypassUnlockAllSponsorsOverride = BypassUnlockAllSponsorsOverride,
+            BypassProgressionOverrides = BypassProgressionOverrides,
+            BypassTeamSizeOverrides = BypassTeamSizeOverrides,
+            BypassRegionSelectOverride = BypassRegionSelectOverride,
+            BypassCurrencyPurchasingOverride = BypassCurrencyPurchasingOverride,
+            DisableDevMapSelector = DisableDevMapSelector,
+            ShowDebugInfoPanel = ShowDebugInfoPanel,
+            ShowPlatformInfoPanel = ShowPlatformInfoPanel,
+            ShowMatchmakingCounters = ShowMatchmakingCounters,
+            ForceChatEnabled = ForceChatEnabled,
+            MostRecentLobbyMode = MostRecentLobbyMode,
+            MostRecentPartyId = MostRecentPartyId.ToString(),
+            EndUserLicenseAcceptedVersion = EndUserLicenseAcceptedVersion,
+            EndUserLicenseAcceptedVersionPlayStation = EndUserLicenseAcceptedVersionPlayStation,
+            EndUserLicenseAcceptedVersionXbox = EndUserLicenseAcceptedVersionXbox,
+            TermsOfServiceAcceptedVersion = TermsOfServiceAcceptedVersion,
+            TermsOfServiceAcceptedVersionPlayStation = TermsOfServiceAcceptedVersionPlayStation,
+            TermsOfServiceAcceptedVersionXbox = TermsOfServiceAcceptedVersionXbox,
+            NonDisclosureAgreementAcceptedVersion = NonDisclosureAgreementAcceptedVersion,
+            NonDisclosureAgreementAcceptedVersionPlayStation = NonDisclosureAgreementAcceptedVersionPlayStation,
+            NonDisclosureAgreementAcceptedVersionXbox = NonDisclosureAgreementAcceptedVersionXbox,
+            SeizureWarningAcknowledgedVersion = SeizureWarningAcknowledgedVersion,
+            SeizureWarningAcknowledgedVersionPlayStation = SeizureWarningAcknowledgedVersionPlayStation,
+            SeizureWarningAcknowledgedVersionXbox = SeizureWarningAcknowledgedVersionXbox,
+            BattlepassSeasonLoggedOn = BattlepassSeasonLoggedOn,
+            BattlepassPurchasePopupLastTime = BattlepassPurchasePopupLastTime,
+            NonDisclosureAgreementUserSignature = NonDisclosureAgreementUserSignature,
+            NonDisclosureAgreementUserSignaturePlayStation = NonDisclosureAgreementUserSignature,
+            NonDisclosureAgreementUserSignatureXbox = NonDisclosureAgreementUserSignatureXbox,
+            NonDisclosureAgreementUserEmail = NonDisclosureAgreementUserEmail,
+            NonDisclosureAgreementUserEmailPlayStation = NonDisclosureAgreementUserEmailPlayStation,
+            NonDisclosureAgreementUserEmailXbox = NonDisclosureAgreementUserEmailXbox,
+            LastVersionShownInDriversWarningDialog = LastVersionShownInDriversWarningDialog,
+            MinSpecWarningDialogTimesDisplayed = MinSpecWarningDialogTimesDisplayed,
+            PingWarningDialogTimesDisplayed = PingWarningDialogTimesDisplayed,
+            HasCompletedLaunchSettingsFlow = HasCompletedLaunchSettingsFlow,
+            IsUsingManualMatchmakingRegionSelection = IsUsingManualMatchmakingRegionSelection
+        };
+        foreach (string item in ManualMatchmakingRegionSelections)
+        {
+            packet.ManualMatchmakingRegionSelections.Add(item);
+        }
+        foreach (string item in RotatingNewsViewedMessages)
+        {
+            packet.RotatingNewsViewedMessages.Add(item);
+        }
+        packet.Version = (int)Version;
+        packet.InkQuality = InkQuality;
+        packet.MouseSensitivityADSScale = MouseSensitivityADSScale;
+        packet.MouseSensitivity = MouseSensitivity;
+        packet.MinimapScale = MinimapScale;
+        packet.MinimapSize = MinimapSize;
+        packet.MinimapMaskOpacity = MinimapMaskOpacity;
+        packet.BInvertedYAxis = InvertedYAxis;
+        packet.BToggleCrouch = ToggleCrouch;
+        packet.BToggleWalk = ToggleWalk;
+        packet.BToggleADS = ToggleADS;
+        packet.RecoilBehavior = RecoilBehavior;
+        packet.BLeftHandedEnabled = LeftHandedEnabled;
+        packet.BRecoilPitchCorrectionEnabled = RecoilPitchCorrectionEnabled;
+        packet.BIsTeamLaserEnabled = IsTeamLaserEnabled;
+        packet.BIsHudMinimapRotationEnabled = IsHudMinimapRotationEnabled;
+        packet.BIsHudMinimapCenteredOnPlayer = IsHudMinimapCenteredOnPlayer;
+        packet.BIsHudMinimapCircle = IsHudMinimapCircle;
+        packet.BIsHudMinimapMaskHighContrastEnabled = IsHudMinimapMaskHighContrastEnabled;
+        packet.BIsHudSnapMinimapWithScoreboardEnabled = IsHudSnapMinimapWithScoreboardEnabled;
+        packet.BIsDamageCameraEffectEnabled = IsDamageCameraEffectEnabled;
+        packet.BStreamerModeEnabled = StreamerModeEnabled;
+        packet.BHideLobbyCode = HideLobbyCode;
+        packet.ADSTracerRatio = ADSTracerRatio;
+        packet.ADSTracerIntensity = ADSTracerIntensity;
+        packet.OpticHitConfirmIntensity = OpticHitConfirmIntensity;
+        packet.BAnonymousMode = AnonymousMode;
+        packet.BAnonymizePlayerNames = AnonymizePlayerNames;
+        packet.BStreamerModeDisableIncomingVoiceChat = StreamerModeDisableIncomingVoiceChat;
+        packet.BStreamerModeDisableIncomingTextChat = StreamerModeDisableIncomingTextChat;
+        packet.BIsTextChatSoundEffectsEnabled = IsTextChatSoundEffectsEnabled;
+        packet.BSubtitles = SubtitlesEnabled;
+        packet.VerboseVoLevel = VerboseVoLevel;
+        packet.BIsBloodFXEnabled = IsBloodFXEnabled;
+        OverrideKeymaps keymaps = new();
+        foreach (string item in OverrideKeymaps)
+        {
+            keymaps.Overrides.Add(item);
+        }
+        packet.OverrideKeymaps = keymaps;
+        packet.VoiceChatInputAudioDevice = VoiceChatInputAudioDevice;
+        packet.VoiceChatOutputAudioDevice = VoiceChatOutputAudioDevice;
+        packet.BVoiceChatTeamEnabled = VoiceChatTeamEnabled;
+        packet.VoiceChatConsoleMode = VoiceChatConsoleMode;
+        packet.BVoiceChatPartyEnabledInGames = VoiceChatPartyEnabledInGames;
+        packet.BVoiceChatTeamPushToTalk = VoiceChatTeamPushToTalk;
+        packet.BVoiceChatPartyPushToTalk = VoiceChatPartyPushToTalk;
+        foreach (string item in EnabledTextStats)
+        {
+            packet.EnabledTextStats.Add(item);
+        }
+        foreach (string item in EnabledGraphStats)
+        {
+            packet.EnabledGraphStats.Add(item);
+        }
+        foreach (string item in MutedChatContexts)
+        {
+            packet.MutedChatContexts.Add(item);
+        }
+        packet.InputBindingsVersion = InputBindingsVersion;
+        packet.SubtitleUserSettings = (await Model.SubtitleUserSettings.RetrieveFromDatabase(playerId)).ToPacket();
+        packet.CrosshairConfig = (await Model.CrosshairConfig.RetrieveFromDatabase(playerId)).ToPacket();
+        packet.GamepadConfig = (await Model.GamepadConfig.RetrieveFromDatabase(playerId)).ToPacket();
+        packet.ColorVisionConfig = (await Model.ColorVisionConfig.RetrieveFromDatabase(playerId)).ToPacket();
+        return packet;
     }
 }

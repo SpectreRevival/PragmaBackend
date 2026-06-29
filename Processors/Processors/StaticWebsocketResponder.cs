@@ -1,13 +1,11 @@
-﻿using Google.Protobuf;
-using Microsoft.AspNetCore.Routing;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
-namespace Packets.Processors;
+namespace Processors.Processors;
 
 public class StaticWebsocketResponder : WebsocketPacketProcessor
 {
     private readonly string _responseData;
-    private static readonly List<StaticWebsocketResponder> _responders = new();
+    private static readonly List<StaticWebsocketResponder> _responders = [];
 
     [SetsRequiredMembers]
     public StaticWebsocketResponder(SpectreRpcType rpcType, string responseFilePath) : base(rpcType)

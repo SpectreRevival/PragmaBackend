@@ -1,11 +1,11 @@
-﻿using Google.Protobuf;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 
-namespace Packets;
+namespace Processors;
 
 public abstract class WebsocketPacketProcessor
 {
-    private static readonly Dictionary<SpectreRpcType, WebsocketPacketProcessor> processors = new();
+    private static readonly Dictionary<SpectreRpcType, WebsocketPacketProcessor> processors = [];
     public required SpectreRpcType RpcType { get; init; }
 
     [SetsRequiredMembers]
@@ -18,14 +18,10 @@ public abstract class WebsocketPacketProcessor
 
     public static WebsocketPacketProcessor? GetProcessorForRequestType(SpectreRpcType rpcType)
     {
-        if(processors.TryGetValue(rpcType, out WebsocketPacketProcessor? processor))
-        {
-            return processor;
-        }
-        return null;
+        return processors.TryGetValue(rpcType, out WebsocketPacketProcessor? processor) ? processor : null;
     }
 
-    private static readonly List<WebsocketPacketProcessor> singletons = new();
+    private static readonly List<WebsocketPacketProcessor> singletons = [];
 
     public static void InstantiateSingletons()
     {
@@ -37,9 +33,9 @@ public abstract class WebsocketPacketProcessor
             ).ToList();
         foreach (Type singletonClass in singletonClasses)
         {
-            var rpcTypeGetter = singletonClass.GetMethod("GetRpcType", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-            var rpcType = rpcTypeGetter.Invoke(null, new object[] { });
-            var ctor = singletonClass.GetConstructors().First();
+            MethodInfo? rpcTypeGetter = singletonClass.GetMethod("GetRpcType", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            object? rpcType = rpcTypeGetter.Invoke(null, new object[] { });
+            ConstructorInfo ctor = singletonClass.GetConstructors().First();
             singletons.Add((WebsocketPacketProcessor)ctor.Invoke(new object[]
             {
                 rpcType

@@ -1,11 +1,10 @@
-﻿using System;
-using System.Net.Sockets;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Npgsql;
 using Serilog;
-using Model;
+using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 
-namespace Persistence;
+namespace Model.Persistence;
 
 public class PostgresDatabase : IAsyncDisposable, IDisposable
 {
@@ -19,10 +18,10 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         int port = int.Parse(config["DB_PORT"] ?? "5432");
         string user = config["DB_USERNAME"] ?? throw new InvalidDataException("No username for db provided");
         string password = config["DB_PASSWORD"] ?? throw new InvalidDataException("No password for db provided");
-        string dbName = config["DB_DATABASE"] ?? throw new InvalidDataException("No db name provided");
+        _ = config["DB_DATABASE"] ?? throw new InvalidDataException("No db name provided");
         this.config = config;
 
-        var ConnStr = new NpgsqlConnectionStringBuilder
+        NpgsqlConnectionStringBuilder ConnStr = new()
         {
             Host = host,
             Port = port,
@@ -33,15 +32,16 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         };
 
         // We have to do the type initialization before so when NpgsqlDataSourceBuilder is created the types are correct (it fetches them into a local cache on creation)
-        using (var conn = new NpgsqlConnection(ConnStr.ConnectionString))
+        using (NpgsqlConnection conn = new(ConnStr.ConnectionString))
         {
             int connectTimeout = int.Parse(config.GetRequiredSection("DB_CONNECT_TIMEOUT_S").Value);
             if (connectTimeout == 0)
             {
                 conn.Open();
-            } else
+            }
+            else
             {
-                CancellationTokenSource src = new CancellationTokenSource(TimeSpan.FromSeconds(connectTimeout));
+                CancellationTokenSource src = new(TimeSpan.FromSeconds(connectTimeout));
                 conn.OpenAsync(src.Token).GetAwaiter().GetResult();
             }
             int currentScriptInitializationLevel = 0;
@@ -66,7 +66,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
                 nextDirPath = Path.Combine(AppContext.BaseDirectory, "commands", "init", currentScriptInitializationLevel.ToString());
             }
         }
-        var builder = new NpgsqlDataSourceBuilder(ConnStr.ConnectionString);
+        NpgsqlDataSourceBuilder builder = new(ConnStr.ConnectionString);
         builder.MapComposite<RGBAColor>("rgbacolor");
         builder.MapComposite<CrosshairDot>("crosshairdot");
         builder.MapComposite<PipConfig>("pipconfig");
@@ -91,9 +91,10 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
             try
             {
                 Log.Information("Attempting to connect to database");
-                using var connection = _dataSource.OpenConnection();
+                using NpgsqlConnection connection = _dataSource.OpenConnection();
                 break;
-            } catch (Exception ex) when (ex is SocketException || ex is PostgresException || ex is NpgsqlException)
+            }
+            catch (Exception ex) when (ex is SocketException or PostgresException or NpgsqlException)
             {
                 Log.Warning("Database not ready yet... trying again in 5s");
                 Thread.Sleep(TimeSpan.FromSeconds(5));
@@ -138,7 +139,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if(_dataSource != null)
+        if (_dataSource != null)
         {
             await _dataSource.DisposeAsync();
         }
@@ -147,7 +148,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
 
     public void Dispose()
     {
-        var awaiter = DisposeAsync().GetAwaiter();
+        ValueTaskAwaiter awaiter = DisposeAsync().GetAwaiter();
         while (!awaiter.IsCompleted)
         {
 

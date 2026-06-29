@@ -1,15 +1,15 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<GamepadConfig, Guid>, IEquatable<GamepadConfig>
+public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<GamepadConfig, Guid>, IEquatable<GamepadConfig>, IInterchangeableKeyed<GamepadConfig, Packets.GamepadConfig, Guid>
 {
     [SetsRequiredMembers]
-    public GamepadConfig(Guid playerId, int inputSchemeIndex, int gamepadGlyphIndex, int lookPresetIndex, LookConfig customLookConfig, ResponseCurve customResponseCurve, bool invertLook, int controllerFeedbackValue, bool turnAccel, bool aimAssist, int responseCurveIndex, double responseCurveArcDeg, double responseCurveSlope, double responseCurveLinearBlendPow, double customScaleADS, bool toggleCrouch, bool toggleWalk, bool togglePlantDefuse, bool toggleADS, string endWalkWhenFiringBehavior, double aDSTriggerThreshold, string deadZoneMoveAmount, double customDeadZoneMoveAmount, string deadZoneLookAmount, double customDeadZoneLookAmount, double walkRunDeflectionThreshold, Int64 version) : base(version)
+    public GamepadConfig(Guid playerId, int inputSchemeIndex, int gamepadGlyphIndex, int lookPresetIndex, LookConfig customLookConfig, ResponseCurve customResponseCurve, bool invertLook, int controllerFeedbackValue, bool turnAccel, bool aimAssist, int responseCurveIndex, double responseCurveArcDeg, double responseCurveSlope, double responseCurveLinearBlendPow, double customScaleADS, bool toggleCrouch, bool toggleWalk, bool togglePlantDefuse, bool toggleADS, string endWalkWhenFiringBehavior, double aDSTriggerThreshold, string deadZoneMoveAmount, double customDeadZoneMoveAmount, string deadZoneLookAmount, double customDeadZoneLookAmount, double walkRunDeflectionThreshold, long version) : base(version)
     {
         PlayerId = playerId;
         InputSchemeIndex = inputSchemeIndex;
@@ -40,16 +40,16 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
     }
 
     public required Guid PlayerId { get; set; }
-    public required Int32 InputSchemeIndex { get; set; }
-    public required Int32 GamepadGlyphIndex { get; set; }
-    public required Int32 LookPresetIndex { get; set; }
+    public required int InputSchemeIndex { get; set; }
+    public required int GamepadGlyphIndex { get; set; }
+    public required int LookPresetIndex { get; set; }
     public required LookConfig CustomLookConfig { get; set; }
     public required ResponseCurve CustomResponseCurve { get; set; }
     public required bool InvertLook { get; set; }
-    public required Int32 ControllerFeedbackValue { get; set; }
+    public required int ControllerFeedbackValue { get; set; }
     public required bool TurnAccel { get; set; }
     public required bool AimAssist { get; set; }
-    public required Int32 ResponseCurveIndex { get; set; }
+    public required int ResponseCurveIndex { get; set; }
     public required double ResponseCurveArcDeg { get; set; }
     public required double ResponseCurveSlope { get; set; }
     public required double ResponseCurveLinearBlendPow { get; set; }
@@ -70,23 +70,21 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_gamepad_config.sql");
         cmd.Parameters.AddWithValue("player_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new GamepadConfig(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new GamepadConfig(
             await reader.GetFieldValueAsync<Guid>(0),
-            await reader.GetFieldValueAsync<Int32>(1),
-            await reader.GetFieldValueAsync<Int32>(2),
-            await reader.GetFieldValueAsync<Int32>(3),
+            await reader.GetFieldValueAsync<int>(1),
+            await reader.GetFieldValueAsync<int>(2),
+            await reader.GetFieldValueAsync<int>(3),
             await reader.GetFieldValueAsync<LookConfig>(4),
             await reader.GetFieldValueAsync<ResponseCurve>(5),
             await reader.GetFieldValueAsync<bool>(6),
-            await reader.GetFieldValueAsync<Int32>(7),
+            await reader.GetFieldValueAsync<int>(7),
             await reader.GetFieldValueAsync<bool>(8),
             await reader.GetFieldValueAsync<bool>(9),
-            await reader.GetFieldValueAsync<Int32>(10),
+            await reader.GetFieldValueAsync<int>(10),
             await reader.GetFieldValueAsync<double>(11),
             await reader.GetFieldValueAsync<double>(12),
             await reader.GetFieldValueAsync<double>(13),
@@ -102,7 +100,7 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
             await reader.GetFieldValueAsync<string>(23),
             await reader.GetFieldValueAsync<double>(24),
             await reader.GetFieldValueAsync<double>(25),
-            await reader.GetFieldValueAsync<Int64>(26)
+            await reader.GetFieldValueAsync<long>(26)
         );
     }
 
@@ -146,10 +144,7 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
 
     public virtual bool Equals(GamepadConfig? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && InputSchemeIndex == other.InputSchemeIndex
             && GamepadGlyphIndex == other.GamepadGlyphIndex
             && LookPresetIndex == other.LookPresetIndex
@@ -174,12 +169,12 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
             && CustomDeadZoneMoveAmount == other.CustomDeadZoneMoveAmount
             && DeadZoneLookAmount == other.DeadZoneLookAmount
             && CustomDeadZoneLookAmount == other.CustomDeadZoneLookAmount
-            && WalkRunDeflectionThreshold == other.WalkRunDeflectionThreshold;
+            && WalkRunDeflectionThreshold == other.WalkRunDeflectionThreshold));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(InputSchemeIndex);
         hash.Add(GamepadGlyphIndex);
@@ -211,12 +206,66 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
 
     public static GamepadConfig CreateDefault(Guid playerId)
     {
-        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "GamepadConfig.json")));
+        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "GamepadConfig.json")));
         defaultJson[nameof(PlayerId)] = playerId;
-        var options = new JsonSerializerOptions
+        JsonSerializerOptions options = new()
         {
             PropertyNameCaseInsensitive = true
         };
         return defaultJson.Deserialize<GamepadConfig>(options);
+    }
+
+    public static GamepadConfig FromPacket(Packets.GamepadConfig inst, Guid id)
+    {
+        return new GamepadConfig(id, inst.InputSchemeIndex, inst.GamepadGlyphIndex, inst.LookPresetIndex,
+            LookConfig.FromPacket(inst.CustomLookConfig), ResponseCurve.FromPacket(inst.CustomResponseCurve), inst.BInvertLook, inst.ControllerFeedbackValue, inst.BTurnAccel, inst.BAimAssist, inst.ResponseCurveIndex, inst.ResponseCurveArcDeg, inst.ResponseCurveSlope, inst.ResponseCurveLinearBlendPow, inst.CustomScaleADS, inst.BToggleCrouch, inst.BToggleWalk, inst.BTogglePlantDefuse, inst.BToggleADS, inst.EndWalkWhenFiringBehavior, inst.ADSTriggerThreshold, inst.DeadZoneMoveAmount, inst.CustomDeadZoneMoveAmount, inst.DeadZoneLookAmount, inst.CustomDeadZoneLookAmount, inst.WalkRunDeflectionThreshold, inst.Version);
+    }
+
+    public Packets.GamepadConfig ToPacket()
+    {
+        Packets.GamepadConfig packet = new()
+        {
+            Version = (int)Version,
+            InputSchemeIndex = InputSchemeIndex,
+            GamepadGlyphIndex = GamepadGlyphIndex,
+            LookPresetIndex = LookPresetIndex
+        };
+        Packets.LookConfig look = new()
+        {
+            DisplayName = CustomLookConfig.DisplayName,
+            LookSettings = CustomLookConfig.LookSettings.ToPacket(),
+            LookSettingsADS = CustomLookConfig.LookSettingsADS.ToPacket()
+        };
+        Packets.ResponseCurve curve = new()
+        {
+            DisplayName = CustomResponseCurve.DisplayName,
+            Exponent = CustomResponseCurve.Exponent,
+            ResponseCurveArcDeg = CustomResponseCurve.ResponseCurveArcDegree,
+            ResponseCurveSlope = CustomResponseCurve.ResponseCurveSlope,
+            ResponseCurveLinearBlendPow = CustomResponseCurve.ResponseCurveLinearBlendPower
+        };
+        packet.CustomResponseCurve = curve;
+        packet.CustomLookConfig = look;
+        packet.BInvertLook = InvertLook;
+        packet.ControllerFeedbackValue = ControllerFeedbackValue;
+        packet.BTurnAccel = TurnAccel;
+        packet.BAimAssist = AimAssist;
+        packet.ResponseCurveIndex = ResponseCurveIndex;
+        packet.ResponseCurveArcDeg = ResponseCurveArcDeg;
+        packet.ResponseCurveSlope = ResponseCurveSlope;
+        packet.ResponseCurveLinearBlendPow = ResponseCurveLinearBlendPow;
+        packet.CustomScaleADS = CustomScaleADS;
+        packet.BToggleCrouch = ToggleCrouch;
+        packet.BToggleWalk = ToggleWalk;
+        packet.BTogglePlantDefuse = TogglePlantDefuse;
+        packet.BToggleADS = ToggleADS;
+        packet.EndWalkWhenFiringBehavior = EndWalkWhenFiringBehavior;
+        packet.ADSTriggerThreshold = ADSTriggerThreshold;
+        packet.DeadZoneMoveAmount = DeadZoneMoveAmount;
+        packet.CustomDeadZoneMoveAmount = CustomDeadZoneMoveAmount;
+        packet.DeadZoneLookAmount = DeadZoneLookAmount;
+        packet.CustomDeadZoneLookAmount = CustomDeadZoneLookAmount;
+        packet.WalkRunDeflectionThreshold = WalkRunDeflectionThreshold;
+        return packet;
     }
 }

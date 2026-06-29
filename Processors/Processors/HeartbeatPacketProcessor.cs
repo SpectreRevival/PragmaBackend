@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace Packets.Processors;
+namespace Processors.Processors;
 
 public class HeartbeatPacketProcessor : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {

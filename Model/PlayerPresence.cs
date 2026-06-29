@@ -1,6 +1,6 @@
-﻿using Npgsql;
+﻿using Model.Persistence;
+using Npgsql;
 using NpgsqlTypes;
-using Persistence;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
@@ -20,23 +20,21 @@ public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Gu
     public required Guid PlayerId { get; set; }
     public required PlayerBasicPresence BasicStatus { get; set; }
     public required DateTimeOffset LastUpdatedTime { get; set; }
-    public required Int32 AdvancedPresenceType { get; set; } // Todo make enum
+    public required int AdvancedPresenceType { get; set; } // Todo make enum
     public required string AdvancedPresenceContext { get; set; }
 
     public static async Task<PlayerPresence?> RetrieveFromDatabase(Guid key)
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_player_presence.sql");
         cmd.Parameters.AddWithValue("player_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new PlayerPresence(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new PlayerPresence(
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<PlayerBasicPresence>(1),
             await reader.GetFieldValueAsync<DateTimeOffset>(4),
-            await reader.GetFieldValueAsync<Int32>(2),
+            await reader.GetFieldValueAsync<int>(2),
             await reader.GetFieldValueAsync<string>(3)
         );
     }
@@ -59,19 +57,16 @@ public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Gu
 
     public virtual bool Equals(PlayerPresence? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && BasicStatus == other.BasicStatus
             && LastUpdatedTime.ToUnixTimeMilliseconds() == other.LastUpdatedTime.ToUnixTimeMilliseconds()
             && AdvancedPresenceType == other.AdvancedPresenceType
-            && AdvancedPresenceContext == other.AdvancedPresenceContext;
+            && AdvancedPresenceContext == other.AdvancedPresenceContext));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(BasicStatus);
         hash.Add(LastUpdatedTime.ToUnixTimeMilliseconds());

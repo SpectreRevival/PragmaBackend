@@ -1,15 +1,15 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<ColorVisionConfig, Guid>, IEquatable<ColorVisionConfig>
+public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<ColorVisionConfig, Guid>, IEquatable<ColorVisionConfig>, IInterchangeableKeyed<ColorVisionConfig, Packets.ColorVisionConfig, Guid>
 {
     [SetsRequiredMembers]
-    public ColorVisionConfig(Guid playerId, string colorVisionType, int severity, bool correctDeficiency, bool showCorrectDeficiency, bool useComfortSwapEffect, bool useCustomOutlineColor, RGBAColor outlineColor, RGBAColor outlineColorLower, double outlineThicknessScale, double outlineBrightnessScale, Int64 version) : base(version)
+    public ColorVisionConfig(Guid playerId, string colorVisionType, int severity, bool correctDeficiency, bool showCorrectDeficiency, bool useComfortSwapEffect, bool useCustomOutlineColor, RGBAColor outlineColor, RGBAColor outlineColorLower, double outlineThicknessScale, double outlineBrightnessScale, long version) : base(version)
     {
         PlayerId = playerId;
         ColorVisionType = colorVisionType ?? throw new ArgumentNullException(nameof(colorVisionType));
@@ -26,9 +26,9 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
 
     public static ColorVisionConfig CreateDefault(Guid playerId)
     {
-        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ColorVisionConfig.json")));
+        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ColorVisionConfig.json")));
         defaultJson[nameof(PlayerId)] = playerId;
-        var options = new JsonSerializerOptions
+        JsonSerializerOptions options = new()
         {
             PropertyNameCaseInsensitive = true
         };
@@ -37,7 +37,7 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
 
     public required Guid PlayerId { get; set; }
     public required string ColorVisionType { get; set; }
-    public required Int32 Severity { get; set; }
+    public required int Severity { get; set; }
     public required bool CorrectDeficiency { get; set; }
     public required bool ShowCorrectDeficiency { get; set; }
     public required bool UseComfortSwapEffect { get; set; }
@@ -51,15 +51,13 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_color_vision_config.sql");
         cmd.Parameters.AddWithValue("playerid", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new ColorVisionConfig(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new ColorVisionConfig(
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<string>(1),
-            await reader.GetFieldValueAsync<Int32>(2),
+            await reader.GetFieldValueAsync<int>(2),
             await reader.GetFieldValueAsync<bool>(3),
             await reader.GetFieldValueAsync<bool>(4),
             await reader.GetFieldValueAsync<bool>(5),
@@ -68,7 +66,7 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
             await reader.GetFieldValueAsync<RGBAColor>(8),
             await reader.GetFieldValueAsync<double>(9),
             await reader.GetFieldValueAsync<double>(10),
-            await reader.GetFieldValueAsync<Int64>(11)
+            await reader.GetFieldValueAsync<long>(11)
         );
     }
 
@@ -97,10 +95,7 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
 
     public virtual bool Equals(ColorVisionConfig? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && ColorVisionType == other.ColorVisionType
             && Severity == other.Severity
             && CorrectDeficiency == other.CorrectDeficiency
@@ -111,12 +106,12 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
             && OutlineColorLower.Equals(other.OutlineColorLower)
             && OutlineThicknessScale == other.OutlineThicknessScale
             && OutlineBrightnessScale == other.OutlineBrightnessScale
-            && Version == other.Version;
+            && Version == other.Version));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(ColorVisionType);
         hash.Add(Severity);
@@ -130,5 +125,43 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
         hash.Add(OutlineBrightnessScale);
         hash.Add(Version);
         return hash.ToHashCode();
+    }
+
+    public static ColorVisionConfig FromPacket(Packets.ColorVisionConfig inst, Guid id)
+    {
+        return new ColorVisionConfig(id, inst.ColorVisionType, inst.Severity, inst.BCorrectDeficiency, inst.BShowCorrectDeficiency, inst.BComfortSwapEffect, inst.BCustomOutlineColor, RGBAColor.FromPacket(inst.OutlineColor), RGBAColor.FromPacket(inst.OutlineColorLower), inst.OutlineThicknessScale, inst.OutlineBrightnessScale, inst.Version);
+    }
+
+    public Packets.ColorVisionConfig ToPacket()
+    {
+        Packets.ColorVisionConfig packet = new()
+        {
+            ColorVisionType = ColorVisionType,
+            Severity = Severity,
+            BCorrectDeficiency = CorrectDeficiency,
+            BShowCorrectDeficiency = ShowCorrectDeficiency,
+            BComfortSwapEffect = UseComfortSwapEffect,
+            BCustomOutlineColor = UseCustomOutlineColor
+        };
+        Packets.RGBAColor outlineColor = new()
+        {
+            R = OutlineColor.R,
+            G = OutlineColor.G,
+            B = OutlineColor.B,
+            A = OutlineColor.A
+        };
+        packet.OutlineColor = outlineColor;
+        Packets.RGBAColor lowerColor = new()
+        {
+            R = OutlineColorLower.R,
+            G = OutlineColorLower.G,
+            B = OutlineColorLower.B,
+            A = OutlineColorLower.A
+        };
+        packet.OutlineColorLower = lowerColor;
+        packet.OutlineThicknessScale = OutlineThicknessScale;
+        packet.OutlineBrightnessScale = OutlineBrightnessScale;
+        packet.Version = (int)Version;
+        return packet;
     }
 }

@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class LookConfig : IEquatable<LookConfig>
+public record class LookConfig : IEquatable<LookConfig>, IInterchangeable<LookConfig, Packets.LookConfig>
 {
     [SetsRequiredMembers]
     public LookConfig(string displayName, LookSettings lookSettings, LookSettings lookSettingsADS)
@@ -20,22 +20,35 @@ public record class LookConfig : IEquatable<LookConfig>
     [PgName("look_settings_ads")]
     public required LookSettings LookSettingsADS { get; set; }
 
+    public static LookConfig FromPacket(Packets.LookConfig inst)
+    {
+        return new LookConfig(inst.DisplayName, LookSettings.FromPacket(inst.LookSettings), LookSettings.FromPacket(inst.LookSettingsADS));
+    }
+
     public virtual bool Equals(LookConfig? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return DisplayName == other.DisplayName
+        return other is not null && (ReferenceEquals(this, other) || (DisplayName == other.DisplayName
             && LookSettings.Equals(other.LookSettings)
-            && LookSettingsADS.Equals(other.LookSettingsADS);
+            && LookSettingsADS.Equals(other.LookSettingsADS)));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(DisplayName);
         hash.Add(LookSettingsADS);
         hash.Add(LookSettings);
         return hash.ToHashCode();
+    }
+
+    public Packets.LookConfig ToPacket()
+    {
+        Packets.LookConfig packet = new()
+        {
+            DisplayName = DisplayName,
+            LookSettings = LookSettings.ToPacket(),
+            LookSettingsADS = LookSettingsADS.ToPacket()
+        };
+        return packet;
     }
 }

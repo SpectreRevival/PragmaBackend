@@ -13,6 +13,10 @@
   </PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Packets\Packets.csproj"></ProjectReference>
+	</ItemGroup>
+
+	<ItemGroup>
 		<None Include="commands\**\*" CopyToOutputDirectory="PreserveNewest" />
 		<None Include="defaults\**\*" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>

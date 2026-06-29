@@ -1,12 +1,12 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
 // Ohm - Intentionally removed country, subdivision, primary/secondary geographic region and address fields from this struct since we aren't going to store those for privacy reasons.
 
-public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatchmakingData, Guid>, IEquatable<PlayerMatchmakingData>
+public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatchmakingData, Guid>, IEquatable<PlayerMatchmakingData>, IInterchangeable<PlayerMatchmakingData, Packets.PlayerMatchmakingData>
 {
     [SetsRequiredMembers]
     public PlayerMatchmakingData(Guid playerId, double casualMMR, double rankedMMR, long soloRankPoints, long casualMatchesPlayed, long rankedMatchesPlayed, long casualMatchesPlayedSeasonal, long rankedMatchesPlayedSeasonal, string[] rankedPlacementMatches, long currentSoloRank, long highestTeamRank, long casualMatchesWon, long rankedMatchesWon, DateTimeOffset priorityMatchmakingUntil, DateTimeOffset restrictMatchmakingUntil, string mapHistory)
@@ -32,16 +32,16 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
     public required Guid PlayerId { get; set; }
     public required double CasualMMR { get; set; }
     public required double RankedMMR { get; set; }
-    public required Int64 SoloRankPoints { get; set; }
-    public required Int64 CasualMatchesPlayed { get; set; }
-    public required Int64 RankedMatchesPlayed { get; set; }
-    public required Int64 CasualMatchesPlayedSeasonal { get; set; }
-    public required Int64 RankedMatchesPlayedSeasonal { get; set; }
+    public required long SoloRankPoints { get; set; }
+    public required long CasualMatchesPlayed { get; set; }
+    public required long RankedMatchesPlayed { get; set; }
+    public required long CasualMatchesPlayedSeasonal { get; set; }
+    public required long RankedMatchesPlayedSeasonal { get; set; }
     public required string[] RankedPlacementMatches { get; set; }
-    public required Int64 CurrentSoloRank { get; set; }// Todo replace with enum
-    public required Int64 HighestTeamRank { get; set; }// same
-    public required Int64 CasualMatchesWon { get; set; }
-    public required Int64 RankedMatchesWon { get; set; }
+    public required long CurrentSoloRank { get; set; }// Todo replace with enum
+    public required long HighestTeamRank { get; set; }// same
+    public required long CasualMatchesWon { get; set; }
+    public required long RankedMatchesWon { get; set; }
     public required DateTimeOffset PriorityMatchmakingUntil { get; set; }
     public required DateTimeOffset RestrictMatchmakingUntil { get; set; }
     public required string MapHistory { get; set; }
@@ -50,25 +50,23 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_player_matchmaking_data.sql");
         cmd.Parameters.AddWithValue("player_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new PlayerMatchmakingData(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new PlayerMatchmakingData(
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<double>(1),
             await reader.GetFieldValueAsync<double>(2),
-            await reader.GetFieldValueAsync<Int64>(3),
-            await reader.GetFieldValueAsync<Int64>(4),
-            await reader.GetFieldValueAsync<Int64>(5),
-            await reader.GetFieldValueAsync<Int64>(6),
-            await reader.GetFieldValueAsync<Int64>(7),
+            await reader.GetFieldValueAsync<long>(3),
+            await reader.GetFieldValueAsync<long>(4),
+            await reader.GetFieldValueAsync<long>(5),
+            await reader.GetFieldValueAsync<long>(6),
+            await reader.GetFieldValueAsync<long>(7),
             await reader.GetFieldValueAsync<string[]>(8),
-            await reader.GetFieldValueAsync<Int64>(9),
-            await reader.GetFieldValueAsync<Int64>(10),
-            await reader.GetFieldValueAsync<Int64>(11),
-            await reader.GetFieldValueAsync<Int64>(12),
+            await reader.GetFieldValueAsync<long>(9),
+            await reader.GetFieldValueAsync<long>(10),
+            await reader.GetFieldValueAsync<long>(11),
+            await reader.GetFieldValueAsync<long>(12),
             await reader.GetFieldValueAsync<DateTimeOffset>(13),
             await reader.GetFieldValueAsync<DateTimeOffset>(14),
             await reader.GetFieldValueAsync<string>(15)
@@ -104,10 +102,7 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
 
     public virtual bool Equals(PlayerMatchmakingData? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && CasualMMR == other.CasualMMR
             && RankedMMR == other.RankedMMR
             && SoloRankPoints == other.SoloRankPoints
@@ -122,12 +117,12 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
             && RankedMatchesWon == other.RankedMatchesWon
             && PriorityMatchmakingUntil.ToUnixTimeMilliseconds() == other.PriorityMatchmakingUntil.ToUnixTimeMilliseconds()
             && RestrictMatchmakingUntil.ToUnixTimeMilliseconds() == other.RestrictMatchmakingUntil.ToUnixTimeMilliseconds()
-            && MapHistory == other.MapHistory;
+            && MapHistory == other.MapHistory));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(CasualMMR);
         hash.Add(RankedMMR);
@@ -150,5 +145,44 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
     public static PlayerMatchmakingData CreateDefault(Guid key)
     {
         return new PlayerMatchmakingData(key, 0, 0, 0, 0, 0, 0, 0, [], 0, 0, 0, 0, DateTimeOffset.FromUnixTimeMilliseconds(0), DateTimeOffset.FromUnixTimeMilliseconds(0), "");
+    }
+
+    public static PlayerMatchmakingData FromPacket(Packets.PlayerMatchmakingData inst)
+    {
+        return new PlayerMatchmakingData(Guid.Parse(inst.PlayerId), inst.CasualMmr, inst.RankedMmr, (long)inst.SoloRankPoints, (long)inst.CasualMatchesPlayedCount, (long)inst.RankedMatchesPlayedCount, (long)inst.CasualMatchesPlayedSeasonCount, (long)inst.RankedMatchesPlayedSeasonCount,
+            inst.RankedPlacementMatches.ToArray(), (long)inst.CurrentSoloRank, (long)inst.HighestTeamRank, (long)inst.CasualMatchesWonCount, (long)inst.RankedMatchesWonCount, DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(inst.PriorityMatchmakingUntil)), DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(inst.RestrictMatchmakingUntil)), inst.MapHistory);
+    }
+
+    public Packets.PlayerMatchmakingData ToPacket()
+    {
+        Packets.PlayerMatchmakingData packet = new()
+        {
+            PlayerId = PlayerId.ToString(),
+            CasualMmr = CasualMMR,
+            RankedMmr = RankedMMR,
+            SoloRankPoints = SoloRankPoints,
+            CasualMatchesPlayedCount = CasualMatchesPlayed,
+            RankedMatchesPlayedCount = RankedMatchesPlayed,
+            CasualMatchesPlayedSeasonCount = CasualMatchesPlayedSeasonal,
+            RankedMatchesPlayedSeasonCount = RankedMatchesPlayedSeasonal
+        };
+        foreach (string placementMatch in RankedPlacementMatches)
+        {
+            packet.RankedPlacementMatches.Add(placementMatch);
+        }
+        packet.CurrentSoloRank = CurrentSoloRank;
+        packet.HighestTeamRank = HighestTeamRank;
+        packet.CasualMatchesWonCount = CasualMatchesWon;
+        packet.RankedMatchesWonCount = RankedMatchesWon;
+        packet.PriorityMatchmakingUntil = PriorityMatchmakingUntil.ToUnixTimeMilliseconds().ToString();
+        packet.RestrictMatchmakingUntil = RestrictMatchmakingUntil.ToUnixTimeMilliseconds().ToString();
+        packet.MatchmakingFlags = 1.0;
+        packet.MapHistory = MapHistory;
+        packet.Country = "US";
+        packet.Address = "0.0.0.0";
+        packet.PrimaryGeographicRegion = "uswest-1";
+        packet.SecondaryGeographicRegion = "uscentral-2";
+        packet.Subdivision = "CO";
+        return packet;
     }
 }

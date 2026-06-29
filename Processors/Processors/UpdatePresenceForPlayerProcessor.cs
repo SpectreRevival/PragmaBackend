@@ -1,6 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using Packets;
+using System.Diagnostics.CodeAnalysis;
 
-namespace Packets.Processors;
+namespace Processors.Processors;
 
 public class UpdatePresenceForPlayerProcessor : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {

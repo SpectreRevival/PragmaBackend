@@ -1,15 +1,15 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefault<SubtitleUserSettings, Guid>, IEquatable<SubtitleUserSettings>
+public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefault<SubtitleUserSettings, Guid>, IEquatable<SubtitleUserSettings>, IInterchangeableKeyed<SubtitleUserSettings, Packets.SubtitleUserSettings, Guid>
 {
     [SetsRequiredMembers]
-    public SubtitleUserSettings(Guid playerId, int fontSize, double backgroundOpacity, string speakerQualifierDisplay, bool postPlayerSubtitles, bool postPlayerSubtitlesToChat, int namesToShowMask, Int64 version) : base(version)
+    public SubtitleUserSettings(Guid playerId, int fontSize, double backgroundOpacity, string speakerQualifierDisplay, bool postPlayerSubtitles, bool postPlayerSubtitlesToChat, int namesToShowMask, long version) : base(version)
     {
         PlayerId = playerId;
         FontSize = fontSize;
@@ -21,31 +21,29 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
     }
 
     public required Guid PlayerId { get; set; }
-    public required Int32 FontSize { get; set; }
+    public required int FontSize { get; set; }
     public required double BackgroundOpacity { get; set; }
     public required string SpeakerQualifierDisplay { get; set; }
     public required bool PostPlayerSubtitles { get; set; }
     public required bool PostPlayerSubtitlesToChat { get; set; }
-    public required Int32 NamesToShowMask { get; set; }
+    public required int NamesToShowMask { get; set; }
 
     public static async Task<SubtitleUserSettings?> RetrieveFromDatabase(Guid key)
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_subtitle_settings.sql");
         cmd.Parameters.AddWithValue("player_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new SubtitleUserSettings(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new SubtitleUserSettings(
             await reader.GetFieldValueAsync<Guid>(0),
-            await reader.GetFieldValueAsync<Int32>(1),
+            await reader.GetFieldValueAsync<int>(1),
             await reader.GetFieldValueAsync<double>(2),
             await reader.GetFieldValueAsync<string>(3),
             await reader.GetFieldValueAsync<bool>(4),
             await reader.GetFieldValueAsync<bool>(5),
-            await reader.GetFieldValueAsync<Int32>(6),
-            await reader.GetFieldValueAsync<Int64>(7)
+            await reader.GetFieldValueAsync<int>(6),
+            await reader.GetFieldValueAsync<long>(7)
         );
     }
 
@@ -70,22 +68,19 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
 
     public virtual bool Equals(SubtitleUserSettings? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && FontSize == other.FontSize
             && BackgroundOpacity == other.BackgroundOpacity
             && SpeakerQualifierDisplay == other.SpeakerQualifierDisplay
             && PostPlayerSubtitles == other.PostPlayerSubtitles
             && PostPlayerSubtitlesToChat == other.PostPlayerSubtitlesToChat
             && NamesToShowMask == other.NamesToShowMask
-            && Version == other.Version;
+            && Version == other.Version));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(FontSize);
         hash.Add(BackgroundOpacity);
@@ -99,12 +94,32 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
 
     public static SubtitleUserSettings CreateDefault(Guid playerId)
     {
-        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "SubtitleUserSettings.json")));
+        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "SubtitleUserSettings.json")));
         defaultJson[nameof(PlayerId)] = playerId;
-        var options = new JsonSerializerOptions
+        JsonSerializerOptions options = new()
         {
             PropertyNameCaseInsensitive = true
         };
         return defaultJson.Deserialize<SubtitleUserSettings>(options);
+    }
+
+    public static SubtitleUserSettings FromPacket(Packets.SubtitleUserSettings inst, Guid id)
+    {
+        return new SubtitleUserSettings(id, inst.FontSize, inst.BackgroundOpacity, inst.SpeakerQualifierDisplay, inst.BPostPlayerSubtitles, inst.BPostPlayerSubtitlesToChat, inst.NamesToShowMask, inst.Version);
+    }
+
+    public Packets.SubtitleUserSettings ToPacket()
+    {
+        Packets.SubtitleUserSettings packet = new()
+        {
+            Version = (int)Version,
+            FontSize = FontSize,
+            BackgroundOpacity = BackgroundOpacity,
+            SpeakerQualifierDisplay = SpeakerQualifierDisplay,
+            BPostPlayerSubtitles = PostPlayerSubtitles,
+            BPostPlayerSubtitlesToChat = PostPlayerSubtitlesToChat,
+            NamesToShowMask = NamesToShowMask
+        };
+        return packet;
     }
 }

@@ -2,8 +2,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Model;
+using Model.Persistence;
 using Npgsql;
-using Persistence;
+using Model.Persistence;
 using Serilog;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
@@ -11,7 +12,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace Packets.Processors;
+namespace Processors.Processors;
 
 public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleton
 {
@@ -40,7 +41,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
           JsonSerializerOptions.Web
         );
 
-        if(reqData == null)
+        if (reqData == null)
         {
             return Results.BadRequest();
         }
@@ -51,17 +52,19 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         try
         {
             ticket = new(reqData.providerToken);
-        } catch(Exception ex)
+        }
+        catch (Exception ex)
         {
             return Results.BadRequest(ex);
         }
         cmd.Parameters.AddWithValue("provider_account_id", ticket.SteamId64);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         Model.ProfileData playerProfile;
         if (!await reader.ReadAsync())
         {
             playerProfile = await CreateNewPlayerFromSteamId(ticket.SteamId64);
-        } else
+        }
+        else
         {
             Guid playerId = await reader.GetFieldValueAsync<Guid>(0);
             await reader.DisposeAsync();
@@ -92,13 +95,13 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
 
     private static string BuildJWT(string backendType, Model.ProfileData profile)
     {
-        var jwtHeader = new JsonObject
+        JsonObject jwtHeader = new()
         {
             ["kid"] = "d3JtOq6jy3_HquwTsrzt81wh3BLiA-4f-qM8mj-0-YQ=",
             ["alg"] = "RS256",
             ["typ"] = "JWT"
         };
-        var payload = new JsonObject
+        JsonObject payload = new()
         {
             ["iss"] = "pragma",
             ["sub"] = profile.PlayerId.ToString(),
@@ -117,13 +120,13 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
             ["pragmaPlayerId"] = profile.PlayerId.ToString()
         };
 
-        if(backendType == "GAME")
+        if (backendType == "GAME")
         {
             payload["gameShardId"] = "00000000-0000-0000-0000-000000000001";
         }
 
-        var headerString = jwtHeader.ToJsonString();
-        var payloadString = payload.ToJsonString();
+        string headerString = jwtHeader.ToJsonString();
+        string payloadString = payload.ToJsonString();
         string encodedHeader = Base64UrlEncode(Encoding.UTF8.GetBytes(headerString));
         string encodedPayload = Base64UrlEncode(Encoding.UTF8.GetBytes(payloadString));
         string stringToSign = $"{encodedHeader}.{encodedPayload}";
@@ -183,7 +186,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
         cmd.Parameters.AddWithValue("player_id", playerId);
         cmd.Parameters.AddWithValue("catalog_id", data.ItemCatalogId);
-        using var reader = cmd.ExecuteReader();
+        using NpgsqlDataReader reader = cmd.ExecuteReader();
         if (!reader.Read())
         {
             throw new InvalidDataException($"The player with id {playerId} doesn't own an item with catalog id {data.ItemCatalogId}");
@@ -205,7 +208,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
         cmd.Parameters.AddWithValue("player_id", playerId);
         cmd.Parameters.AddWithValue("catalog_id", data.ItemCatalogId);
-        using var reader = cmd.ExecuteReader();
+        using NpgsqlDataReader reader = cmd.ExecuteReader();
         if (!reader.Read())
         {
             throw new InvalidDataException($"The player with id {playerId} doesn't own an item with catalog id {data.ItemCatalogId}");
@@ -216,7 +219,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
             NpgsqlCommand attachmentCmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
             attachmentCmd.Parameters.AddWithValue("player_id", playerId);
             attachmentCmd.Parameters.AddWithValue("catalog_id", data.Attachment.AttachmentItemCatalogId);
-            using var attachmentReader = attachmentCmd.ExecuteReader();
+            using NpgsqlDataReader attachmentReader = attachmentCmd.ExecuteReader();
             if (!attachmentReader.Read())
             {
                 throw new InvalidDataException($"The player with id {playerId} doesn't own an item with catalog id {data.Attachment.AttachmentItemCatalogId}");
@@ -254,12 +257,10 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM instanced_items WHERE catalog_id=@catalog_id AND owning_player_id=@player_id");
         cmd.Parameters.AddWithValue("catalog_id", catalogId);
         cmd.Parameters.AddWithValue("player_id", owningPlayerId);
-        using var reader = cmd.ExecuteReader();
-        if (!reader.Read())
-        {
-            throw new InvalidDataException($"No item found with catalog id {catalogId} and owning player id {owningPlayerId}");
-        }
-        return reader.GetGuid(0);
+        using NpgsqlDataReader reader = cmd.ExecuteReader();
+        return !reader.Read()
+            ? throw new InvalidDataException($"No item found with catalog id {catalogId} and owning player id {owningPlayerId}")
+            : reader.GetGuid(0);
     }
 
     private static async Task<Model.ProfileData> CreateNewPlayerFromSteamId(string steamId)
@@ -269,25 +270,25 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         {
             PropertyNameCaseInsensitive = true
         });
-        foreach (var stackableItem in defaultInv.StackableItems)
+        foreach (Model.StackableItem stackableItem in defaultInv.StackableItems)
         {
             stackableItem.InstanceId = Guid.NewGuid();
             stackableItem.OwningPlayerId = playerId;
             await stackableItem.SyncToDatabase();
         }
-        foreach (var customizedInstancedItem in defaultInv.CustomizedInstancedItems)
+        foreach (CustomizedInstancedItem customizedInstancedItem in defaultInv.CustomizedInstancedItems)
         {
             customizedInstancedItem.InstanceId = Guid.NewGuid();
             customizedInstancedItem.OwningPlayerId = playerId;
             await customizedInstancedItem.SyncToDatabase();
         }
-        foreach (var progressionTrackerItem in defaultInv.ProgresionTrackingItems)
+        foreach (ProgressionTrackingItem progressionTrackerItem in defaultInv.ProgresionTrackingItems)
         {
             progressionTrackerItem.InstanceId = Guid.NewGuid();
             progressionTrackerItem.OwningPlayerId = playerId;
             await progressionTrackerItem.SyncToDatabase();
         }
-        foreach (var sponsorTrackerItem in defaultInv.SponsorUnlockItems)
+        foreach (SponsorUnlockTrackerItem sponsorTrackerItem in defaultInv.SponsorUnlockItems)
         {
             sponsorTrackerItem.InstanceId = Guid.NewGuid();
             sponsorTrackerItem.OwningPlayerId = playerId;

@@ -1,6 +1,4 @@
-﻿using Microsoft.CodeCoverage.Core.Reports.Coverage;
-using Serilog;
-using System.Linq.Expressions;
+﻿using Serilog;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -26,11 +24,7 @@ public class HTTPTests
 
     public static string GetCustomTestName(MethodInfo methodInfo, object[] data)
     {
-        if (data != null && data.Length > 1 && data[1] is string testName)
-        {
-            return $"{methodInfo.Name}_{testName}";
-        }
-        return methodInfo.Name;
+        return data != null && data.Length > 1 && data[1] is string testName ? $"{methodInfo.Name}_{testName}" : methodInfo.Name;
     }
 
     [TestMethod]
@@ -44,7 +38,7 @@ public class HTTPTests
         {
             Assert.Inconclusive($"Skipping due to route {testData.path} appearing in skip routes list");
         }
-        using var cancelToken = new CancellationTokenSource();
+        using CancellationTokenSource cancelToken = new();
         cancelToken.CancelAfter(TimeSpan.FromSeconds(10));
         HttpClient client = new()
         {
@@ -52,12 +46,12 @@ public class HTTPTests
         };
         try
         {
-            using var req = new HttpRequestMessage(new HttpMethod(testData.method), $"http://localhost:21330{testData.path}");
+            using HttpRequestMessage req = new(new HttpMethod(testData.method), $"http://localhost:21330{testData.path}");
             req.Content = new StringContent(testData.request, Encoding.UTF8, "application/json");
             HttpResponseMessage res = await client.SendAsync(req, cancelToken.Token);
             res.EnsureSuccessStatusCode();
             string content = await res.Content.ReadAsStringAsync(cancelToken.Token);
-            if(!JsonTestUtil.JsonMatchesSchema(content, testData.response, false, false))
+            if (!JsonTestUtil.JsonMatchesSchema(content, testData.response, false, false))
             {
                 Assert.Fail("Json content doesn't match");
             }

@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace Packets;
+namespace Processors;
 
 public record class SpectreRpcType
 {
@@ -21,9 +21,9 @@ public record class SpectreRpcType
     public SpectreRpcType GetResponseType()
     {
         string resName = GetName();
-        if(resName.Length >= 7 && resName.EndsWith("Request"))
+        if (resName.Length >= 7 && resName.EndsWith("Request"))
         {
-            resName = resName.Remove(resName.Length - 7);
+            resName = resName[..^7];
         }
         resName += "Response";
         return new SpectreRpcType(resName);

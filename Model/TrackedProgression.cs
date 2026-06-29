@@ -1,5 +1,5 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -39,12 +39,10 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_team_progression.sql");
         cmd.Parameters.AddWithValue("player_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new TeamTrackedProgression(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new TeamTrackedProgression(
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<Guid[]>(2),
             await reader.GetFieldValueAsync<Guid[]>(3),
@@ -73,20 +71,17 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
     public virtual bool Equals(TeamTrackedProgression? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && ActiveDailyQuests.SequenceEqual(other.ActiveDailyQuests)
             && ActiveWeeklyQuests.SequenceEqual(other.ActiveWeeklyQuests)
             && ActiveEventQuests.SequenceEqual(other.ActiveEventQuests)
             && LastRolloverTimestamp.ToUnixTimeMilliseconds() == other.LastRolloverTimestamp.ToUnixTimeMilliseconds()
-            && TeamId == other.TeamId;
+            && TeamId == other.TeamId));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(ActiveDailyQuests);
         hash.Add(ActiveWeeklyQuests);
@@ -98,9 +93,9 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
     public static TeamTrackedProgression CreateDefault(Guid playerId)
     {
-        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "TeamTrackedProgression.json")));
+        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "TeamTrackedProgression.json")));
         defaultJson[nameof(PlayerId)] = playerId;
-        var options = new JsonSerializerOptions
+        JsonSerializerOptions options = new()
         {
             PropertyNameCaseInsensitive = true
         };
@@ -122,12 +117,10 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_individual_progression.sql");
         cmd.Parameters.AddWithValue("player_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new IndividualTrackedProgression(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new IndividualTrackedProgression(
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<Guid[]>(1),
             await reader.GetFieldValueAsync<Guid[]>(2),
@@ -156,20 +149,17 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
 
     public virtual bool Equals(IndividualTrackedProgression? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && ActiveDailyQuests.SequenceEqual(other.ActiveDailyQuests)
             && ActiveWeeklyQuests.SequenceEqual(other.ActiveWeeklyQuests)
             && ActiveEventQuests.SequenceEqual(other.ActiveEventQuests)
             && LastRolloverTimestamp.ToUnixTimeMilliseconds() == other.LastRolloverTimestamp.ToUnixTimeMilliseconds()
-            && ActiveEndorsement == other.ActiveEndorsement;
+            && ActiveEndorsement == other.ActiveEndorsement));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(ActiveDailyQuests);
         hash.Add(ActiveWeeklyQuests);
@@ -181,9 +171,9 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
 
     public static IndividualTrackedProgression CreateDefault(Guid playerId)
     {
-        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "IndividualTrackedProgression.json")));
+        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "IndividualTrackedProgression.json")));
         defaultJson[nameof(PlayerId)] = playerId;
-        var options = new JsonSerializerOptions
+        JsonSerializerOptions options = new()
         {
             PropertyNameCaseInsensitive = true
         };

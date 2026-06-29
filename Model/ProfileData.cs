@@ -1,5 +1,5 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -51,29 +51,27 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
     public required DateTimeOffset LastUpdated { get; set; }
     public required DateTimeOffset NextNewDayRollover { get; set; }
     public required DateTimeOffset LastLogin { get; set; }
-    public required Int32 PlayerFlags { get; set; }
-    public required Int64 CrewScore { get; set; }
-    public required Int32 CurrentSoloRank { get; set; } // todo enum
-    public required Int32 HighestTeamRank { get; set; } // todo enum
+    public required int PlayerFlags { get; set; }
+    public required long CrewScore { get; set; }
+    public required int CurrentSoloRank { get; set; } // todo enum
+    public required int HighestTeamRank { get; set; } // todo enum
     public required string DivisionType { get; set; } // todo enum
-    public required Int64 InventoryVersion { get; set; }
+    public required long InventoryVersion { get; set; }
     public required Guid CrewId { get; set; }
     public required string AccountIdProvider { get; set; } // todo enum
     public required string PlatformName { get; set; }
     public required string ProviderAccountId { get; set; }
     public required string CrossplayPlatformKind { get; set; }
-    public required Int32 GamesRemainingUntilCrewJoin { get; set; }
+    public required int GamesRemainingUntilCrewJoin { get; set; }
 
     public static async Task<ProfileData?> RetrieveFromDatabase(Guid key)
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_profile_data.sql");
         cmd.Parameters.AddWithValue("player_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new ProfileData(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new ProfileData(
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<DisplayName>(1),
             await reader.GetFieldValueAsync<Guid>(2),
@@ -87,18 +85,18 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
             await reader.GetFieldValueAsync<DateTimeOffset>(10),
             await reader.GetFieldValueAsync<DateTimeOffset>(11),
             await reader.GetFieldValueAsync<DateTimeOffset>(12),
-            await reader.GetFieldValueAsync<Int32>(13),
-            await reader.GetFieldValueAsync<Int64>(14),
-            await reader.GetFieldValueAsync<Int32>(15),
-            await reader.GetFieldValueAsync<Int32>(16),
+            await reader.GetFieldValueAsync<int>(13),
+            await reader.GetFieldValueAsync<long>(14),
+            await reader.GetFieldValueAsync<int>(15),
+            await reader.GetFieldValueAsync<int>(16),
             await reader.GetFieldValueAsync<string>(17),
-            await reader.GetFieldValueAsync<Int64>(18),
+            await reader.GetFieldValueAsync<long>(18),
             await reader.GetFieldValueAsync<Guid>(19),
             await reader.GetFieldValueAsync<string>(20),
             await reader.GetFieldValueAsync<string>(21),
             await reader.GetFieldValueAsync<string>(22),
             await reader.GetFieldValueAsync<string>(23),
-            await reader.GetFieldValueAsync<Int32>(24)
+            await reader.GetFieldValueAsync<int>(24)
         );
     }
 
@@ -140,10 +138,7 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
 
     public virtual bool Equals(ProfileData? other)
     {
-        if (other is null) return false;
-        if(ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && DisplayName.Equals(other.DisplayName)
             && BannerItemId == other.BannerItemId
             && PreSprayItemId == other.PreSprayItemId
@@ -167,12 +162,12 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
             && PlatformName == other.PlatformName
             && ProviderAccountId == other.ProviderAccountId
             && CrossplayPlatformKind == other.CrossplayPlatformKind
-            && GamesRemainingUntilCrewJoin == other.GamesRemainingUntilCrewJoin;
+            && GamesRemainingUntilCrewJoin == other.GamesRemainingUntilCrewJoin));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(DisplayName);
         hash.Add(BannerItemId);
@@ -203,9 +198,9 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
 
     public static ProfileData CreateDefault(Guid playerId)
     {
-        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ProfileData.json")));
+        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ProfileData.json")));
         defaultJson[nameof(PlayerId)] = playerId;
-        var options = new JsonSerializerOptions
+        JsonSerializerOptions options = new()
         {
             PropertyNameCaseInsensitive = true
         };

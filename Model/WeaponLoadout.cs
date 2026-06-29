@@ -1,12 +1,12 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid>, IEquatable<WeaponLoadout>
+public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid>, IEquatable<WeaponLoadout>, IInterchangeable<WeaponLoadout, Packets.WeaponLoadout>
 {
     [SetsRequiredMembers]
     public WeaponLoadout(Guid playerId, Guid loadoutId, WeaponData semiAutoPistol, WeaponData suppressedPistol, WeaponData autoPistol, WeaponData highcalPistol, WeaponData heavyShotgun, WeaponData autoShotgun, WeaponData tacticalSMG, WeaponData rapidfireSMG, WeaponData suppressedSMG, WeaponData standardAR, WeaponData semiAutoAR, WeaponData burstAR, WeaponData tacticalAR, WeaponData suppressedAR, WeaponData heavyAR, WeaponData highcalMG, WeaponData rapidfireMG, WeaponData semiAutoSniper, WeaponData boltActionSniper, WeaponData melee)
@@ -62,12 +62,10 @@ public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_weapon_loadout.sql");
         cmd.Parameters.AddWithValue("loadout_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new WeaponLoadout(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new WeaponLoadout(
             await reader.GetFieldValueAsync<Guid>(1),
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<WeaponData>(2),
@@ -128,10 +126,7 @@ public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid
 
     public virtual bool Equals(WeaponLoadout? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return LoadoutId == other.LoadoutId
+        return other is not null && (ReferenceEquals(this, other) || (LoadoutId == other.LoadoutId
             && PlayerId == other.PlayerId
             && SemiAutoPistol.Equals(other.SemiAutoPistol)
             && SuppressedPistol.Equals(other.SuppressedPistol)
@@ -152,12 +147,12 @@ public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid
             && RapidfireMG.Equals(other.RapidfireMG)
             && SemiAutoSniper.Equals(other.SemiAutoSniper)
             && BoltActionSniper.Equals(other.BoltActionSniper)
-            && Melee.Equals(other.Melee);
+            && Melee.Equals(other.Melee)));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(LoadoutId);
         hash.Add(PlayerId);
         hash.Add(SemiAutoPistol);
@@ -183,14 +178,48 @@ public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid
 
     public static WeaponLoadout CreateDefault(Guid playerId)
     {
-        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "WeaponLoadout.json")));
+        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "WeaponLoadout.json")));
         defaultJson[nameof(PlayerId)] = playerId;
-        var options = new JsonSerializerOptions
+        JsonSerializerOptions options = new()
         {
             PropertyNameCaseInsensitive = true
         };
         WeaponLoadout defaultValue = defaultJson.Deserialize<WeaponLoadout>(options);
         defaultValue.LoadoutId = Guid.NewGuid();
         return defaultValue;
+    }
+
+    public static WeaponLoadout FromPacket(Packets.WeaponLoadout inst)
+    {
+        return new WeaponLoadout(Guid.Parse(inst.PlayerId), Guid.Parse(inst.LoadoutId), WeaponData.FromPacket(inst.SemiautoPistolData), WeaponData.FromPacket(inst.SuppressedPistolData), WeaponData.FromPacket(inst.AutoPistolData), WeaponData.FromPacket(inst.HighcalPistolData), WeaponData.FromPacket(inst.HeavyShotgunData), WeaponData.FromPacket(inst.AutoShotgunData), WeaponData.FromPacket(inst.TacticalSmgData), WeaponData.FromPacket(inst.RapidfireSmgData), WeaponData.FromPacket(inst.SuppressedSmgData), WeaponData.FromPacket(inst.StandardArData), WeaponData.FromPacket(inst.SemiautoArData), WeaponData.FromPacket(inst.BurstArData), WeaponData.FromPacket(inst.TacticalArData), WeaponData.FromPacket(inst.SuppressedArData), WeaponData.FromPacket(inst.HeavyArData), WeaponData.FromPacket(inst.HighcalMgData), WeaponData.FromPacket(inst.RapidfireMgData), WeaponData.FromPacket(inst.SemiautoSniperData), WeaponData.FromPacket(inst.BoltactionSniperData), WeaponData.FromPacket(inst.MeleeData));
+    }
+
+    public Packets.WeaponLoadout ToPacket()
+    {
+        return new Packets.WeaponLoadout()
+        {
+            LoadoutId = LoadoutId.ToString(),
+            PlayerId = PlayerId.ToString(),
+            SemiautoPistolData = SemiAutoPistol.ToPacket(),
+            SuppressedPistolData = SuppressedPistol.ToPacket(),
+            AutoPistolData = AutoPistol.ToPacket(),
+            HighcalPistolData = HighcalPistol.ToPacket(),
+            HeavyShotgunData = HeavyShotgun.ToPacket(),
+            AutoShotgunData = AutoShotgun.ToPacket(),
+            TacticalSmgData = TacticalSMG.ToPacket(),
+            RapidfireSmgData = RapidfireSMG.ToPacket(),
+            SuppressedSmgData = SuppressedSMG.ToPacket(),
+            StandardArData = StandardAR.ToPacket(),
+            SemiautoArData = SemiAutoAR.ToPacket(),
+            BurstArData = BurstAR.ToPacket(),
+            TacticalArData = TacticalAR.ToPacket(),
+            SuppressedArData = SuppressedAR.ToPacket(),
+            HeavyArData = HeavyAR.ToPacket(),
+            HighcalMgData = HighcalMG.ToPacket(),
+            RapidfireMgData = RapidfireMG.ToPacket(),
+            SemiautoSniperData = SemiAutoSniper.ToPacket(),
+            BoltactionSniperData = BoltActionSniper.ToPacket(),
+            MeleeData = Melee.ToPacket(),
+        };
     }
 }

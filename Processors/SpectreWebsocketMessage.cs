@@ -1,7 +1,7 @@
 ﻿using Google.Protobuf;
 using System.Text.Json.Nodes;
 
-namespace Packets;
+namespace Processors;
 
 public class SpectreWebsocketMessage
 {

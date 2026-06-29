@@ -1,5 +1,5 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
@@ -53,22 +53,22 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
 
     public required Guid PlayerId { get; set; }
     public required LegacyStatsType StatsType { get; set; }
-    public required Int64 KillCount { get; set; } = 0;
-    public required Int64 DeathCount { get; set; } = 0;
-    public required Int64 AceCount { get; set; } = 0;
-    public required Int64 DualityKillCount { get; set; } = 0;
-    public required Int64 FirstKillCount { get; set; } = 0;
-    public required Int64 FirstDeathCount { get; set; } = 0;
+    public required long KillCount { get; set; } = 0;
+    public required long DeathCount { get; set; } = 0;
+    public required long AceCount { get; set; } = 0;
+    public required long DualityKillCount { get; set; } = 0;
+    public required long FirstKillCount { get; set; } = 0;
+    public required long FirstDeathCount { get; set; } = 0;
     public required double KAST { get; set; } = 0;
     public required double DualityRating { get; set; } = 0;
-    public required Int64 ImpactCount { get; set; } = 0;
-    public required Int64 TotalMatchesPlayedCount { get; set; } = 0;
-    public required Int64 FanCount { get; set; } = 0;
-    public required Int64 WinCount { get; set; } = 0;
-    public required Int64 TotalRoundsPlayedCount { get; set; } = 0;
-    public required Int64 HeadshotsCount { get; set; } = 0;
-    public required Int64 TotalDamagingShotsCount { get; set; } = 0;
-    public required Int64 TotalDamageCount { get; set; } = 0;
+    public required long ImpactCount { get; set; } = 0;
+    public required long TotalMatchesPlayedCount { get; set; } = 0;
+    public required long FanCount { get; set; } = 0;
+    public required long WinCount { get; set; } = 0;
+    public required long TotalRoundsPlayedCount { get; set; } = 0;
+    public required long HeadshotsCount { get; set; } = 0;
+    public required long TotalDamagingShotsCount { get; set; } = 0;
+    public required long TotalDamageCount { get; set; } = 0;
     public required string[] TopSponsors { get; set; } = [];
     public required string[] TopWeapons { get; set; } = [];
 
@@ -76,30 +76,28 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile($"query_legacy_stats_data_{key.StatsType.ToString().ToLower()}.sql");
         cmd.Parameters.AddWithValue("player_id", key.PlayerId);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new LegacyStatsData(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new LegacyStatsData(
             await reader.GetFieldValueAsync<Guid>(0),
             key.StatsType,
-            await reader.GetFieldValueAsync<Int64>(1),
-            await reader.GetFieldValueAsync<Int64>(2),
-            await reader.GetFieldValueAsync<Int64>(3),
-            await reader.GetFieldValueAsync<Int64>(4),
-            await reader.GetFieldValueAsync<Int64>(5),
-            await reader.GetFieldValueAsync<Int64>(6),
+            await reader.GetFieldValueAsync<long>(1),
+            await reader.GetFieldValueAsync<long>(2),
+            await reader.GetFieldValueAsync<long>(3),
+            await reader.GetFieldValueAsync<long>(4),
+            await reader.GetFieldValueAsync<long>(5),
+            await reader.GetFieldValueAsync<long>(6),
             await reader.GetFieldValueAsync<double>(7),
             await reader.GetFieldValueAsync<double>(8),
-            await reader.GetFieldValueAsync<Int64>(9),
-            await reader.GetFieldValueAsync<Int64>(10),
-            await reader.GetFieldValueAsync<Int64>(11),
-            await reader.GetFieldValueAsync<Int64>(12),
-            await reader.GetFieldValueAsync<Int64>(13),
-            await reader.GetFieldValueAsync<Int64>(14),
-            await reader.GetFieldValueAsync<Int64>(15),
-            await reader.GetFieldValueAsync<Int64>(16),
+            await reader.GetFieldValueAsync<long>(9),
+            await reader.GetFieldValueAsync<long>(10),
+            await reader.GetFieldValueAsync<long>(11),
+            await reader.GetFieldValueAsync<long>(12),
+            await reader.GetFieldValueAsync<long>(13),
+            await reader.GetFieldValueAsync<long>(14),
+            await reader.GetFieldValueAsync<long>(15),
+            await reader.GetFieldValueAsync<long>(16),
             await reader.GetFieldValueAsync<string[]>(17),
             await reader.GetFieldValueAsync<string[]>(18)
         );
@@ -137,10 +135,7 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
 
     public virtual bool Equals(LegacyStatsData? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && StatsType == other.StatsType
             && KillCount == other.KillCount
             && DeathCount == other.DeathCount
@@ -159,12 +154,12 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
             && TotalDamagingShotsCount == other.TotalDamagingShotsCount
             && TotalDamageCount == other.TotalDamageCount
             && TopSponsors.SequenceEqual(other.TopSponsors)
-            && TopWeapons.SequenceEqual(other.TopWeapons);
+            && TopWeapons.SequenceEqual(other.TopWeapons)));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(PlayerId);
         hash.Add(StatsType);
         hash.Add(KillCount);

@@ -1,12 +1,12 @@
-﻿using Npgsql;
-using Persistence;
+﻿using Model.Persistence;
+using Npgsql;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid>, IEquatable<OutfitLoadout>
+public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid>, IEquatable<OutfitLoadout>, IInterchangeable<OutfitLoadout, Packets.OutfitLoadout>
 {
     [SetsRequiredMembers]
     public OutfitLoadout(Guid playerId, Guid loadoutId, OutfitData head, OutfitData hair, OutfitData faceStyle, OutfitData faceAccessory, OutfitData outfit)
@@ -32,12 +32,10 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_outfit_loadout.sql");
         cmd.Parameters.AddWithValue("loadout_id", key);
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-        return new OutfitLoadout(
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
+        return !await reader.ReadAsync()
+            ? null
+            : new OutfitLoadout(
             await reader.GetFieldValueAsync<Guid>(1),
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<OutfitData>(2),
@@ -68,21 +66,18 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
 
     public virtual bool Equals(OutfitLoadout? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return LoadoutId == other.LoadoutId
+        return other is not null && (ReferenceEquals(this, other) || (LoadoutId == other.LoadoutId
             && PlayerId == other.PlayerId
             && Head.Equals(other.Head)
             && Hair.Equals(other.Hair)
             && FaceStyle.Equals(other.FaceStyle)
             && FaceAccessory.Equals(other.FaceAccessory)
-            && Outfit.Equals(other.Outfit);
+            && Outfit.Equals(other.Outfit)));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(LoadoutId);
         hash.Add(PlayerId);
         hash.Add(Hair);
@@ -95,14 +90,33 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
 
     public static OutfitLoadout CreateDefault(Guid playerId)
     {
-        var defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "OutfitLoadout.json")));
+        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "OutfitLoadout.json")));
         defaultJson[nameof(PlayerId)] = playerId;
-        var options = new JsonSerializerOptions
+        JsonSerializerOptions options = new()
         {
             PropertyNameCaseInsensitive = true
         };
         OutfitLoadout defaultValue = defaultJson.Deserialize<OutfitLoadout>(options);
         defaultValue.LoadoutId = Guid.NewGuid();
         return defaultValue;
+    }
+
+    public static OutfitLoadout FromPacket(Packets.OutfitLoadout inst)
+    {
+        return new OutfitLoadout(Guid.Parse(inst.PlayerId), Guid.Parse(inst.LoadoutId), OutfitData.FromPacket(inst.HeadData), OutfitData.FromPacket(inst.HairData), OutfitData.FromPacket(inst.FaceStyleData), OutfitData.FromPacket(inst.FaceAccessoryData), OutfitData.FromPacket(inst.OutfitData));
+    }
+
+    public Packets.OutfitLoadout ToPacket()
+    {
+        return new Packets.OutfitLoadout()
+        {
+            PlayerId = PlayerId.ToString(),
+            LoadoutId = LoadoutId.ToString(),
+            HeadData = Head.ToPacket(),
+            HairData = Hair.ToPacket(),
+            FaceAccessoryData = FaceAccessory.ToPacket(),
+            FaceStyleData = FaceStyle.ToPacket(),
+            OutfitData = Outfit.ToPacket()
+        };
     }
 }
