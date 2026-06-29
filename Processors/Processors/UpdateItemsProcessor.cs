@@ -55,8 +55,7 @@ public class UpdateItemsProcessor : WebsocketPacketProcessor, IWebsocketPacketPr
             packet.ActiveBpQuests.Add(activeQuest.ToString());
         }
         packet.DebugSeasonOffsetMillis = "0";
-        Model.SeasonEntry entry = await Model.SeasonEntry.RetrieveFromDatabase(1);
-        packet.SeasonEntry = entry.ToPacket();
+        packet.SeasonEntry = Model.SeasonEntry.GetActive().ToPacket();
         return packet;
     }
 
@@ -86,17 +85,6 @@ public class UpdateItemsProcessor : WebsocketPacketProcessor, IWebsocketPacketPr
         itemProg.LastRolloverTimestamp = prog.LastRolloverTimestamp.ToUnixTimeMilliseconds().ToString();
         itemProg.BpTrackerData = await ConvertAndCreateBpTrackerItem(prog.PlayerId);
         ret.Ext.TrackedProgression = itemProg;
-        return ret;
-    }
-
-    private static Packets.StackableItem ConvertStackableItem(Model.StackableItem item)
-    {
-        Packets.StackableItem ret = new()
-        {
-            Amount = item.Amount.ToString(),
-            InstanceId = item.InstanceId.ToString(),
-            CatalogId = item.CatalogId
-        };
         return ret;
     }
 
@@ -147,20 +135,24 @@ public class UpdateItemsProcessor : WebsocketPacketProcessor, IWebsocketPacketPr
         foreach (StackedItemUpdate? stackableItemUpdate in req.StackableItemsUpdates)
         {
             Model.StackableItem item = await Model.StackableItem.RetrieveFromDatabase(Guid.Parse(stackableItemUpdate.InstanceId));
-            Packets.StackableItem init = ConvertStackableItem(item);
+            Packets.StackableItem init = item.ToPacket();
             StackableDelta itemDelta = new()
             {
                 Initial = init
             };
             item.Amount = long.Parse(stackableItemUpdate.NewAmount);
             await item.SyncToDatabase();
-            Packets.StackableItem final = ConvertStackableItem(item);
+            Packets.StackableItem final = item.ToPacket();
             segment.Stackables.Add(final);
             itemDelta.CatalogId = item.CatalogId;
             itemDelta.Final = final;
             itemDelta.Operation = "UPDATED";
             delta.Stackables.Add(itemDelta);
         }
+        var profileData = await Model.ProfileData.RetrieveFromDatabase(ConnectionHandler.PlayerId);
+        profileData.InventoryVersion++;
+        await profileData.SyncToDatabase();
+        // TODO: Send InventoryUpdated notification
         return SpectreWebsocketMessage.From(res);
     }
 }

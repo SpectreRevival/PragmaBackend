@@ -11,4 +11,4 @@ SELECT instance_id,
 	last_contribution,
 	is_bundle_purchased,
 	num_levels_purchased
-	FROM instanced_items WHERE instance_id = @instance_id LIMIT 1;
+	FROM progression_tracking_items WHERE instance_id = @instance_id LIMIT 1;

@@ -198,6 +198,11 @@ public class InterchangeableTest()
     public async Task TestInterchangeableKeyedClass(string modelClassName)
     {
         Type modelClass = Type.GetType(modelClassName);
+        if (modelClass.IsSubclassOf(typeof(Item)))
+        {
+            await TestInterchangeableKeyedItemClass(modelClass);
+            return;
+        }
         Type interfaceType = typeof(IInterchangeableKeyed<,,>);
         Type packetClass = modelClass.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType).First().GetGenericArguments()[1];
         Assert.AreNotEqual(packetClass, modelClass);
@@ -211,6 +216,25 @@ public class InterchangeableTest()
         object? key = getKeyMethod.Invoke(modelobj1, new object[] { });
         object? packetObj1 = toPacketMethod.Invoke(modelobj1, new object[] { });
         object? recreatedObj1 = fromPacketMethod.Invoke(null, new object[] { packetObj1, key });
+        Assert.AreEqual(modelobj1, recreatedObj1);
+        Assert.AreNotEqual(modelobj2, recreatedObj1);
+    }
+
+    public async Task TestInterchangeableKeyedItemClass(Type modelClass)
+    {
+        Type interfaceType = typeof(IInterchangeableKeyed<,,>);
+        Type packetClass = modelClass.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType).First().GetGenericArguments()[1];
+        Assert.AreNotEqual(packetClass, modelClass);
+        object modelobj1 = CreateFromConstructor(modelClass);
+        object modelobj2 = CreateFromConstructor(modelClass);
+        Assert.AreEqual(modelobj1, modelobj1);
+        Assert.AreNotEqual(modelobj1, modelobj2);
+        MethodInfo? toPacketMethod = modelClass.GetMethod("ToPacket", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        MethodInfo? fromPacketMethod = modelClass.GetMethod("FromPacket", BindingFlags.Public | BindingFlags.Static);
+        PropertyInfo? pidProp = modelClass.GetProperty("OwningPlayerId");
+        object? pid = pidProp.GetValue(modelobj1);
+        object? packetObj1 = toPacketMethod.Invoke(modelobj1, new object[] { });
+        object? recreatedObj1 = fromPacketMethod.Invoke(null, new object[] { packetObj1, pid });
         Assert.AreEqual(modelobj1, recreatedObj1);
         Assert.AreNotEqual(modelobj2, recreatedObj1);
     }

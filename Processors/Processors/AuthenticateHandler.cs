@@ -180,7 +180,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
 
     private static void FixupOutfitData(Model.OutfitData data, Guid playerId)
     {
-        NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
+        NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM customized_instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
         cmd.Parameters.AddWithValue("player_id", playerId);
         cmd.Parameters.AddWithValue("catalog_id", data.ItemCatalogId);
         using NpgsqlDataReader reader = cmd.ExecuteReader();
@@ -202,7 +202,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
 
     private static void FixupWeaponData(Model.WeaponData data, Guid playerId)
     {
-        NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
+        NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM customized_instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
         cmd.Parameters.AddWithValue("player_id", playerId);
         cmd.Parameters.AddWithValue("catalog_id", data.ItemCatalogId);
         using NpgsqlDataReader reader = cmd.ExecuteReader();
@@ -213,7 +213,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         data.ItemInstanceId = reader.GetGuid(0);
         if (data.Attachment != null)
         {
-            NpgsqlCommand attachmentCmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
+            NpgsqlCommand attachmentCmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM customized_instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
             attachmentCmd.Parameters.AddWithValue("player_id", playerId);
             attachmentCmd.Parameters.AddWithValue("catalog_id", data.Attachment.AttachmentItemCatalogId);
             using NpgsqlDataReader attachmentReader = attachmentCmd.ExecuteReader();
@@ -251,7 +251,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
 
     private static Guid GetInstanceIdByCatalogId(string catalogId, Guid owningPlayerId)
     {
-        NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM instanced_items WHERE catalog_id=@catalog_id AND owning_player_id=@player_id");
+        NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM customized_instanced_items WHERE catalog_id=@catalog_id AND owning_player_id=@player_id");
         cmd.Parameters.AddWithValue("catalog_id", catalogId);
         cmd.Parameters.AddWithValue("player_id", owningPlayerId);
         using NpgsqlDataReader reader = cmd.ExecuteReader();
