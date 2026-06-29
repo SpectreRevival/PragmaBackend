@@ -1,0 +1,7 @@
+{
+  "requestBody": {},
+  "rpcType": "InventoryRpc.GetInventoryV2Request",
+  "testAge": 1723924189.938,
+  "responsePayload": {},
+  "onlyCheckResponse": true
+}

@@ -112,6 +112,11 @@ public class WebsocketTests
                 Assert.Fail();
                 throw new InvalidDataException("Failed to convert res to SpectreWebsocketResponse json");
             }
+            if (testData.onlyCheckResponse == true)
+            {
+                await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Completed request", cts.Token);
+                break;
+            }
             if (!JsonTestUtil.JsonMatchesSchema(res.response.payload.ToJsonString(), testData.responsePayload.ToJsonString(), testData.ignoreReplace == true, testData.ignoreAdd == true))
             {
                 Assert.Fail("Json schema did not match");
