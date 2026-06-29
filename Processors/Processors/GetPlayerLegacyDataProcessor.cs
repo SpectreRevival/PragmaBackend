@@ -15,38 +15,6 @@ public class GetPlayerLegacyDataProcessor : WebsocketPacketProcessor, IWebsocket
         return new SpectreRpcType("MtnPlayerDataServiceRpc.GetPlayerLegacyDataV1Request");
     }
 
-    private static LegacyStatsData ConvertLegacyStatsData(Model.LegacyStatsData data)
-    {
-        LegacyStatsData ret = new()
-        {
-            KillCount = data.KillCount,
-            DeathCount = data.DeathCount,
-            AceCount = data.AceCount,
-            DualityKillCount = data.DualityKillCount,
-            FirstKillCount = data.FirstKillCount,
-            FirstDeathCount = data.FirstDeathCount,
-            Kast = data.KAST,
-            DualityRating = data.DualityRating,
-            ImpactCount = data.ImpactCount,
-            TotalMatchesPlayedCount = data.TotalMatchesPlayedCount,
-            FanCount = data.FanCount,
-            WinCount = data.WinCount,
-            TotalRoundsPlayedCount = data.TotalRoundsPlayedCount,
-            HeadshotsCount = data.HeadshotsCount,
-            TotalDamagingShotsCount = data.TotalDamagingShotsCount,
-            TotalDamageCount = data.TotalDamageCount
-        };
-        foreach (string sponsor in data.TopSponsors)
-        {
-            ret.Sponsors.Add(sponsor);
-        }
-        foreach (string weapon in data.TopWeapons)
-        {
-            ret.Weapons.Add(weapon);
-        }
-        return ret;
-    }
-
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
         Model.LegacySeasonData seasonData = await Model.LegacySeasonData.RetrieveFromDatabase(ConnectionHandler.PlayerId);
@@ -61,9 +29,9 @@ public class GetPlayerLegacyDataProcessor : WebsocketPacketProcessor, IWebsocket
             SoloRankPoints = seasonData.SoloRankedPoints
         };
         res.SeasonData = packetSeason;
-        res.Rank = ConvertLegacyStatsData(rankedData);
-        res.Casual = ConvertLegacyStatsData(casualData);
-        res.Team = ConvertLegacyStatsData(teamData);
+        res.Rank = rankedData.ToPacket();
+        res.Casual = casualData.ToPacket();
+        res.Team = teamData.ToPacket();
         return SpectreWebsocketMessage.From(res);
     }
 }
