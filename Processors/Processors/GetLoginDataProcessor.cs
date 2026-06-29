@@ -1,10 +1,15 @@
-﻿using Packets;
+using Google.Protobuf;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Processors.Processors;
 
 public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
+    // the item catalog that the client loads all item / cosmetic shit from.
+    // owned items come from the inventory service.
+    private static readonly string InventoryDataJson =
+        File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "staticdata", "login_inventorydata.json"));
+
     [SetsRequiredMembers]
     public GetLoginDataProcessor(SpectreRpcType rpcType) : base(rpcType)
     {
@@ -15,78 +20,62 @@ public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketP
         return new SpectreRpcType("GameDataRpc.GetLoginDataV3Request");
     }
 
-    private static Packets.PlayerMatchmakingData MatchmakingDataConvert(Model.PlayerMatchmakingData mm)
-    {
-        Packets.PlayerMatchmakingData packet = new()
-        {
-            PlayerId = mm.PlayerId.ToString(),
-            CasualMmr = mm.CasualMMR,
-            RankedMmr = mm.RankedMMR,
-            SoloRankPoints = mm.SoloRankPoints,
-            CasualMatchesPlayedCount = mm.CasualMatchesPlayed,
-            RankedMatchesPlayedCount = mm.RankedMatchesPlayed,
-            CasualMatchesPlayedSeasonCount = mm.CasualMatchesPlayedSeasonal,
-            RankedMatchesPlayedSeasonCount = mm.RankedMatchesPlayedSeasonal
-        };
-        foreach (string placementMatch in mm.RankedPlacementMatches)
-        {
-            packet.RankedPlacementMatches.Add(placementMatch);
-        }
-        packet.CurrentSoloRank = mm.CurrentSoloRank;
-        packet.HighestTeamRank = mm.HighestTeamRank;
-        packet.CasualMatchesWonCount = mm.CasualMatchesWon;
-        packet.RankedMatchesWonCount = mm.RankedMatchesWon;
-        packet.PriorityMatchmakingUntil = mm.PriorityMatchmakingUntil.ToUnixTimeMilliseconds().ToString();
-        packet.RestrictMatchmakingUntil = mm.RestrictMatchmakingUntil.ToUnixTimeMilliseconds().ToString();
-        packet.MatchmakingFlags = 1.0;
-        packet.MapHistory = mm.MapHistory;
-        return packet;
-    }
-
-    private static async Task<FlatInstancedItem> GetFlatInstancedItem(Guid instanceId)
-    {
-        Model.CustomizedInstancedItem item = await Model.CustomizedInstancedItem.RetrieveFromDatabase(instanceId);
-        FlatInstancedItem packet = new()
-        {
-            ItemInstanceId = item.InstanceId.ToString(),
-            ItemCatalogId = item.CatalogId
-        };
-        return packet;
-    }
-
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
+        Guid playerId = ConnectionHandler.PlayerId;
+        Model.ProfileData profileData = await Model.ProfileData.RetrieveFromDatabase(playerId);
+        Model.PlayerMatchmakingData mmData = await Model.PlayerMatchmakingData.RetrieveFromDatabase(playerId);
+
         LoginDataResponse res = new();
         LoginData loginData = new();
-        LoginDataExt ext = new()
-        {
-            CrewAutomationInProcess = false,
-            CurrentServiceTimestampMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(),
-            NoCrew = -1.0d,
-            NextCrewAutomationDate = DateTimeOffset.MinValue.ToString("yyyy-MM-ddTHH:mm")
-        };
+        LoginDataExt ext = new();
+        ext.CrewAutomationInProcess = false;
+        ext.CurrentServiceTimestampMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+        ext.NoCrew = -1.0d;
+        ext.NextCrewAutomationDate = DateTimeOffset.MinValue.ToString("yyyy-MM-ddTHH:mm");
+
         PlayerData playerData = new();
-        Model.ProfileData profileData = await Model.ProfileData.RetrieveFromDatabase(ConnectionHandler.PlayerId);
-        playerData.PlayerId = ConnectionHandler.PlayerId.ToString();
+        playerData.PlayerId = playerId.ToString();
         playerData.AttackerOutfitLoadoutId = profileData.AttackerOutfitLoadoutId.ToString();
         playerData.AttackerWeaponLoadoutId = profileData.AttackerWeaponLoadoutId.ToString();
         playerData.DefenderOutfitLoadoutId = profileData.DefenderOutfitLoadoutId.ToString();
         playerData.DefenderWeaponLoadoutId = profileData.DefenderWeaponLoadoutId.ToString();
-        playerData.LastUpdated = profileData.LastUpdated.ToString();
+        playerData.LastUpdated = profileData.LastUpdated.ToString("yyyy-MM-ddTHH:mm");
+        playerData.LastLogin = profileData.LastLogin.ToUnixTimeMilliseconds().ToString();
         playerData.PlayerFlags = profileData.PlayerFlags;
-        playerData.LastLogin = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
         playerData.ServerData = "{}";
-        Model.PlayerMatchmakingData mmData = await Model.PlayerMatchmakingData.RetrieveFromDatabase(ConnectionHandler.PlayerId);
-        playerData.MatchmakingData = MatchmakingDataConvert(mmData);
-        playerData.Banner = await GetFlatInstancedItem(profileData.BannerItemId);
-        playerData.PreSpray = await GetFlatInstancedItem(profileData.PreSprayItemId);
-        playerData.MatchSpray = await GetFlatInstancedItem(profileData.MatchSprayItemId);
-        playerData.PostSpray = await GetFlatInstancedItem(profileData.PostSprayItemId);
-        PlayerServiceData playerServiceData = new();
-        playerData.PlayerServiceData = playerServiceData;
+        playerData.PlayerServiceData = new PlayerServiceData();
+        playerData.MatchmakingData = GetPlayerClientData.MatchmakingDataConvert(mmData);
+        playerData.Banner = await GetPlayerClientData.GetFlatInstancedItem(profileData.BannerItemId);
+        playerData.PreSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.PreSprayItemId);
+        playerData.MatchSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.MatchSprayItemId);
+        playerData.PostSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.PostSprayItemId);
+        playerData.Data = await GetPlayerClientData.CreatePacketConfigForPlayer(playerId);
+
         ext.PlayerData = playerData;
         loginData.Ext = ext;
         res.LoginData = loginData;
-        throw new NotImplementedException();
+
+        JsonFormatter outFormatter = new(
+            new JsonFormatter.Settings(true)
+            .WithFormatDefaultValues(true)
+            .WithFormatEnumsAsIntegers(true)
+            .WithPreserveProtoFieldNames(true)
+        );
+
+        // the client wants playerData.data as stringified json, not a nested object. same shit as GetPlayerClientData.
+        string playerConfigJson = outFormatter.Format(playerData.Data);
+        playerConfigJson = playerConfigJson.Replace(" ", "");
+        string jsonString = outFormatter.Format(res);
+        jsonString = jsonString.Replace(" ", "");
+        string[] beforeData = jsonString.Split("\"data\":{\"unlockAll");
+        string[] afterData = beforeData[1].Split("\"matchmakingData\"");
+        playerConfigJson = playerConfigJson.Replace("\r", "");
+        playerConfigJson = playerConfigJson.Replace("\n", "");
+        playerConfigJson = playerConfigJson.Replace("\"", "\\\"");
+        string extOnly = beforeData[0] + $"\"data\":\"{playerConfigJson}\"," + "\"matchmakingData\"" + afterData[1];
+        
+        string finalString = extOnly[..^2] + ",\"inventoryData\":" + InventoryDataJson + "}}";
+        return SpectreWebsocketMessage.From(finalString);
     }
 }

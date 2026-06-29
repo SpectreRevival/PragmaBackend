@@ -7,6 +7,20 @@
   </PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Model\Model.csproj"></ProjectReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Protobuf Include="Protoc\**\*.proto" GrpcServices="None" AdditionalImportDirs="Protoc\" AdditionalArgs="--csharp_opt=base_namespace=Packets"></Protobuf>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="staticws\**\*" CopyToOutputDirectory="PreserveNewest"></None>
+		<None Include="httpstatic\**\*" CopyToOutputDirectory="PreserveNewest"></None>
+		<None Include="staticdata\**\*" CopyToOutputDirectory="PreserveNewest"></None>
+	</ItemGroup>
+
+	<ItemGroup>
 	  <PackageReference Include="Google.Protobuf" Version="3.35.0" />
 	  <PackageReference Include="Grpc.Tools" Version="2.81.0">
 	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
