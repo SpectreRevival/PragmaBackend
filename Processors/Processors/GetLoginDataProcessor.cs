@@ -49,7 +49,8 @@ public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketP
             Banner = await GetPlayerClientData.GetFlatInstancedItem(profileData.BannerItemId),
             PreSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.PreSprayItemId),
             MatchSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.MatchSprayItemId),
-            PostSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.PostSprayItemId)
+            PostSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.PostSprayItemId),
+            NextNewDayRolloverTimestamp = DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeMilliseconds().ToString()
         };
         Model.PlayerConfig playerCfg = await Model.PlayerConfig.RetrieveFromDatabase(playerId);
         playerData.Data = await playerCfg.ToPacketFull(playerId);

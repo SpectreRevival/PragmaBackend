@@ -4,7 +4,7 @@
     "loginData": {
       "ext": {
         "crewAutomationInProcess": false,
-        "currentServiceTimestampMillis": "1740507429270",
+        "currentServiceTimestampMillis": "*",
         "inboxMessages": [],
         "nextCrewAutomationDate": "2025-03-04T09:00",
         "noCrew": -1.0,
@@ -14,7 +14,7 @@
             "attachmentItemCatalogId": "",
             "attachmentItemInstanceId": "",
             "itemCatalogId": "SpectreBannerItemDef:BannerID_Default",
-            "itemInstanceId": "4F30362E-0F4A-4389-8C43-4C588924CA09",
+            "itemInstanceId": "*",
             "itemType": ""
           },
           "data": "{\r\n\t\"bAnonymousMode\": false,\r\n\t\"unlockAllPlayModes\": false,\r\n\t\"unlockAllMenuTabs\": false,\r\n\t\"unlockAllSponsors\": false,\r\n\t\"bypassUnlockAllSponsorsOverride\": false,\r\n\t\"bypassProgressionOverrides\": false,\r\n\t\"bypassTeamSizeOverrides\": false,\r\n\t\"bypassRegionSelectOverride\": false,\r\n\t\"bypassCurrencyPurchasingOverride\": false,\r\n\t\"disableDevMapSelector\": false,\r\n\t\"showDebugInfoPanel\": false,\r\n\t\"showPlatformInfoPanel\": false,\r\n\t\"showMatchmakingCounters\": false,\r\n\t\"mostRecentLobbyMode\": 3,\r\n\t\"mostRecentPartyId\": \"870c219f-c42c-47ac-a4a8-3aef65d982c6\",\r\n\t\"endUserLicenseAcceptedVersion\": 2,\r\n\t\"termsOfServiceAcceptedVersion\": 2,\r\n\t\"nonDisclosureAgreementAcceptedVersion\": 0,\r\n\t\"seizureWarningAcknowledgedVersion\": 1,\r\n\t\"nonDisclosureAgreementUserSignature\": \"\",\r\n\t\"nonDisclosureAgreementUserEmail\": \"\",\r\n\t\"lastVersionShownInDriversWarningDialog\": \"\",\r\n\t\"minSpecWarningDialogTimesDisplayed\": 0,\r\n\t\"pingWarningDialogTimesDisplayed\": 0,\r\n\t\"hasCompletedLaunchSettingsFlow\": true,\r\n\t\"isUsingManualMatchmakingRegionSelection\": false,\r\n\t\"manualMatchmakingRegionSelections\": []\r\n}",
@@ -23,7 +23,7 @@
             "attachmentItemCatalogId": "",
             "attachmentItemInstanceId": "",
             "itemCatalogId": "SpectreSprayItemDef:SprayID_Default_01",
-            "itemInstanceId": "489DF6B8-0961-452C-B0EC-FC12E6DC4F2D",
+            "itemInstanceId": "*",
             "itemType": ""
           },
           "matchmakingData": {
@@ -56,7 +56,7 @@
             "attachmentItemCatalogId": "",
             "attachmentItemInstanceId": "",
             "itemCatalogId": "SpectreSprayItemDef:SprayID_Event_2024_Halloween_01",
-            "itemInstanceId": "8C9AAF53-004D-486A-B621-C6619FD62FD3",
+            "itemInstanceId": "*",
             "itemType": ""
           },
           "serverData": "{}"
@@ -57953,6 +57953,7 @@
     }
   },
   "ignoreReplace": true,
+  "ignoreAdd": true,
   "rpcType": "GameDataRpc.GetLoginDataV3Request",
   "testAge": 1740507427.94
 }
