@@ -378,7 +378,7 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
     {
         List<InstancedItem> items = [];
         await using NpgsqlCommand cmd = PostgresDatabase.CreateCommand(
-            "SELECT instance_id FROM instanced_items WHERE owning_player_id = @player_id AND alteration_channels IS NOT NULL");
+            "SELECT instance_id FROM customized_instanced_items WHERE owning_player_id = @player_id AND alteration_channels IS NOT NULL");
         cmd.Parameters.AddWithValue("player_id", playerId);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
         List<Guid> itemIds = [];

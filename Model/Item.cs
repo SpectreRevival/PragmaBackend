@@ -1,5 +1,6 @@
 ﻿using Model.Persistence;
 using Npgsql;
+using Packets;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
@@ -19,7 +20,7 @@ public abstract record class Item
     public required Guid InstanceId { get; set; }
 }
 
-public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>, IEquatable<StackableItem>
+public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>, IEquatable<StackableItem>, IInterchangeableKeyed<StackableItem, Packets.StackableItem, Guid>
 {
     [SetsRequiredMembers]
     public StackableItem(Guid owningPlayerId, string catalogId, Guid instanceId, long amount) : base(owningPlayerId, catalogId, instanceId)
@@ -76,6 +77,21 @@ public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>
         hash.Add(Amount);
         return hash.ToHashCode();
     }
+
+    public static StackableItem FromPacket(Packets.StackableItem inst, Guid owningPlayerId)
+    {
+        return new StackableItem(owningPlayerId, inst.CatalogId, Guid.Parse(inst.InstanceId), long.Parse(inst.Amount));
+    }
+
+    public Packets.StackableItem ToPacket()
+    {
+        return new Packets.StackableItem()
+        {
+            InstanceId = InstanceId.ToString(),
+            CatalogId = CatalogId.ToString(),
+            Amount = Amount.ToString()
+        };
+    }
 }
 
 public abstract record class InstancedItem : Item
@@ -89,7 +105,7 @@ public abstract record class InstancedItem : Item
     public required bool Viewed { get; set; }
 }
 
-public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<CustomizedInstancedItem, Guid>, IEquatable<CustomizedInstancedItem>
+public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<CustomizedInstancedItem, Guid>, IEquatable<CustomizedInstancedItem>, IInterchangeableKeyed<CustomizedInstancedItem, Packets.InstancedItem, Guid>
 {
     [SetsRequiredMembers]
     public CustomizedInstancedItem(Guid owningPlayerId, string catalogId, Guid instanceId, bool viewed, AlterationChannel[] alterationChannels) : base(owningPlayerId, catalogId, instanceId, viewed)
@@ -150,9 +166,33 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
         hash.Add(Viewed);
         return hash.ToHashCode();
     }
+
+    public static CustomizedInstancedItem FromPacket(Packets.InstancedItem inst, Guid owningPlayerId)
+    {
+        return new CustomizedInstancedItem(owningPlayerId, inst.CatalogId, Guid.Parse(inst.InstanceId), inst.Ext.Viewed, inst.Ext.InstancedCustomizationData.InstancedAlterationChannels.Select(altData => AlterationChannel.FromPacket(altData)).ToArray());
+    }
+
+    public Packets.InstancedItem ToPacket()
+    {
+        var packet = new Packets.InstancedItem()
+        {
+            InstanceId = InstanceId.ToString(),
+            CatalogId = CatalogId
+        };
+        var ext = new InstanceExtData();
+        ext.Viewed = Viewed;
+        var customizationData = new InstancedCustomizationData();
+        foreach (var altChannel in AlterationChannels)
+        {
+            customizationData.InstancedAlterationChannels.Add(altChannel.ToPacket());
+        }
+        ext.InstancedCustomizationData = customizationData;
+        packet.Ext = ext;
+        return packet;
+    }
 }
 
-public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<ProgressionTrackingItem, Guid>, IEquatable<ProgressionTrackingItem>
+public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<ProgressionTrackingItem, Guid>, IEquatable<ProgressionTrackingItem>, IInterchangeableKeyed<ProgressionTrackingItem, Packets.InstancedItem, Guid>
 {
     [SetsRequiredMembers]
     public ProgressionTrackingItem(Guid owningPlayerId, string catalogId, Guid instanceId, bool viewed, Dictionary<string, string> progressionByStats, bool areObjectivesCompleted, int currentObjectiveId, int currentObjectiveIndex, bool isPremiumUnlocked, Guid? teamId, ObjectiveContribution? lastContribution, bool isBundlePurchased, int numLevelsPurchased) : base(owningPlayerId, catalogId, instanceId, viewed)
@@ -262,9 +302,57 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
         hash.Add(NumLevelsPurchased);
         return hash.ToHashCode();
     }
+
+    public static ProgressionTrackingItem FromPacket(Packets.InstancedItem inst, Guid owningPlayerId)
+    {
+        Guid? teamId = null;
+        if (inst.Ext.ActiveProgressionData.TeamId != null)
+        {
+            teamId = Guid.Parse(inst.Ext.ActiveProgressionData.TeamId);
+        }
+        ObjectiveContribution? lastContrib = null;
+        if (inst.Ext.ActiveProgressionData.LastContribution != null)
+        {
+            lastContrib = ObjectiveContribution.FromPacket(inst.Ext.ActiveProgressionData.LastContribution);
+        }
+        return new ProgressionTrackingItem(owningPlayerId, inst.CatalogId, Guid.Parse(inst.InstanceId),
+            inst.Ext.Viewed, inst.Ext.ActiveProgressionData.ProgressByStat.ToDictionary(),
+            inst.Ext.ActiveProgressionData.AreObjectivesCompleted, int.Parse(inst.Ext.ActiveProgressionData.CurrentObjectiveId),
+            (int)inst.Ext.ActiveProgressionData.CurrentObjectiveIndex, inst.Ext.ActiveProgressionData.IsPremiumUnlocked,
+            teamId, lastContrib, inst.Ext.ActiveProgressionData.IsBundlePurchased, (int)inst.Ext.ActiveProgressionData.NumLevelsPurchased);
+    }
+
+    public Packets.InstancedItem ToPacket()
+    {
+        var packet = new Packets.InstancedItem()
+        {
+            InstanceId = InstanceId.ToString(),
+            CatalogId = CatalogId
+        };
+        InstanceExtData ext = new();
+        ActiveProgressionData progData = new();
+        progData.ProgressByStat.Add(ProgressionByStats);
+        progData.AreObjectivesCompleted = AreObjectivesCompleted;
+        progData.CurrentObjectiveId = CurrentObjectiveId.ToString();
+        progData.IsPremiumUnlocked = IsPremiumUnlocked;
+        if (TeamId != null)
+        {
+            progData.TeamId = TeamId.ToString();
+        }
+        if (LastContribution != null)
+        {
+            progData.LastContribution = LastContribution.ToPacket();
+        }
+        progData.IsBundlePurchased = IsBundlePurchased;
+        progData.NumLevelsPurchased = NumLevelsPurchased;
+        ext.ActiveProgressionData = progData;
+        ext.Viewed = Viewed;
+        packet.Ext = ext;
+        return packet;
+    }
 }
 
-public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<SponsorUnlockTrackerItem, Guid>, IEquatable<SponsorUnlockTrackerItem>
+public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<SponsorUnlockTrackerItem, Guid>, IEquatable<SponsorUnlockTrackerItem>, IInterchangeableKeyed<SponsorUnlockTrackerItem, Packets.InstancedItem, Guid>
 {
     [SetsRequiredMembers]
     public SponsorUnlockTrackerItem(Guid owningPlayerId, string catalogId, Guid instanceId, bool viewed, string sponsorName) : base(owningPlayerId, catalogId, instanceId, viewed)
@@ -324,5 +412,28 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
         hash.Add(Viewed);
         hash.Add(SponsorName);
         return hash.ToHashCode();
+    }
+
+    public static SponsorUnlockTrackerItem FromPacket(Packets.InstancedItem inst, Guid owningPlayerId)
+    {
+        return new SponsorUnlockTrackerItem(
+            owningPlayerId, inst.CatalogId, Guid.Parse(inst.InstanceId), inst.Ext.Viewed, inst.Ext.SponsorUnlockData.SponsorName
+            );
+    }
+
+    public Packets.InstancedItem ToPacket()
+    {
+        var packet = new Packets.InstancedItem()
+        {
+            CatalogId = CatalogId,
+            InstanceId = InstanceId.ToString()
+        };
+        InstanceExtData ext = new();
+        ext.Viewed = Viewed;
+        SponsorUnlockData sponsorData = new();
+        sponsorData.SponsorName = SponsorName;
+        ext.SponsorUnlockData = sponsorData;
+        packet.Ext = ext;
+        return packet;
     }
 }

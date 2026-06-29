@@ -1,0 +1,1 @@
+SELECT instance_id FROM customized_instanced_items WHERE owning_player_id=@player_id
