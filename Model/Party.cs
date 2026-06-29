@@ -102,7 +102,9 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
 
     public virtual bool Equals(Party? other)
     {
-        return other is not null && (ReferenceEquals(this, other) || (PartyId == other.PartyId
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return PartyId == other.PartyId
             && Members.SequenceEqual(other.Members)
             && InviteCode == other.InviteCode
             && QueuePool == other.QueuePool

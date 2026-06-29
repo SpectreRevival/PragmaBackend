@@ -34,7 +34,9 @@ public record class PartyMember : IEquatable<PartyMember>
 
     public virtual bool Equals(PartyMember? other)
     {
-        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return PlayerId == other.PlayerId
             && IsReady == other.IsReady
             && IsLeader == other.IsLeader
             && PreferredTeam == other.PreferredTeam

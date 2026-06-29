@@ -1,4 +1,5 @@
 using Google.Protobuf;
+using Packets;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Processors.Processors;
@@ -45,12 +46,13 @@ public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketP
         playerData.PlayerFlags = profileData.PlayerFlags;
         playerData.ServerData = "{}";
         playerData.PlayerServiceData = new PlayerServiceData();
-        playerData.MatchmakingData = GetPlayerClientData.MatchmakingDataConvert(mmData);
+        playerData.MatchmakingData = mmData.ToPacket();
         playerData.Banner = await GetPlayerClientData.GetFlatInstancedItem(profileData.BannerItemId);
         playerData.PreSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.PreSprayItemId);
         playerData.MatchSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.MatchSprayItemId);
         playerData.PostSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.PostSprayItemId);
-        playerData.Data = await GetPlayerClientData.CreatePacketConfigForPlayer(playerId);
+        Model.PlayerConfig playerCfg = await Model.PlayerConfig.RetrieveFromDatabase(playerId);
+        playerData.Data = await playerCfg.ToPacketFull(playerId);
 
         ext.PlayerData = playerData;
         loginData.Ext = ext;
