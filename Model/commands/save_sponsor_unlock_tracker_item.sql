@@ -1,4 +1,4 @@
-INSERT INTO instanced_items (
+INSERT INTO sponsor_tracker_items (
 	instance_id,
 	catalog_id,
 	owning_player_id,

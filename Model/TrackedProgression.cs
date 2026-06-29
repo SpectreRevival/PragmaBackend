@@ -1,5 +1,6 @@
 ﻿using Model.Persistence;
 using Npgsql;
+using Packets;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -25,7 +26,7 @@ public abstract record class TrackedProgression
     public required DateTimeOffset LastRolloverTimestamp { get; set; }
 }
 
-public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<TeamTrackedProgression, Guid>, IEquatable<TeamTrackedProgression>
+public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<TeamTrackedProgression, Guid>, IEquatable<TeamTrackedProgression>, IInterchangeableKeyed<TeamTrackedProgression, Packets.TrackedProgression, Guid>
 {
     [SetsRequiredMembers]
     public TeamTrackedProgression(Guid playerId, Guid[] activeDailyQuests, Guid[] activeWeeklyQuests, Guid[] activeEventQuests, DateTimeOffset lastRolloverTimestamp, Guid teamId) : base(playerId, activeDailyQuests, activeWeeklyQuests, activeEventQuests, lastRolloverTimestamp)
@@ -71,12 +72,14 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
     public virtual bool Equals(TeamTrackedProgression? other)
     {
-        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return PlayerId == other.PlayerId
             && ActiveDailyQuests.SequenceEqual(other.ActiveDailyQuests)
             && ActiveWeeklyQuests.SequenceEqual(other.ActiveWeeklyQuests)
             && ActiveEventQuests.SequenceEqual(other.ActiveEventQuests)
             && LastRolloverTimestamp.ToUnixTimeMilliseconds() == other.LastRolloverTimestamp.ToUnixTimeMilliseconds()
-            && TeamId == other.TeamId));
+            && TeamId == other.TeamId;
     }
 
     public override int GetHashCode()
@@ -100,6 +103,36 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
             PropertyNameCaseInsensitive = true
         };
         return defaultJson.Deserialize<TeamTrackedProgression>(options);
+    }
+
+    public static TeamTrackedProgression FromPacket(Packets.TrackedProgression inst, Guid playerId)
+    {
+        return new TeamTrackedProgression(playerId, inst.ActiveDailyQuests.Select(q => Guid.Parse(q)).ToArray(), inst.ActiveWeeklyQuests.Select(q => Guid.Parse(q)).ToArray(), inst.ActiveEventQuests.Select(q => Guid.Parse(q)).ToArray(), DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(inst.LastRolloverTimestamp)), Guid.Parse(inst.TeamId));
+    }
+
+    public Packets.TrackedProgression ToPacket()
+    {
+        var packet = new Packets.TrackedProgression();
+        packet.ActiveDailyQuests.AddRange(ActiveDailyQuests.Select(q => q.ToString()));
+        packet.ActiveWeeklyQuests.AddRange(ActiveWeeklyQuests.Select(q => q.ToString()));
+        packet.ActiveEventQuests.AddRange(ActiveEventQuests.Select(q => q.ToString()));
+        packet.LastRolloverTimestamp = LastRolloverTimestamp.ToUnixTimeMilliseconds().ToString();
+        packet.TeamId = TeamId.ToString();
+        return packet;
+    }
+
+    public Packets.InstancedItem ToProgressionTrackerItem()
+    {
+        var packet = new Packets.InstancedItem()
+        {
+            CatalogId = "MtnManualItem:TeamProgressionTracker",
+            InstanceId = Guid.NewGuid().ToString()
+        };
+        InstanceExtData ext = new();
+        Packets.TrackedProgression prog = ToPacket();
+        ext.TrackedProgression = prog;
+        packet.Ext = ext;
+        return packet;
     }
 }
 
@@ -178,5 +211,31 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
             PropertyNameCaseInsensitive = true
         };
         return defaultJson.Deserialize<IndividualTrackedProgression>(options);
+    }
+
+    public async Task<Packets.TrackedProgression> AssemblePacketIndividualProgression()
+    {
+        var packet = new Packets.TrackedProgression();
+        packet.ActiveEndorsement = ActiveEndorsement.ToString();
+        packet.ActiveDailyQuests.AddRange(ActiveDailyQuests.Select(q => q.ToString()));
+        packet.ActiveWeeklyQuests.AddRange(ActiveWeeklyQuests.Select(q => q.ToString()));
+        packet.ActiveEventQuests.AddRange(ActiveEventQuests.Select(q => q.ToString()));
+        packet.LastRolloverTimestamp = LastRolloverTimestamp.ToUnixTimeMilliseconds().ToString();
+        BattlepassData bpData = await BattlepassData.RetrieveFromDatabase(PlayerId);
+        packet.BpTrackerData = bpData.ToPacket();
+        return packet;
+    }
+
+    public async Task<Packets.InstancedItem> ToProgressionTrackerItem()
+    {
+        var packet = new Packets.InstancedItem()
+        {
+            CatalogId = "MtnManualItem:ProgressionTracker",
+            InstanceId = Guid.NewGuid().ToString()
+        };
+        InstanceExtData ext = new();
+        ext.TrackedProgression = await AssemblePacketIndividualProgression();
+        packet.Ext = ext;
+        return packet;
     }
 }

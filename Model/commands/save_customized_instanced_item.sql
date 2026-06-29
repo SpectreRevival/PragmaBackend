@@ -1,4 +1,4 @@
-INSERT INTO instanced_items (
+INSERT INTO customized_instanced_items (
 	instance_id,
 	catalog_id,
 	owning_player_id,
