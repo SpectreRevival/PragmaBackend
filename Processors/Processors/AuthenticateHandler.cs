@@ -1,10 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Model;
 using Model.Persistence;
 using Npgsql;
-using Model.Persistence;
 using Serilog;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
@@ -72,7 +69,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         }
 
         // the jwt carries displayName, so the steam persona name has to be resolved and persisted before we build it.
-        string? steamApiKey = Request.RequestServices.GetRequiredService<IConfiguration>()["STEAM_WEB_API_KEY"];
+        string? steamApiKey = PostgresDatabase.Get().GetConfiguration()["STEAM_WEB_API_KEY"];
         if (!string.IsNullOrWhiteSpace(steamApiKey))
         {
             string? personaName = await ResolveSteamPersonaName(ticket.SteamId64, steamApiKey);

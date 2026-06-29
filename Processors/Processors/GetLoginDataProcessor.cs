@@ -1,15 +1,12 @@
 using Google.Protobuf;
+using Model;
+using Packets;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Processors.Processors;
 
 public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
-    // the item catalog that the client loads all item / cosmetic shit from.
-    // owned items come from the inventory service.
-    private static readonly string InventoryDataJson =
-        File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "staticdata", "login_inventorydata.json"));
-
     [SetsRequiredMembers]
     public GetLoginDataProcessor(SpectreRpcType rpcType) : base(rpcType)
     {
@@ -28,29 +25,35 @@ public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketP
 
         LoginDataResponse res = new();
         LoginData loginData = new();
-        LoginDataExt ext = new();
-        ext.CrewAutomationInProcess = false;
-        ext.CurrentServiceTimestampMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
-        ext.NoCrew = -1.0d;
-        ext.NextCrewAutomationDate = DateTimeOffset.MinValue.ToString("yyyy-MM-ddTHH:mm");
+        LoginDataExt ext = new()
+        {
+            CrewAutomationInProcess = false,
+            CurrentServiceTimestampMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(),
+            NoCrew = -1.0d,
+            NextCrewAutomationDate = DateTimeOffset.MinValue.ToString("yyyy-MM-ddTHH:mm")
+        };
 
-        PlayerData playerData = new();
-        playerData.PlayerId = playerId.ToString();
-        playerData.AttackerOutfitLoadoutId = profileData.AttackerOutfitLoadoutId.ToString();
-        playerData.AttackerWeaponLoadoutId = profileData.AttackerWeaponLoadoutId.ToString();
-        playerData.DefenderOutfitLoadoutId = profileData.DefenderOutfitLoadoutId.ToString();
-        playerData.DefenderWeaponLoadoutId = profileData.DefenderWeaponLoadoutId.ToString();
-        playerData.LastUpdated = profileData.LastUpdated.ToString("yyyy-MM-ddTHH:mm");
-        playerData.LastLogin = profileData.LastLogin.ToUnixTimeMilliseconds().ToString();
-        playerData.PlayerFlags = profileData.PlayerFlags;
-        playerData.ServerData = "{}";
-        playerData.PlayerServiceData = new PlayerServiceData();
-        playerData.MatchmakingData = GetPlayerClientData.MatchmakingDataConvert(mmData);
-        playerData.Banner = await GetPlayerClientData.GetFlatInstancedItem(profileData.BannerItemId);
-        playerData.PreSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.PreSprayItemId);
-        playerData.MatchSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.MatchSprayItemId);
-        playerData.PostSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.PostSprayItemId);
-        playerData.Data = await GetPlayerClientData.CreatePacketConfigForPlayer(playerId);
+        PlayerData playerData = new()
+        {
+            PlayerId = playerId.ToString(),
+            AttackerOutfitLoadoutId = profileData.AttackerOutfitLoadoutId.ToString(),
+            AttackerWeaponLoadoutId = profileData.AttackerWeaponLoadoutId.ToString(),
+            DefenderOutfitLoadoutId = profileData.DefenderOutfitLoadoutId.ToString(),
+            DefenderWeaponLoadoutId = profileData.DefenderWeaponLoadoutId.ToString(),
+            LastUpdated = profileData.LastUpdated.ToString("yyyy-MM-ddTHH:mm"),
+            LastLogin = profileData.LastLogin.ToUnixTimeMilliseconds().ToString(),
+            PlayerFlags = profileData.PlayerFlags,
+            ServerData = "{}",
+            PlayerServiceData = new PlayerServiceData(),
+            MatchmakingData = mmData.ToPacket(),
+            Banner = await GetPlayerClientData.GetFlatInstancedItem(profileData.BannerItemId),
+            PreSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.PreSprayItemId),
+            MatchSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.MatchSprayItemId),
+            PostSpray = await GetPlayerClientData.GetFlatInstancedItem(profileData.PostSprayItemId),
+            NextNewDayRolloverTimestamp = DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeMilliseconds().ToString()
+        };
+        Model.PlayerConfig playerCfg = await Model.PlayerConfig.RetrieveFromDatabase(playerId);
+        playerData.Data = await playerCfg.ToPacketFull(playerId);
 
         ext.PlayerData = playerData;
         loginData.Ext = ext;
@@ -74,8 +77,8 @@ public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketP
         playerConfigJson = playerConfigJson.Replace("\n", "");
         playerConfigJson = playerConfigJson.Replace("\"", "\\\"");
         string extOnly = beforeData[0] + $"\"data\":\"{playerConfigJson}\"," + "\"matchmakingData\"" + afterData[1];
-        
-        string finalString = extOnly[..^2] + ",\"inventoryData\":" + InventoryDataJson + "}}";
+
+        string finalString = extOnly[..^2] + ",\"inventoryData\":" + InventoryStore.Get().GetPacketString() + "}}";
         return SpectreWebsocketMessage.From(finalString);
     }
 }

@@ -6,7 +6,7 @@ namespace Model;
 public record class PartyMember : IEquatable<PartyMember>
 {
     [SetsRequiredMembers]
-    public PartyMember(Guid playerId, bool isReady, bool isLeader, string preferredTeam, bool rankedModeUnlocked, Int64 partyMemberVersion, string region = "")
+    public PartyMember(Guid playerId, bool isReady, bool isLeader, string preferredTeam, bool rankedModeUnlocked, long partyMemberVersion, string region = "")
     {
         PlayerId = playerId;
         IsReady = isReady;
@@ -28,7 +28,7 @@ public record class PartyMember : IEquatable<PartyMember>
     [PgName("ranked_mode_unlocked")]
     public required bool RankedModeUnlocked { get; set; }
     [PgName("party_member_version")]
-    public required Int64 PartyMemberVersion { get; set; }
+    public required long PartyMemberVersion { get; set; }
     [PgName("region")]
     public required string Region { get; set; }
 
@@ -40,7 +40,7 @@ public record class PartyMember : IEquatable<PartyMember>
             && PreferredTeam == other.PreferredTeam
             && RankedModeUnlocked == other.RankedModeUnlocked
             && PartyMemberVersion == other.PartyMemberVersion
-            && Region == other.Region;
+            && Region == other.Region));
     }
 
     public override int GetHashCode()

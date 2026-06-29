@@ -13,6 +13,7 @@
 	<ItemGroup>
 		<None Include="staticws\**\*" CopyToOutputDirectory="PreserveNewest"></None>
 		<None Include="httpstatic\**\*" CopyToOutputDirectory="PreserveNewest"></None>
+		<None Include="staticdata\**\*" CopyToOutputDirectory="PreserveNewest"></None>
 	</ItemGroup>
 	
 

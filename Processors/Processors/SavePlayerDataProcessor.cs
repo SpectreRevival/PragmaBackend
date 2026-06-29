@@ -24,158 +24,6 @@ public class SavePlayerDataProcessor : WebsocketPacketProcessor, IWebsocketPacke
         await newItem.SyncToDatabase();
     }
 
-    private static async Task ConvertAndSavePlayerConfig(Packets.PlayerConfig config, Guid playerId)
-    {
-        Model.PlayerConfig modelcfg = new(
-            playerId,
-            config.UnlockAllPlayModes,
-            config.UnlockAllMenuTabs,
-            config.UnlockAllSponsors,
-            config.BypassUnlockAllSponsorsOverride,
-            config.BypassProgressionOverrides,
-            config.BypassTeamSizeOverrides,
-            config.BypassRegionSelectOverride,
-            config.BypassCurrencyPurchasingOverride,
-            config.DisableDevMapSelector,
-            config.ShowDebugInfoPanel,
-            config.ShowPlatformInfoPanel,
-            config.ShowMatchmakingCounters,
-            config.ForceChatEnabled,
-            config.MostRecentLobbyMode,
-            Guid.Parse(config.MostRecentPartyId),
-            config.EndUserLicenseAcceptedVersion,
-            config.EndUserLicenseAcceptedVersionPlayStation,
-            config.EndUserLicenseAcceptedVersionXbox,
-            config.TermsOfServiceAcceptedVersion,
-            config.TermsOfServiceAcceptedVersionPlayStation,
-            config.TermsOfServiceAcceptedVersionXbox,
-            config.NonDisclosureAgreementAcceptedVersion,
-            config.NonDisclosureAgreementAcceptedVersionPlayStation,
-            config.NonDisclosureAgreementAcceptedVersionXbox,
-            config.SeizureWarningAcknowledgedVersion,
-            config.SeizureWarningAcknowledgedVersionPlayStation,
-            config.SeizureWarningAcknowledgedVersionXbox,
-            config.BattlepassSeasonLoggedOn,
-            config.BattlepassPurchasePopupLastTime,
-            config.NonDisclosureAgreementUserSignature,
-            config.NonDisclosureAgreementUserSignaturePlayStation,
-            config.NonDisclosureAgreementUserSignatureXbox,
-            config.NonDisclosureAgreementUserEmail,
-            config.NonDisclosureAgreementUserEmailPlayStation,
-            config.NonDisclosureAgreementUserEmailXbox,
-            config.LastVersionShownInDriversWarningDialog,
-            config.MinSpecWarningDialogTimesDisplayed,
-            config.PingWarningDialogTimesDisplayed,
-            config.HasCompletedLaunchSettingsFlow,
-            config.IsUsingManualMatchmakingRegionSelection,
-            config.ManualMatchmakingRegionSelections.ToArray(),
-            config.RotatingNewsViewedMessages.ToArray(),
-            config.InkQuality,
-            config.MouseSensitivityADSScale,
-            config.MouseSensitivity,
-            config.MinimapScale,
-            config.MinimapSize,
-            config.MinimapMaskOpacity,
-            config.BInvertedYAxis,
-            config.BToggleCrouch,
-            config.BToggleWalk,
-            config.BToggleADS,
-            config.RecoilBehavior,
-            config.BLeftHandedEnabled,
-            config.BRecoilPitchCorrectionEnabled,
-            config.BIsTeamLaserEnabled,
-            config.BIsHudMinimapRotationEnabled,
-            config.BIsHudMinimapCenteredOnPlayer,
-            config.BIsHudMinimapCircle,
-            config.BIsHudMinimapMaskHighContrastEnabled,
-            config.BIsHudSnapMinimapWithScoreboardEnabled,
-            config.BIsDamageCameraEffectEnabled,
-            config.BStreamerModeEnabled,
-            config.BHideLobbyCode,
-            config.ADSTracerRatio,
-            config.ADSTracerIntensity,
-            config.OpticHitConfirmIntensity,
-            config.BAnonymousMode,
-            config.BAnonymizePlayerNames,
-            config.BStreamerModeDisableIncomingVoiceChat,
-            config.BStreamerModeDisableIncomingTextChat,
-            config.BIsTextChatSoundEffectsEnabled,
-            config.BSubtitles,
-            config.VerboseVoLevel,
-            config.BIsBloodFXEnabled,
-            config.OverrideKeymaps.Overrides.ToArray(),
-            config.VoiceChatInputAudioDevice,
-            config.VoiceChatOutputAudioDevice,
-            config.BVoiceChatTeamEnabled,
-            config.VoiceChatConsoleMode,
-            config.BVoiceChatPartyEnabled,
-            config.BVoiceChatPartyEnabledInGames,
-            config.BVoiceChatTeamPushToTalk,
-            config.BVoiceChatPartyPushToTalk,
-            config.EnabledTextStats.ToArray(),
-            config.EnabledGraphStats.ToArray(),
-            config.MutedChatContexts.ToArray(),
-            config.InputBindingsVersion,
-            config.Version + 1);
-        await modelcfg.SyncToDatabase();
-    }
-
-    private static async Task ConvertAndSaveSubtitleUserSettings(Packets.SubtitleUserSettings settings, Guid playerId)
-    {
-        Model.SubtitleUserSettings dat = new(playerId, settings.FontSize, settings.BackgroundOpacity, settings.SpeakerQualifierDisplay, settings.BPostPlayerSubtitles, settings.BPostPlayerSubtitlesToChat, settings.NamesToShowMask, settings.Version);
-        await dat.SyncToDatabase();
-    }
-
-    private static Model.RGBAColor ConvertRGBAColor(Packets.RGBAColor color)
-    {
-        return new Model.RGBAColor((byte)color.R, (byte)color.G, (byte)color.B, (byte)color.A);
-    }
-
-    private static Model.PipConfig ConvertPipConfig(Packets.PipConfig config)
-    {
-        return new Model.PipConfig(config.Thickness, config.Length, config.Opacity, config.Offset, config.BMoveAccuracyOffset, config.BFireAccuracyOffset);
-    }
-
-    private static Model.CrosshairDot ConvertCrosshairDot(Packets.CrosshairDot dot)
-    {
-        return new Model.CrosshairDot(dot.Thickness, dot.Opacity, dot.ColorIndex, ConvertRGBAColor(dot.CustomColor), dot.BOutlineEnabled, ConvertRGBAColor(dot.CustomOutlineColor), dot.OutlineOpacity, dot.Thickness);
-    }
-
-    private static async Task ConvertAndSaveCrosshairConfig(Packets.CrosshairConfig cfg, Guid playerId)
-    {
-        Model.CrosshairConfig dat = new(playerId, cfg.ColorIndex, cfg.BAdvancedCrosshairSettings, ConvertRGBAColor(cfg.CustomColor), cfg.BFireAccuracyFade, cfg.BFollowRecoil, cfg.BShowOutlines, cfg.OutlineThickness, cfg.OutlineOpacity, cfg.BShowCenterDot, cfg.BUseADSSettings,
-            ConvertCrosshairDot(cfg.CenterDotConfig), ConvertCrosshairDot(cfg.SniperDotConfig), ConvertCrosshairDot(cfg.CenterDotConfigADS), ConvertPipConfig(cfg.PipConfigs.Inner), ConvertPipConfig(cfg.PipConfigs.Outer), cfg.Version);
-        await dat.SyncToDatabase();
-    }
-
-    private static async Task ConvertAndSaveColorVisionConfig(Packets.ColorVisionConfig cfg, Guid playerId)
-    {
-        Model.ColorVisionConfig dat = new(playerId, cfg.ColorVisionType, cfg.Severity, cfg.BCorrectDeficiency, cfg.BShowCorrectDeficiency, cfg.BComfortSwapEffect, cfg.BCustomOutlineColor, ConvertRGBAColor(cfg.OutlineColor), ConvertRGBAColor(cfg.OutlineColorLower), cfg.OutlineThicknessScale, cfg.OutlineBrightnessScale, cfg.Version);
-        await dat.SyncToDatabase();
-    }
-
-    private static Model.LookConfig ConvertLookConfig(Packets.LookConfig cfg)
-    {
-        return new Model.LookConfig(cfg.DisplayName, ConvertLookSettings(cfg.LookSettings), ConvertLookSettings(cfg.LookSettingsADS));
-    }
-
-    private static Model.LookSettings ConvertLookSettings(Packets.LookSettings cfg)
-    {
-        return new Model.LookSettings(cfg.YawRate, cfg.PitchScale, cfg.TurnAccelYawBonus, cfg.TurnAccelPitchBonus, cfg.TurnAccelDelaySeconds, cfg.TurnAccelTimeToMax);
-    }
-
-    private static Model.ResponseCurve ConvertResponseCurve(Packets.ResponseCurve curve)
-    {
-        return new Model.ResponseCurve(curve.DisplayName, curve.Exponent, curve.ResponseCurveArcDeg, curve.ResponseCurveSlope, curve.ResponseCurveLinearBlendPow);
-    }
-
-    private static async Task ConvertAndSaveGamepadConfig(Packets.GamepadConfig cfg, Guid playerId)
-    {
-        Model.GamepadConfig dat = new(playerId, cfg.InputSchemeIndex, cfg.GamepadGlyphIndex, cfg.LookPresetIndex, ConvertLookConfig(cfg.CustomLookConfig), ConvertResponseCurve(cfg.CustomResponseCurve),
-            cfg.BInvertLook, cfg.ControllerFeedbackValue, cfg.BTurnAccel, cfg.BAimAssist, cfg.ResponseCurveIndex, cfg.ResponseCurveArcDeg, cfg.ResponseCurveSlope, cfg.ResponseCurveLinearBlendPow, cfg.CustomScaleADS, cfg.BToggleCrouch, cfg.BToggleWalk, cfg.BTogglePlantDefuse, cfg.BToggleADS, cfg.EndWalkWhenFiringBehavior, cfg.ADSTriggerThreshold, cfg.DeadZoneMoveAmount, cfg.CustomDeadZoneMoveAmount, cfg.DeadZoneLookAmount, cfg.CustomDeadZoneLookAmount, cfg.WalkRunDeflectionThreshold, cfg.Version);
-        await dat.SyncToDatabase();
-    }
-
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
         string innerJson = Packet.RequestPayload["data"].ToString();
@@ -233,11 +81,12 @@ public class SavePlayerDataProcessor : WebsocketPacketProcessor, IWebsocketPacke
 
         profile.PlayerFlags = (int)Math.Round(packetData.PlayerFlags);
 
-        await ConvertAndSavePlayerConfig(packetData.Data, playerId);
-        await ConvertAndSaveCrosshairConfig(packetData.Data.CrosshairConfig, playerId);
-        await ConvertAndSaveSubtitleUserSettings(packetData.Data.SubtitleUserSettings, playerId);
-        await ConvertAndSaveColorVisionConfig(packetData.Data.ColorVisionConfig, playerId);
-        await ConvertAndSaveGamepadConfig(packetData.Data.GamepadConfig, playerId);
+        Model.PlayerConfig playerCfg = Model.PlayerConfig.FromPacket(packetData.Data, playerId);
+        await playerCfg.SyncToDatabase();
+        await Model.CrosshairConfig.FromPacket(packetData.Data.CrosshairConfig, playerId).SyncToDatabase();
+        await Model.SubtitleUserSettings.FromPacket(packetData.Data.SubtitleUserSettings, playerId).SyncToDatabase();
+        await Model.ColorVisionConfig.FromPacket(packetData.Data.ColorVisionConfig, playerId).SyncToDatabase();
+        await Model.GamepadConfig.FromPacket(packetData.Data.GamepadConfig, playerId).SyncToDatabase();
 
         await profile.SyncToDatabase();
 

@@ -24,7 +24,7 @@ public record class LegacyStatsDataKey
     public required LegacyStatsType StatsType { get; set; }
 }
 
-public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, LegacyStatsDataKey>, IEquatable<LegacyStatsData>
+public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, LegacyStatsDataKey>, IEquatable<LegacyStatsData>, IInterchangeableKeyed<LegacyStatsData, Packets.LegacyStatsData, LegacyStatsDataKey>
 {
     [SetsRequiredMembers]
     public LegacyStatsData(Guid playerId, LegacyStatsType statsType, long killCount, long deathCount, long aceCount, long dualityKillCount, long firstKillCount, long firstDeathCount, double kAST, double dualityRating, long impactCount, long totalMatchesPlayedCount, long fanCount, long winCount, long totalRoundsPlayedCount, long headshotsCount, long totalDamagingShotsCount, long totalDamageCount, string[] topSponsors, string[] topWeapons)
@@ -186,5 +186,43 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
     public static LegacyStatsData CreateDefault(LegacyStatsDataKey key)
     {
         return new LegacyStatsData(key.PlayerId, key.StatsType, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, [], []);
+    }
+
+    public static LegacyStatsData FromPacket(Packets.LegacyStatsData inst, LegacyStatsDataKey key)
+    {
+        return new LegacyStatsData(key.PlayerId, key.StatsType, (long)inst.KillCount, (long)inst.DeathCount, (long)inst.AceCount, (long)inst.DualityKillCount, (long)inst.FirstKillCount,
+            (long)inst.FirstDeathCount, inst.Kast, inst.DualityRating, (long)inst.ImpactCount, (long)inst.TotalMatchesPlayedCount, (long)inst.FanCount, (long)inst.WinCount, (long)inst.TotalRoundsPlayedCount, (long)inst.HeadshotsCount, (long)inst.TotalDamagingShotsCount, (long)inst.TotalDamageCount, inst.Sponsors.ToArray(), inst.Weapons.ToArray());
+    }
+
+    public Packets.LegacyStatsData ToPacket()
+    {
+        Packets.LegacyStatsData ret = new()
+        {
+            KillCount = KillCount,
+            DeathCount = DeathCount,
+            AceCount = AceCount,
+            DualityKillCount = DualityKillCount,
+            FirstKillCount = FirstKillCount,
+            FirstDeathCount = FirstDeathCount,
+            Kast = KAST,
+            DualityRating = DualityRating,
+            ImpactCount = ImpactCount,
+            TotalMatchesPlayedCount = TotalMatchesPlayedCount,
+            FanCount = FanCount,
+            WinCount = WinCount,
+            TotalRoundsPlayedCount = TotalRoundsPlayedCount,
+            HeadshotsCount = HeadshotsCount,
+            TotalDamagingShotsCount = TotalDamagingShotsCount,
+            TotalDamageCount = TotalDamageCount
+        };
+        foreach (string sponsor in TopSponsors)
+        {
+            ret.Sponsors.Add(sponsor);
+        }
+        foreach (string weapon in TopWeapons)
+        {
+            ret.Weapons.Add(weapon);
+        }
+        return ret;
     }
 }

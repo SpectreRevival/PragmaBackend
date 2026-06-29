@@ -1,38 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Model\Model.csproj"></ProjectReference>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Protobuf Include="Protoc\**\*.proto" GrpcServices="None" AdditionalImportDirs="Protoc\" AdditionalArgs="--csharp_opt=base_namespace=Packets"></Protobuf>
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Include="staticws\**\*" CopyToOutputDirectory="PreserveNewest"></None>
-		<None Include="httpstatic\**\*" CopyToOutputDirectory="PreserveNewest"></None>
-		<None Include="staticdata\**\*" CopyToOutputDirectory="PreserveNewest"></None>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <PackageReference Include="Google.Protobuf" Version="3.35.0" />
-	  <PackageReference Include="Grpc.Tools" Version="2.81.0">
-	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-	    <PrivateAssets>all</PrivateAssets>
-	  </PackageReference>
-	  <PackageReference Include="Serilog" Version="4.3.1" />
-	  <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
+		<PackageReference Include="Google.Protobuf" Version="3.35.0" />
+		<PackageReference Include="Grpc.Tools" Version="2.81.0">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="Serilog" Version="4.3.1" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
 	</ItemGroup>
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 	<ItemGroup>
-		<Protobuf Include="*.proto" GrpcServices="None" AdditionalImportDirs="Protoc\" AdditionalArgs="--csharp_opt=base_namespace=Packets"></Protobuf>
+		<Protobuf Include="*.proto" GrpcServices="None" AdditionalArgs="--csharp_opt=base_namespace=Packets"></Protobuf>
 	</ItemGroup>
 </Project>

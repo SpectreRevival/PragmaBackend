@@ -19,9 +19,9 @@ public class SpectreWebsocket
     private WebSocket Socket { get; init; }
     private int sequenceId = 0;
     private readonly SemaphoreSlim sendLock = new(1, 1);
-    private readonly List<SpectreWebsocketNotification> postResponseNotifications = new();
+    private readonly List<SpectreWebsocketNotification> postResponseNotifications = [];
     private readonly object postResponseNotificationsLock = new();
-    private static readonly Int32 MAX_BUFFER_SIZE = 32 * 1024 * 1024;
+    private static readonly int MAX_BUFFER_SIZE = 32 * 1024 * 1024;
 
     [SetsRequiredMembers]
     public SpectreWebsocket(HttpContext upgradeRequest, WebSocket webSocket)
@@ -60,7 +60,7 @@ public class SpectreWebsocket
     {
         lock (postResponseNotificationsLock)
         {
-            List<SpectreWebsocketNotification> notifications = new(postResponseNotifications);
+            List<SpectreWebsocketNotification> notifications = [.. postResponseNotifications];
             postResponseNotifications.Clear();
             return notifications;
         }
