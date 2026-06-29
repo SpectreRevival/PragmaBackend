@@ -595,7 +595,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
 
     public static PlayerConfig FromPacket(Packets.PlayerConfig inst, Guid id)
     {
-        return new PlayerConfig((Guid)id, inst.UnlockAllPlayModes, inst.UnlockAllMenuTabs, inst.UnlockAllSponsors, inst.BypassUnlockAllSponsorsOverride,
+        return new PlayerConfig(id, inst.UnlockAllPlayModes, inst.UnlockAllMenuTabs, inst.UnlockAllSponsors, inst.BypassUnlockAllSponsorsOverride,
             inst.BypassProgressionOverrides, inst.BypassTeamSizeOverrides, inst.BypassRegionSelectOverride, inst.BypassCurrencyPurchasingOverride, inst.DisableDevMapSelector,
             inst.ShowDebugInfoPanel, inst.ShowPlatformInfoPanel, inst.ShowMatchmakingCounters, inst.ForceChatEnabled, inst.MostRecentLobbyMode, Guid.Parse(inst.MostRecentPartyId), inst.EndUserLicenseAcceptedVersion,
             inst.EndUserLicenseAcceptedVersionPlayStation, inst.EndUserLicenseAcceptedVersionXbox, inst.TermsOfServiceAcceptedVersion, inst.TermsOfServiceAcceptedVersionPlayStation, inst.TermsOfServiceAcceptedVersionXbox, inst.NonDisclosureAgreementAcceptedVersion, inst.NonDisclosureAgreementAcceptedVersionPlayStation, inst.NonDisclosureAgreementAcceptedVersionXbox,

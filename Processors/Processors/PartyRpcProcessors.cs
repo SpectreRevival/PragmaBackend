@@ -1,13 +1,13 @@
 using Google.Protobuf;
 using Model.Persistence;
 using Npgsql;
-using Processors;
+using Packets;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace Packets.Processors;
+namespace Processors.Processors;
 
 public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
 {
@@ -35,12 +35,7 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
     protected static async Task<Model.Party> GetPartyOrThrow(string partyId)
     {
         Model.Party? party = await Model.Party.RetrieveFromDatabase(Guid.Parse(partyId));
-        if (party is null)
-        {
-            throw new InvalidDataException($"No party found for id {partyId}");
-        }
-
-        return party;
+        return party is null ? throw new InvalidDataException($"No party found for id {partyId}") : party;
     }
 
     protected static async Task<SpectreWebsocketMessage> CreatePartyMessage(Model.Party party)
@@ -111,7 +106,7 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
 
         if (pool == "custom")
         {
-            party.Standard = new Dictionary<string, string>();
+            party.Standard = [];
             party.CustomJson = update.Custom is null ? "" : ProtoFormatter.Format(update.Custom);
         }
         else
@@ -196,12 +191,16 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
     private static SpectreWebsocketNotification[] CreateMatchmakingNotifications(GameConnectionDetails details,
         bool matchLeader)
     {
-        AddedToGameV1Notification addedToGame = new();
-        addedToGame.GameInstanceId = details.GameInstanceId;
-        addedToGame.Ext = new AddedToGameExt { MatchLeader = matchLeader };
+        AddedToGameV1Notification addedToGame = new()
+        {
+            GameInstanceId = details.GameInstanceId,
+            Ext = new AddedToGameExt { MatchLeader = matchLeader }
+        };
 
-        HostConnectionDetailsV1Notification hostDetails = new();
-        hostDetails.ConnectionDetails = details;
+        HostConnectionDetailsV1Notification hostDetails = new()
+        {
+            ConnectionDetails = details
+        };
 
         return
         [
@@ -219,14 +218,16 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
 
     private static GameConnectionDetails CreateGameConnectionDetails()
     {
-        GameConnectionDetails details = new();
-        details.GameInstanceId = GetEnvString("SPECTRE_GAME_INSTANCE_ID", "185206f8-dae2-4144-923d-9ac326240f30");
-        details.Hostname = GetEnvString("SPECTRE_GAME_HOST", "127.0.0.1");
-        details.Port = GetEnvInt("SPECTRE_GAME_PORT", 7777);
-        details.ConnectionToken = GetEnvString("SPECTRE_GAME_CONNECTION_TOKEN", "8656593e-1d5c-4a94-b460-190f7b694c95");
-        details.ExtConnectionDetails = new ExtConnectionDetails
+        GameConnectionDetails details = new()
         {
-            MatchData = GetEnvString("SPECTRE_GAME_MATCH_DATA", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+            GameInstanceId = GetEnvString("SPECTRE_GAME_INSTANCE_ID", "185206f8-dae2-4144-923d-9ac326240f30"),
+            Hostname = GetEnvString("SPECTRE_GAME_HOST", "127.0.0.1"),
+            Port = GetEnvInt("SPECTRE_GAME_PORT", 7777),
+            ConnectionToken = GetEnvString("SPECTRE_GAME_CONNECTION_TOKEN", "8656593e-1d5c-4a94-b460-190f7b694c95"),
+            ExtConnectionDetails = new ExtConnectionDetails
+            {
+                MatchData = GetEnvString("SPECTRE_GAME_MATCH_DATA", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+            }
         };
         return details;
     }
@@ -283,16 +284,16 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
 
         PartyMember member = new()
         {
-            Ext = new PartyMemberExtraInfo()
-        };
-        member.PlayerId = modelMember.PlayerId.ToString();
-        member.SocialId = modelMember.PlayerId.ToString();
-        member.IsReady = modelMember.IsReady;
-        member.IsLeader = modelMember.IsLeader;
-        member.DisplayName = new DisplayName
-        {
-            DisplayName_ = profile.DisplayName.PlayerName,
-            Discriminator = profile.DisplayName.Discriminator
+            Ext = new PartyMemberExtraInfo(),
+            PlayerId = modelMember.PlayerId.ToString(),
+            SocialId = modelMember.PlayerId.ToString(),
+            IsReady = modelMember.IsReady,
+            IsLeader = modelMember.IsLeader,
+            DisplayName = new DisplayName
+            {
+                DisplayName_ = profile.DisplayName.PlayerName,
+                Discriminator = profile.DisplayName.Discriminator
+            }
         };
 
         PartyMemberExtraInfo ext = member.Ext;
@@ -309,43 +310,49 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
 
     private static PartySharedClientData CreateSharedClientData(Model.ProfileData profile)
     {
-        PartySharedClientData sharedData = new();
-        sharedData.AccountIdProvider = profile.AccountIdProvider;
-        sharedData.PlatformName = profile.PlatformName;
-        sharedData.CrossPlayPlatformKind = profile.CrossplayPlatformKind;
-        sharedData.CurrentProviderAccountId = profile.ProviderAccountId;
-        sharedData.CrewId = profile.CrewId == Guid.Empty ? "" : profile.CrewId.ToString();
-        sharedData.GamesRemainingUntilCrewJoin = (uint)Math.Max(0, profile.GamesRemainingUntilCrewJoin);
-        sharedData.BattlePassLevel = 0;
+        PartySharedClientData sharedData = new()
+        {
+            AccountIdProvider = profile.AccountIdProvider,
+            PlatformName = profile.PlatformName,
+            CrossPlayPlatformKind = profile.CrossplayPlatformKind,
+            CurrentProviderAccountId = profile.ProviderAccountId,
+            CrewId = profile.CrewId == Guid.Empty ? "" : profile.CrewId.ToString(),
+            GamesRemainingUntilCrewJoin = (uint)Math.Max(0, profile.GamesRemainingUntilCrewJoin),
+            BattlePassLevel = 0
+        };
         return sharedData;
     }
 
     private static async Task<PartyMemberPlayerData> CreatePartyMemberPlayerData(Model.ProfileData profile)
     {
-        PartyMemberPlayerData data = new();
-        data.AttackerWeaponLoadout = new WeaponLoadoutReference
+        PartyMemberPlayerData data = new()
         {
-            PlayerId = profile.PlayerId.ToString(),
-            LoadoutId = profile.AttackerWeaponLoadoutId.ToString()
-        };
-        data.DefenderWeaponLoadout = new WeaponLoadoutReference
-        {
-            PlayerId = profile.PlayerId.ToString(),
-            LoadoutId = profile.DefenderWeaponLoadoutId.ToString()
-        };
+            AttackerWeaponLoadout = new WeaponLoadoutReference
+            {
+                PlayerId = profile.PlayerId.ToString(),
+                LoadoutId = profile.AttackerWeaponLoadoutId.ToString()
+            },
+            DefenderWeaponLoadout = new WeaponLoadoutReference
+            {
+                PlayerId = profile.PlayerId.ToString(),
+                LoadoutId = profile.DefenderWeaponLoadoutId.ToString()
+            },
 
-        data.AttackerOutfitLoadout = (await Model.OutfitLoadout.RetrieveFromDatabase(profile.AttackerOutfitLoadoutId)).ToPacket();
-        data.DefenderOutfitLoadout = (await Model.OutfitLoadout.RetrieveFromDatabase(profile.DefenderOutfitLoadoutId)).ToPacket();
-        data.MatchmakingData = (await Model.PlayerMatchmakingData.RetrieveFromDatabase(profile.PlayerId)).ToPacket();
-        data.Banner = await CreateFlatInstancedItem(profile.BannerItemId);
+            AttackerOutfitLoadout = (await Model.OutfitLoadout.RetrieveFromDatabase(profile.AttackerOutfitLoadoutId)).ToPacket(),
+            DefenderOutfitLoadout = (await Model.OutfitLoadout.RetrieveFromDatabase(profile.DefenderOutfitLoadoutId)).ToPacket(),
+            MatchmakingData = (await Model.PlayerMatchmakingData.RetrieveFromDatabase(profile.PlayerId)).ToPacket(),
+            Banner = await CreateFlatInstancedItem(profile.BannerItemId)
+        };
         return data;
     }
 
     private static async Task<FlatInstancedItem> CreateFlatInstancedItem(Guid instanceId)
     {
         Model.CustomizedInstancedItem? model = await Model.CustomizedInstancedItem.RetrieveFromDatabase(instanceId);
-        FlatInstancedItem packet = new();
-        packet.ItemInstanceId = instanceId.ToString();
+        FlatInstancedItem packet = new()
+        {
+            ItemInstanceId = instanceId.ToString()
+        };
         if (model is null)
         {
             return packet;
@@ -388,20 +395,24 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
                 continue;
             }
 
-            InstancedItem packet = new();
-            packet.CatalogId = item.CatalogId;
-            packet.InstanceId = item.InstanceId.ToString();
-            packet.Ext = new InstanceExtData
+            InstancedItem packet = new()
             {
-                Reserved = 0,
-                Viewed = item.Viewed,
-                InstancedCustomizationData = new InstancedCustomizationData()
+                CatalogId = item.CatalogId,
+                InstanceId = item.InstanceId.ToString(),
+                Ext = new InstanceExtData
+                {
+                    Reserved = 0,
+                    Viewed = item.Viewed,
+                    InstancedCustomizationData = new InstancedCustomizationData()
+                }
             };
 
             foreach (Model.AlterationChannel channel in item.AlterationChannels)
             {
-                AlterationChannel packetChannel = new();
-                packetChannel.ChannelId = channel.ChannelId;
+                AlterationChannel packetChannel = new()
+                {
+                    ChannelId = channel.ChannelId
+                };
                 packetChannel.OwnedAlterations.Add(channel.Alterations);
                 packet.Ext.InstancedCustomizationData.InstancedAlterationChannels.Add(packetChannel);
             }

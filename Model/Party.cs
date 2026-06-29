@@ -7,7 +7,7 @@ namespace Model;
 public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEquatable<Party>
 {
     [SetsRequiredMembers]
-    public Party(Guid partyId, PartyMember[] members, string inviteCode, string queuePool, string lobbyMode, string chatId, bool useTeamMMR, Int64 version, string partyExtVersion = "173322", string region = "", string tag = "", string profile = "", bool hasAcceptableRegion = true, string[]? preferredGameServerZones = null, Dictionary<string, string>? standard = null, string customJson = "", string crossplayPlatform = "CROSS_PLAY_PLATFORM_PC") : base(version)
+    public Party(Guid partyId, PartyMember[] members, string inviteCode, string queuePool, string lobbyMode, string chatId, bool useTeamMMR, long version, string partyExtVersion = "173322", string region = "", string tag = "", string profile = "", bool hasAcceptableRegion = true, string[]? preferredGameServerZones = null, Dictionary<string, string>? standard = null, string customJson = "", string crossplayPlatform = "CROSS_PLAY_PLATFORM_PC") : base(version)
     {
         PartyId = partyId;
         Members = members ?? throw new ArgumentNullException(nameof(members));
@@ -59,7 +59,7 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
             await reader.GetFieldValueAsync<string>(4),
             await reader.GetFieldValueAsync<string>(5),
             await reader.GetFieldValueAsync<bool>(6),
-            await reader.GetFieldValueAsync<Int64>(7),
+            await reader.GetFieldValueAsync<long>(7),
             await reader.GetFieldValueAsync<string>(8),
             await reader.GetFieldValueAsync<string>(9),
             await reader.GetFieldValueAsync<string>(10),
@@ -102,9 +102,7 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
 
     public virtual bool Equals(Party? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return PartyId == other.PartyId
+        return other is not null && (ReferenceEquals(this, other) || (PartyId == other.PartyId
             && Members.SequenceEqual(other.Members)
             && InviteCode == other.InviteCode
             && QueuePool == other.QueuePool
@@ -121,7 +119,7 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
             && !Standard.Except(other.Standard).Any()
             && CustomJson == other.CustomJson
             && CrossplayPlatform == other.CrossplayPlatform
-            && Version == other.Version;
+            && Version == other.Version));
     }
 
     public override int GetHashCode()

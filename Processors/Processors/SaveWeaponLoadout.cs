@@ -1,5 +1,4 @@
-﻿using Model;
-using Packets;
+﻿using Packets;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Nodes;
 
@@ -20,7 +19,7 @@ public class SaveWeaponLoadout : WebsocketPacketProcessor, IWebsocketPacketProce
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
         SaveWeaponLoadoutMessage req = Packet.GetPayloadAsMessage<SaveWeaponLoadoutMessage>();
-        var saved = Model.WeaponLoadout.FromPacket(req.WeaponLoadoutData);
+        Model.WeaponLoadout saved = Model.WeaponLoadout.FromPacket(req.WeaponLoadoutData);
         await saved.SyncToDatabase();
         JsonObject resJson = new()
         {

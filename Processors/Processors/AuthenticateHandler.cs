@@ -1,10 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Model;
 using Model.Persistence;
 using Npgsql;
-using Model.Persistence;
 using Serilog;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
