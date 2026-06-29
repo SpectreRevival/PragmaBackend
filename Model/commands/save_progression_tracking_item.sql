@@ -1,4 +1,4 @@
-INSERT INTO instanced_items (
+INSERT INTO progression_tracking_items (
 	instance_id,
 	catalog_id,
 	owning_player_id,

@@ -81,4 +81,15 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
         defaultJson[nameof(PlayerId)] = playerId;
         return defaultJson.Deserialize<BattlepassData>();
     }
+
+    public Packets.BattlepassData ToPacket()
+    {
+        var packet = new Packets.BattlepassData();
+        packet.ActiveBattlePasses.AddRange(ActiveBattlePasses.Select(b => b.ToString()));
+        packet.BpQuests.AddRange(BattlepassQuests.Select(q => q.ToString()));
+        packet.ActiveBpQuests.AddRange(ActiveBattlepassQuests.Select(q => q.ToString()));
+        packet.DebugSeasonOffsetMillis = "0";
+        packet.SeasonEntry = SeasonEntry.GetActive().ToPacket();
+        return packet;
+    }
 }

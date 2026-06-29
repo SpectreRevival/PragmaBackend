@@ -1,1 +1,1 @@
-SELECT instance_id, catalog_id, owning_player_id, viewed, alteration_channels FROM instanced_items WHERE instance_id = @instance_id LIMIT 1;
+SELECT instance_id, catalog_id, owning_player_id, viewed, alteration_channels FROM customized_instanced_items WHERE instance_id = @instance_id LIMIT 1;

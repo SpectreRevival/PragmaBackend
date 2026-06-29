@@ -1,0 +1,1 @@
+SELECT instance_id FROM sponsor_tracker_items WHERE owning_player_id=@player_id
