@@ -1,0 +1,1 @@
+SELECT * FROM season_entries WHERE season_number = @season_number LIMIT 1;

@@ -1,0 +1,1 @@
+SELECT * FROM crosshair_config WHERE player_id = @player_id LIMIT 1;

@@ -1,0 +1,7 @@
+syntax = "proto3";
+import "FriendsList.proto";
+package Packets;
+
+message GetFriendsListAndRegisterOnlineResponse {
+    FriendsList friendList = 1;
+}

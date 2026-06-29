@@ -1,0 +1,1 @@
+SELECT * FROM battlepass_data WHERE player_id = @playerid LIMIT 1;

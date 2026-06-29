@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS individual_tracked_progression (
+    player_id UUID PRIMARY KEY,
+    active_daily_quests UUID [] NOT NULL,
+    active_weekly_quests UUID [] NOT NULL,
+    active_event_quests UUID [] NOT NULL,
+    active_endorsement UUID NOT NULL,
+    last_rollover TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS team_tracked_progression (
+    player_id UUID PRIMARY KEY,
+    team_id UUID NOT NULL,
+    active_daily_quests UUID [] NOT NULL,
+    active_weekly_quests UUID [] NOT NULL,
+    active_event_quests UUID [] NOT NULL,
+    last_rollover TIMESTAMPTZ NOT NULL
+);

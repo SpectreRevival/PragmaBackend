@@ -1,0 +1,94 @@
+{
+  "Version": 0,
+  "ColorIndex": 0,
+  "AdvancedCrosshairSettings": false,
+  "CustomColor": {
+    "b": 255,
+    "g": 255,
+    "r": 255,
+    "a": 255
+  },
+  "FireAccuracyFade": false,
+  "FollowRecoil": false,
+  "ShowOutlines": true,
+  "outlineThickness": 1,
+  "OutlineOpacity": 0.5,
+  "ShowCenterDot": false,
+  "UseADSSettings": true,
+  "CenterDot": {
+    "Thickness": 2,
+    "Opacity": 1,
+    "ColorIndex": 0,
+    "CustomColor": {
+      "b": 255,
+      "g": 255,
+      "r": 255,
+      "a": 255
+    },
+    "OutlineEnabled": true,
+    "CustomOutlineColor": {
+      "b": 0,
+      "g": 0,
+      "r": 0,
+      "a": 255
+    },
+    "OutlineOpacity": 0.5,
+    "OutlineThickness": 1
+  },
+  "CenterDotADS": {
+    "Thickness": 2,
+    "Opacity": 1,
+    "ColorIndex": 0,
+    "CustomColor": {
+      "b": 255,
+      "g": 255,
+      "r": 255,
+      "a": 255
+    },
+    "OutlineEnabled": true,
+    "CustomOutlineColor": {
+      "b": 0,
+      "g": 0,
+      "r": 0,
+      "a": 255
+    },
+    "OutlineOpacity": 0.5,
+    "OutlineThickness": 2
+  },
+  "SniperDot": {
+    "Thickness": 2,
+    "Opacity": 1,
+    "ColorIndex": -1,
+    "CustomColor": {
+      "b": 0,
+      "g": 0,
+      "r": 255,
+      "a": 255
+    },
+    "OutlineEnabled": true,
+    "CustomOutlineColor": {
+      "b": 0,
+      "g": 0,
+      "r": 0,
+      "a": 255
+    },
+    "OutlineOpacity": 0.5,
+    "OutlineThickness": 1
+  },
+  "InnerPip": {
+    "Thickness": 2,
+    "Length": 8,
+    "Opacity": 0.800000011920929,
+    "Offset": 0,
+    "MoveAccuracyOffset": true,
+    "FireAccuracyOffset": true
+  },
+  "OuterPip": {
+    "Thickness": 2,
+    "Length": 2,
+    "Opacity": 0,
+    "Offset": 0,
+    "MoveAccuracyOffset": true,
+    "FireAccuracyOffset": true
+  }
+}

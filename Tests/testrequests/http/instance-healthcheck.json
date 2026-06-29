@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "path": "/instance-healthcheck",
+  "request": "",
+  "response": "{\"alive\":true}",
+  "testAge": "2025-02-25T13:17:06.4306968-05:00"
+}

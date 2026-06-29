@@ -1,0 +1,69 @@
+﻿using Serilog;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+
+namespace Tests;
+
+[TestClass]
+public class HTTPTests
+{
+    public static IEnumerable<object[]> GetHTTPTestInstances()
+    {
+        string httpReqDir = Path.Combine(Path.Combine(AppContext.BaseDirectory, "testrequests"), "http");
+        foreach (string filePath in Directory.EnumerateFiles(httpReqDir, "*.json"))
+        {
+            HTTPTestData testData = JsonDocument.Parse(File.ReadAllText(filePath)).Deserialize<HTTPTestData>();
+            yield return new object[]
+            {
+                filePath,
+                testData.path
+            };
+        }
+    }
+
+    public static string GetCustomTestName(MethodInfo methodInfo, object[] data)
+    {
+        return data != null && data.Length > 1 && data[1] is string testName ? $"{methodInfo.Name}_{testName}" : methodInfo.Name;
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(GetHTTPTestInstances), DynamicDataDisplayName = nameof(GetCustomTestName))]
+    public async Task RunHTTPTest(string testDataFile, string testName)
+    {
+        string[] skipRoutes = File.ReadAllLines(Path.Combine(Path.Combine(AppContext.BaseDirectory, "testrequests"), "httpSkipTests.txt"));
+        HTTPTestData? testData = JsonDocument.Parse(File.ReadAllText(testDataFile)).Deserialize<HTTPTestData>();
+        Assert.IsNotNull(testData);
+        if (skipRoutes.Any(route => route == testData.path))
+        {
+            Assert.Inconclusive($"Skipping due to route {testData.path} appearing in skip routes list");
+        }
+        using CancellationTokenSource cancelToken = new();
+        cancelToken.CancelAfter(TimeSpan.FromSeconds(10));
+        HttpClient client = new()
+        {
+            Timeout = TimeSpan.FromSeconds(10)
+        };
+        try
+        {
+            using HttpRequestMessage req = new(new HttpMethod(testData.method), $"http://localhost:21330{testData.path}");
+            req.Content = new StringContent(testData.request, Encoding.UTF8, "application/json");
+            HttpResponseMessage res = await client.SendAsync(req, cancelToken.Token);
+            res.EnsureSuccessStatusCode();
+            string content = await res.Content.ReadAsStringAsync(cancelToken.Token);
+            if (!JsonTestUtil.JsonMatchesSchema(content, testData.response, false, false))
+            {
+                Assert.Fail("Json content doesn't match");
+            }
+        }
+        catch (OperationCanceledException ex) when (cancelToken.IsCancellationRequested)
+        {
+            if (ex.InnerException is TimeoutException)
+            {
+                Log.Error("Request timed out");
+                Assert.Fail("Timed out");
+                throw;
+            }
+        }
+    }
+}

@@ -1,0 +1,1 @@
+SELECT * FROM friends_list WHERE player_id = @player_id LIMIT 1;

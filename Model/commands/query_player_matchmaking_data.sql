@@ -1,0 +1,1 @@
+SELECT * FROM player_matchmaking_data WHERE player_id = @player_id LIMIT 1;

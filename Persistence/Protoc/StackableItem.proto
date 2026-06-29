@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-message StackableItem {
-	string catalogId = 1;
-	string instanceId = 2;
-	string amount = 3;
-}

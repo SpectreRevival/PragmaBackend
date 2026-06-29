@@ -1,5 +1,0 @@
-syntax = "proto3";
-
-message EnterMatchmakingRequest {
-	string partyId = 1;
-}

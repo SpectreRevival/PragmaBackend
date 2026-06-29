@@ -1,0 +1,1 @@
+SELECT * FROM color_vision_config WHERE player_id = @playerid LIMIT 1;

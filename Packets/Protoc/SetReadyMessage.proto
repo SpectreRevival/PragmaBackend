@@ -1,6 +1,0 @@
-syntax = "proto3";
-
-message SetReadyMessage {
-	bool ready = 1;
-	string partyId = 2;
-}

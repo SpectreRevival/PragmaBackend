@@ -1,0 +1,1 @@
+SELECT * FROM subtitle_settings WHERE player_id = @player_id LIMIT 1;

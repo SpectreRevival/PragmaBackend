@@ -1,0 +1,6 @@
+syntax = "proto3";
+import "PlayerData.proto";
+package Packets;
+message PlayerMatchmakingDataResponse {
+  PlayerMatchmakingData data = 1;
+}

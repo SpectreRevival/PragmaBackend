@@ -1,0 +1,7 @@
+syntax = "proto3";
+import "WeaponLoadout.proto";
+package Packets;
+
+message SaveWeaponLoadoutMessage {
+	WeaponLoadout weaponLoadoutData = 1;
+}

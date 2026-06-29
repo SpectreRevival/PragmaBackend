@@ -1,0 +1,6 @@
+syntax = "proto3";
+package Packets;
+
+message IsInPartyResponse {
+    bool isInParty = 1;
+}

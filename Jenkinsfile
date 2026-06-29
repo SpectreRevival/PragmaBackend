@@ -2,15 +2,7 @@ pipeline {
     agent none
 
     stages {
-        stage("Spell check") {
-            agent { label 'linux' }
-            steps {
-                checkout scm
-                sh 'codespell'
-            }
-        }
-
-        stage('Build Matrix') {
+        stage("Compile backend"){
             matrix {
                 axes {
                     axis {
@@ -18,244 +10,100 @@ pipeline {
                         values 'windows', 'linux'
                     }
                     axis {
-                        name 'BUILD_TYPE'
-                        values 'debug', 'release'
+                        name 'CONFIGURATION'
+                        values 'Debug', 'Release'
                     }
                 }
-
+                
                 agent { label "${OS}" }
 
-                options {
-                    throttle(['RamIntensiveJob'])
-                }
-
                 stages {
-                    stage('Checkout') {
+                    stage("Checkout"){
                         steps {
                             checkout scm
-                            script {
-                                if (isUnix()) {
-                                    sh "git submodule sync --recursive"
-                                    sh "git submodule update --init --recursive"
-                                } else {
-                                    bat "git submodule sync --recursive"
-                                    bat "git submodule update --init --recursive"
-                                }
-                            }
                         }
                     }
-
-                    stage('Get vcpkg commit') {
+                    stage("Download dependencies"){
                         steps {
                             script {
-                                def sha
-                                if (isUnix()) {
-                                    sha = sh(script: "cd vcpkg && git rev-parse HEAD", returnStdout: true).trim()
+                                if(isUnix()){
+                                    sh 'dotnet restore'
                                 } else {
-                                    sha = bat(script: "cd vcpkg && git rev-parse HEAD", returnStdout: true).trim()
-                                }
-                                env.VCPKG_SHA = sha
-                            }
-                        }
-                    }
-
-                    stage("Write auth.json") {
-                        steps {
-                            withCredentials([
-                                string(credentialsId: 'STEAM_KEY', variable: 'STEAM_KEY')
-                            ]) {
-                                script {
-                                    if (isUnix()) {
-                                        sh "echo \"{\\\"steamApiKey\\\": \\\"\$STEAM_KEY\\\"}\" > auth.json"
-                                    } else {
-                                        powershell '''
-                                            $content = "{`"steamApiKey`": `"$env:STEAM_KEY`"}"
-                                            Set-Content -Path auth.json -Value $content
-                                        '''
-                                    }
+                                    bat 'dotnet restore'
                                 }
                             }
                         }
                     }
-
-                    stage('Configure') {
+                    stage("Build project"){
                         steps {
                             script {
-                                if (env.OS == 'windows') {
-                                    bat """
-                                        call "C:\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat" x64
-                                        cmake --preset x64-${BUILD_TYPE}-win
-                                    """
+                                if(isUnix()){
+                                    sh "dotnet build --configuration ${CONFIGURATION} /m:1 /p:UseSharedCompilation=false /nodeReuse:false"
                                 } else {
-                                    sh "cmake --preset x64-${BUILD_TYPE}-linux"
+                                    bat "dotnet build --configuration ${CONFIGURATION} /m:1 /p:UseSharedCompilation=false /nodeReuse:false"
                                 }
                             }
                         }
                     }
-
-                    stage('Build') {
+                    stage("Archive artifacts"){
                         steps {
                             script {
-                                if (env.OS == 'windows') {
-                                    bat """
-                                        call "C:\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat" x64
-                                        cmake --build out/build/x64-${BUILD_TYPE}-win
-                                    """
-                                } else {
-                                    sh "cmake --build out/build/x64-${BUILD_TYPE}-linux"
-                                }
+                                def artifactPath = "**/bin/Release/**"
+                                archiveArtifacts artifacts: "${artifactPath}", allowEmptyArchive: true, fingerprint: true
                             }
                         }
                     }
-
-                    stage('Archive') {
-                        steps {
-                            script {
-                                if (env.OS == 'windows') {
-                                    cleanCPPBuildDir("out/build/x64-${BUILD_TYPE}-win", "package-${BUILD_TYPE}-win", BUILD_TYPE == "debug")
-                                    archiveArtifacts artifacts: "package-${BUILD_TYPE}-win/**", fingerprint: true
-                                } else {
-                                    cleanCPPBuildDir("out/build/x64-${BUILD_TYPE}-linux", "package-${BUILD_TYPE}-linux", BUILD_TYPE == "debug")
-                                    archiveArtifacts artifacts: "package-${BUILD_TYPE}-linux/**", fingerprint: true
-                                }
-                            }
-                        }
-                    }
-
-                    stage("Stash") {
-                        when {
-                            expression { BUILD_TYPE == "release" }
-                        }
-                        steps {
-                            script {
-                                if (env.OS == 'windows') {
-                                    stash name: 'winbuild', includes: 'package-release-win/**'
-                                } else {
-                                    stash name: 'linuxbuild', includes: 'package-release-linux/**'
-                                }
-                            }
-                        }
-                    }
-                } 
-            } 
+                }
+            }
         }
-
-        stage("Post-matrix parallel tasks") {
-            parallel {
-                stage("Build docker server container") {
-                    agent { label 'docker-linux' }
-                    steps {
-                        checkout scm
-                        dir('out/build') {
-                            sh "rm -rf x64-release-linux"
-                            sh "rm -rf package-release-linux"
-                            unstash 'linuxbuild'
-                            sh "mv package-release-linux x64-release-linux"
-                        }
-                        sh "docker build -t pragmabackend:latest ."
+        stage("Compile backend docker image"){
+            agent { label 'docker-linux' }
+            steps {
+                checkout scm
+                sh "docker build -t pragmabackend:latest -f Backend.dockerfile ."
+                script {
+                    if (env.BRANCH_NAME == 'master'){
+                        sh "docker tag pragmabackend:latest registry.bgfamily.ca/pragmabackend:latest"
+                        sh "docker push registry.bgfamily.ca/pragmabackend:latest"
                         sh "docker tag pragmabackend:latest ohmivr/pragmabackend:latest"
-                        sh "docker push ohmivr/pragmabackend:latest"
-                        sh "docker save pragmabackend:latest -o pragmabackend-docker.tar"
-                        archiveArtifacts artifacts: 'pragmabackend-docker.tar', fingerprint: true
-                        sh "rm pragmabackend-docker.tar"
-                    }
-                }
-
-                stage("Code formatter") {
-                    agent { label 'linux' }
-                    steps {
-                        script {
-                            checkout scm
-                            sh """
-                                FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
-                                clang-format -i \$FILES main.cpp
-                            """
-                            sh """
-                                if ! git diff --quiet; then
-                                    git diff > clang-format.patch
-                                    echo "Patch created, apply the patch from the artifacts section to fix"
-                                else
-                                    echo "No changes required"
-                                fi
-                            """
-                            if (fileExists('clang-format.patch')) {
-                                archiveArtifacts artifacts: 'clang-format.patch', fingerprint: true
-                                sh "rm clang-format.patch"
-                                error("Formatting changes required")
-                            }
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]){
+                            sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                            sh "docker push ohmivr/pragmabackend:latest"
+                            sh "docker logout"
                         }
                     }
                 }
-
-                stage("Code linter") {
-                    agent { label 'linux' }
-                    options { throttle(['RamIntensiveJob']) }
-                    steps {
-                        script {
-                            checkout scm
-                            sh "git submodule sync --recursive"
-                            sh "git submodule update --init --recursive"
-                            sh "cmake --preset x64-debug-linux"
-                            sh "cmake --build out/build/x64-debug-linux --target generate_protos"
-
-                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                sh """
-                                    FILES=\$(find . -type f -regex '\\./\\(Packets\\|Persistence\\|tests\\)/.*\\.\\(h\\|cpp\\)\$')
-                                    run-clang-tidy \$FILES main.cpp -fix -p out/build/x64-debug-linux -extra-arg=-Werror
-                                """
-                            }
-                            sh """
-                                if ! git diff --quiet; then
-                                    git diff > clang-tidy.patch
-                                    echo "Patch created, apply the patch from the artifacts section to fix"
-                                else
-                                    echo "No changes required"
-                                fi
-                            """
-                            if (fileExists('clang-tidy.patch')) {
-                                archiveArtifacts artifacts: 'clang-tidy.patch', fingerprint: true
-                                sh "rm clang-tidy.patch"
-                                error("Linter changes required")
-                            }
-                        }
-                    }
-                }
-
-                stage("Unit tests - Linux") {
-                    agent { label 'linux' }
-                    steps {
-                        script {
-                            sh "mkdir -p testdir"
-                            sh "rm -rf testdir/package-release-linux"
-                            dir('testdir') {
-                                unstash 'linuxbuild'
-                            }
-                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                sh "testdir/package-release-linux/tests/tests"
-                            }
-                            sh "pkill -9 pragmabackend || true"
-                        }
-                    }
-                }
-
-                stage("Unit tests - Windows") {
-                    agent { label 'windows' }
-                    steps {
-                        script {
-                            bat "if not exist testdir mkdir testdir"
-                            dir('testdir') {
-                                unstash 'winbuild'
-                            }
-                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                bat "testdir\\package-release-win\\tests\\tests.exe"
-                            }
-                            bat "taskkill /f /im pragmabackend.exe || exit 0"
-                        }
-                    }
-                }
-            } 
+            }
         }
-    } 
+        stage("Compile database docker image"){
+            agent { label 'docker-linux' }
+            steps {
+                checkout scm
+                sh "docker build -t pragmabackend-pgdb:latest -f Postgres.dockerfile ."
+                script {
+                    if (env.BRANCH_NAME == 'master'){
+                        sh "docker tag pragmabackend-pgdb:latest registry.bgfamily.ca/pragmabackend-pgdb:latest"
+                        sh "docker push registry.bgfamily.ca/pragmabackend-pgdb:latest"
+                        sh "docker tag pragmabackend-pgdb:latest ohmivr/pragmabackend-pgdb:latest"
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]){
+                            sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                            sh "docker push ohmivr/pragmabackend-pgdb:latest"
+                            sh "docker logout"
+                        }
+                    }
+                }
+            }
+        }
+        stage("Run tests"){
+            agent { label 'docker-linux-dind' }
+            steps {
+                checkout scm
+                sh 'dotnet restore'
+                sh 'dotnet build --configuration Release /m:1 /p:UseSharedCompilation=false /nodeReuse:false'
+                sh 'dotnet test --configuration Release'
+            }
+        }
+    }
 
     post {
         always {

@@ -1,0 +1,9 @@
+{
+  "version": 0,
+  "fontSize": 39,
+  "backgroundOpacity": 0.20000000298023224,
+  "speakerQualifierDisplay": "Name",
+  "postPlayerSubtitles": true,
+  "postPlayerSubtitlesToChat": false,
+  "namesToShowMask": 3
+}

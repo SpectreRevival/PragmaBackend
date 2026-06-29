@@ -1,0 +1,23 @@
+{
+  "Version": 0,
+  "ColorVisionType": "NormalVision",
+  "Severity": 1,
+  "CorrectDeficiency": true,
+  "ShowCorrectDeficiency": true,
+  "UseComfortSwapEffect": false,
+  "UseCustomOutlineColor": false,
+  "OutlineColor": {
+    "b": 36,
+    "g": 120,
+    "r": 197,
+    "a": 255
+  },
+  "OutlineColorLower": {
+    "b": 36,
+    "g": 120,
+    "r": 197,
+    "a": 255
+  },
+  "OutlineThicknessScale": 1,
+  "OutlineBrightnessScale": 1
+}

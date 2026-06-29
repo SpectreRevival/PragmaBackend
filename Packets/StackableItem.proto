@@ -1,0 +1,8 @@
+syntax = "proto3";
+package Packets;
+
+message StackableItem {
+	string catalogId = 1;
+	string instanceId = 2;
+	string amount = 3;
+}

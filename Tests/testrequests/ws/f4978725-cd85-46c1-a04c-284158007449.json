@@ -1,0 +1,174 @@
+{
+  "requestBody": {
+    "playerId": "$PLAYER_ID"
+  },
+  "responsePayload": {
+    "loadouts": [
+      {
+        "faceStyleData": {
+          "attachmentItemCatalogId": "",
+          "attachmentItemInstanceId": "",
+          "alterationData": [
+            {
+              "channelId": "Color",
+              "alterationId": "Option1"
+            }
+          ],
+          "itemCatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_001",
+          "itemInstanceId": "*",
+          "itemType": ""
+        },
+        "faceAccessoryData": {
+          "alterationData": [],
+          "attachmentItemCatalogId": "",
+          "attachmentItemInstanceId": "",
+          "itemCatalogId": "CharacterCosmeticItemSimple:HAccessoryID_M_Prince",
+          "itemInstanceId": "*",
+          "itemType": ""
+        },
+        "hairData": {
+          "alterationData": [
+            {
+              "alterationId": "Option7",
+              "channelId": "Color"
+            }
+          ],
+          "attachmentItemCatalogId": "",
+          "attachmentItemInstanceId": "",
+          "itemCatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0016",
+          "itemInstanceId": "*",
+          "itemType": ""
+        },
+        "headData": {
+          "alterationData": [
+            {
+              "alterationId": "Option5",
+              "channelId": "SkinTone"
+            },
+            {
+              "alterationId": "Option3",
+              "channelId": "LipColor"
+            },
+            {
+              "alterationId": "Option6",
+              "channelId": "EyeColor"
+            },
+            {
+              "alterationId": "Option4",
+              "channelId": "EyebrowColor"
+            },
+            {
+              "alterationId": "Option5",
+              "channelId": "Voice"
+            }
+          ],
+          "attachmentItemCatalogId": "",
+          "attachmentItemInstanceId": "",
+          "itemCatalogId": "CharacterCosmeticItemHead:HeadID_Face_003",
+          "itemInstanceId": "*",
+          "itemType": ""
+        },
+        "loadoutId": "*",
+        "outfitData": {
+          "alterationData": [
+            {
+              "alterationId": "Option1",
+              "channelId": "Color"
+            }
+          ],
+          "attachmentItemCatalogId": "",
+          "attachmentItemInstanceId": "",
+          "itemCatalogId": "CharacterCosmeticItemOutfit:OutfitID_F_Default",
+          "itemInstanceId": "*",
+          "itemType": ""
+        },
+        "playerId": "*"
+      },
+      {
+        "faceStyleData": {
+          "attachmentItemCatalogId": "",
+          "attachmentItemInstanceId": "",
+          "alterationData": [
+            {
+              "channelId": "Color",
+              "alterationId": "Option1"
+            }
+          ],
+          "itemCatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_001",
+          "itemInstanceId": "*",
+          "itemType": ""
+        },
+        "faceAccessoryData": {
+          "alterationData": [],
+          "attachmentItemCatalogId": "",
+          "attachmentItemInstanceId": "",
+          "itemCatalogId": "CharacterCosmeticItemSimple:HAccessoryID_M_Prince",
+          "itemInstanceId": "*",
+          "itemType": ""
+        },
+        "hairData": {
+          "alterationData": [
+            {
+              "alterationId": "Option7",
+              "channelId": "Color"
+            }
+          ],
+          "attachmentItemCatalogId": "",
+          "attachmentItemInstanceId": "",
+          "itemCatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0016",
+          "itemInstanceId": "*",
+          "itemType": ""
+        },
+        "headData": {
+          "alterationData": [
+            {
+              "alterationId": "Option5",
+              "channelId": "SkinTone"
+            },
+            {
+              "alterationId": "Option3",
+              "channelId": "LipColor"
+            },
+            {
+              "alterationId": "Option6",
+              "channelId": "EyeColor"
+            },
+            {
+              "alterationId": "Option4",
+              "channelId": "EyebrowColor"
+            },
+            {
+              "alterationId": "Option5",
+              "channelId": "Voice"
+            }
+          ],
+          "attachmentItemCatalogId": "",
+          "attachmentItemInstanceId": "",
+          "itemCatalogId": "CharacterCosmeticItemHead:HeadID_Face_003",
+          "itemInstanceId": "*",
+          "itemType": ""
+        },
+        "loadoutId": "*",
+        "outfitData": {
+          "alterationData": [
+            {
+              "alterationId": "Option1",
+              "channelId": "Color"
+            }
+          ],
+          "attachmentItemCatalogId": "",
+          "attachmentItemInstanceId": "",
+          "itemCatalogId": "CharacterCosmeticItemOutfit:OutfitID_F_Default",
+          "itemInstanceId": "*",
+          "itemType": ""
+        },
+        "playerId": "*"
+      }
+    ],
+    "message": [
+      "Loadouts: 2"
+    ]
+  },
+  "rpcType": "MtnLoadoutServiceRpc.FetchPlayerOutfitLoadoutsV1Request",
+  "testAge": 1740507430.624
+}

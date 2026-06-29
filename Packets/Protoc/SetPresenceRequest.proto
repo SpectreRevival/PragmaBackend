@@ -1,8 +1,0 @@
-syntax = "proto3";
-import "PlayerPresence.proto";
-
-message SetPresenceRequest {
-    PlayerBasicPresence basicPresence = 1;
-    string gameShardId = 2;
-    PlayerPresenceExt requestExt = 3;
-}

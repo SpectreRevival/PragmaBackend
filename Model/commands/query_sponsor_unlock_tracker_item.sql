@@ -1,0 +1,1 @@
+SELECT instance_id, catalog_id, owning_player_id, viewed, sponsor_name FROM instanced_items WHERE instance_id = @instance_id LIMIT 1;

@@ -1,0 +1,1 @@
+SELECT * FROM parties WHERE party_id = @party_id LIMIT 1;

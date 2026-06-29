@@ -1,0 +1,7 @@
+syntax = "proto3";
+package Packets;
+
+message SetReadyMessage {
+	bool ready = 1;
+	string partyId = 2;
+}

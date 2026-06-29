@@ -1,123 +1,41 @@
+Emulates the backend service made by Pragma for the game spectre divide.
 
+# Recommended Tools
+- Visual Studio (either 2022 or 2026)
+- pgAdmin 4
+- Docker desktop
+# Overview of Projects / Submodules
 
-# Spectre Divide's Custom Metagame Backend Server
-# made by @OhmV-IR and @AstroVal0
+## Model
+- our internal representation of the backend's data structures
+- has embedded json unpacked
+- has stuff like port numbers being doubles fixed
+- most classes are designed to be SQL tables with player ids as primary key
+- these are the structures that we will be passing around in the backend
 
-> **Status:** on pause for now. PRs welcome.
+## Packets
+- spectre's representation of the backend data structures
+- basically just the protobuf classes we had before
+- contains constructors to convert from Model classes to Packet classes
+- what actually gets sent / serialized to JSON
+- Also has functions to go from packet to model classes for receiving update packets
 
-# Check out the Wiki!
+## Persistence
+- Pushing model classes to the database
+- Receiving model classes from the database
+- Might make this an interface class so we can support multiple backends (ie SQLite for testing / ease of use and Postgres for prod)
 
-## What this repo contains
+## BackendServer
+- Packet processors
+- Commands (eg making one user friends with another)
+- Responds to requests 
 
-- HTTP handlers (some static, some dynamic)
-- WebSocket RPC handlers (static + a few dynamic processors)
-- SQLiteCpp
-- Protobuf models
-- vcpkg manifest dependencies (repo includes `vcpkg` as a submodule)
-
-## Requirements
-
-This is currently set up primarily for **Windows** (can build for linux, check prod branch):
-
-- Windows 10+ (targeted)
-- Visual Studio / MSVC toolchain (or clang-cl) https://visualstudio.microsoft.com/downloads/?q=build+tools#build-tools-for-visual-studio-2026
-
-> Dependency management is via **vcpkg** (manifest mode). You need to build with the vcpkg toolchain file enabled.
-
-You can follow this tutorial if you want (make sure to read about the configuration first)
-NOTE: as of 7th May 2026 you no longer need a steam api key or an auth.json. you only need an auth.json if you wish to use vivox voice and chat backend.
-https://youtu.be/j1DOWg2PbLA
-
-## Clone
-
-git clone https://github.com/astroval0/pragmabackend
-cd pragmabackend
-git submodule update --init --recursive
-
-### Vivox-Voice Configuration
-
-If you'd like to set up Vivox-Voice chat server (Spectre's text and voice chat backend)
-
-You'll need to make an auth.json at the repo root and fill it out with the respective values.
-
-https://unity.com/products/vivox
-
-```json
-{
-  "vivox": {
-    "server": "",
-    "domain": "",
-    "issuer": "",
-    "key": ""
-  }
-}
-```
-
-> **Do not commit `auth.json` lol.**
-
-## Build
-
-
-
-### Recommended: JetBrains CLion (Windows)
-
-In **Settings -> Build, Execution, Deployment -> CMake**, set:
-
-* **Generator:** Ninja (default is fine)
-* **CMake options:** set the vcpkg toolchain file, e.g.
-* * if your absolute path is `E:\dev\spectre\srv\pragmabackend` then your toolchain file path is
-  * `E:\dev\spectre\srv\pragmabackend\vcpkg\scripts\buildsystems\vcpkg.cmake`
-
-```
--DCMAKE_TOOLCHAIN_FILE="<path>"
-```
-
-
-## Run
-
-Logs are written to `logs/app.log`.
-
-## Default ports
-
-By default the server starts three listeners:
-
-* **Game HTTP:** `http://127.0.0.1:8081`
-* **Social HTTP:** `http://127.0.0.1:8082`
-* **WebSocket:** `ws://127.0.0.1:80`
-
-## Client / launcher
-
-Any client needs to point at the backend address:
-
-* `http://127.0.0.1:8081` (game)
-* `http://127.0.0.1:8082` (social)
-
-This project is meant for local, but you can forward it publicly.
-
-## Contributing
-
-PRs welcome. If you contribute:
-
-* keep changes focused (one feature/fix per PR)
-* don't commit secrets (`auth.json`, tokens, private keys)
-* include a quick note on how to test the change locally
-
-## Troubleshooting
-
-**CMake can't find packages**
-
-* You probably forgot the vcpkg toolchain file. Set `-DCMAKE_TOOLCHAIN_FILE="<your absolute path plus \vcpkg\scripts\buildsystems\vcpkg.cmake > "`.
-* * if your absolute path is `E:\dev\spectre\srv\pragmabackend` then your toolchain file path is `E:\dev\spectre\srv\pragmabackend\vcpkg\scripts\buildsystems\vcpkg.cmake`
- 
-**failed to open InventoryStore file**
-* you didn't follow the instructions properly so it couldn't build fully.
-
-**Port already in use**
-
-* Change the port defines and rebuild. Make sure whatever client you use is updated too.
-
-**failed to read PlayerConfigData in SavePlayerDataProcessor**
-* Press WIN+R -> type in `%localappdata%` -> press enter -> delete the `Spectre` folder.
-
-### Using a published release
-You may download a public build of the backend from the [latest release](https://github.com/SpectreRevival/pragmabackend/releases/latest). This will contain a build for windows, linux and a docker container image. For windows or linux, simply extract the .zip and run the executable named pragmabackend inside. For the docker container, run `docker image load -i pragmabackend-docker.tar` and then `docker run -d -p 80:80 -p 8081:8081 -p 8082:8082 pragmabackend:latest`
+# Development guide / setup workflow
+1. With your ide of choice open the solution and get it to build. You can also rename env.example.json to env.json if you want to use the json configuration secrets file.
+2. `cd Docker`
+3. On windows, `copy .env.example .env` or on linux `cp .env.example .env`
+4. `docker build -t pragmabackend:latest -f Backend.dockerfile ..`
+5. `docker build -t pragmabackend-pgdb:latest -f Postgres.dockerfile .`
+6. `docker compose up` Note that you can add the -d flag to this command if you would like your terminal to detach from the console view.
+7. When finished, `docker compose down` will stop the application while preserving data while `docker compose down -v` will stop the application and remove all data.
+If you want to only start the database, use `docker compose up backend-pgdb` and `docker compose down backend-pgdb`

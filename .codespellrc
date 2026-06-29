@@ -1,4 +1,0 @@
-[codespell]
-skip = .git,out,vcpkg,__fiddler_captures,resources
-count =
-quiet-level = 1

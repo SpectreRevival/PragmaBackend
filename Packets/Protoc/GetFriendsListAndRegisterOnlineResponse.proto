@@ -1,6 +1,0 @@
-syntax = "proto3";
-import "FriendsList.proto";
-
-message GetFriendsListAndRegisterOnlineResponse {
-    FriendsList friendList = 1;
-}

@@ -1,0 +1,6 @@
+syntax = "proto3";
+package Packets;
+
+message EnterMatchmakingRequest {
+	string partyId = 1;
+}
