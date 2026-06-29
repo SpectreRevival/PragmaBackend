@@ -6,7 +6,7 @@ namespace Model;
 public record class PartyMember : IEquatable<PartyMember>
 {
     [SetsRequiredMembers]
-    public PartyMember(Guid playerId, bool isReady, bool isLeader, string preferredTeam, bool rankedModeUnlocked, long partyMemberVersion)
+    public PartyMember(Guid playerId, bool isReady, bool isLeader, string preferredTeam, bool rankedModeUnlocked, Int64 partyMemberVersion, string region = "")
     {
         PlayerId = playerId;
         IsReady = isReady;
@@ -14,6 +14,7 @@ public record class PartyMember : IEquatable<PartyMember>
         PreferredTeam = preferredTeam ?? throw new ArgumentNullException(nameof(preferredTeam));
         RankedModeUnlocked = rankedModeUnlocked;
         PartyMemberVersion = partyMemberVersion;
+        Region = region ?? throw new ArgumentNullException(nameof(region));
     }
 
     [PgName("player_id")]
@@ -27,7 +28,9 @@ public record class PartyMember : IEquatable<PartyMember>
     [PgName("ranked_mode_unlocked")]
     public required bool RankedModeUnlocked { get; set; }
     [PgName("party_member_version")]
-    public required long PartyMemberVersion { get; set; }
+    public required Int64 PartyMemberVersion { get; set; }
+    [PgName("region")]
+    public required string Region { get; set; }
 
     public virtual bool Equals(PartyMember? other)
     {
@@ -36,7 +39,8 @@ public record class PartyMember : IEquatable<PartyMember>
             && IsLeader == other.IsLeader
             && PreferredTeam == other.PreferredTeam
             && RankedModeUnlocked == other.RankedModeUnlocked
-            && PartyMemberVersion == other.PartyMemberVersion));
+            && PartyMemberVersion == other.PartyMemberVersion
+            && Region == other.Region;
     }
 
     public override int GetHashCode()
@@ -48,6 +52,7 @@ public record class PartyMember : IEquatable<PartyMember>
         hash.Add(PreferredTeam);
         hash.Add(RankedModeUnlocked);
         hash.Add(PartyMemberVersion);
+        hash.Add(Region);
         return hash.ToHashCode();
     }
 }

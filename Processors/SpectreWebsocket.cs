@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using Serilog;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.WebSockets;
@@ -9,13 +10,18 @@ using System.Text.Json;
 
 namespace Processors;
 
+public record class SpectreWebsocketNotification(SpectreRpcType RpcType, SpectreWebsocketMessage Payload);
+
 public class SpectreWebsocket
 {
+    private static readonly ConcurrentDictionary<Guid, SpectreWebsocket> ConnectionsByPlayerId = new();
     public required Guid PlayerId { get; init; }
     private WebSocket Socket { get; init; }
     private int sequenceId = 0;
     private readonly SemaphoreSlim sendLock = new(1, 1);
-    private static readonly int MAX_BUFFER_SIZE = 32 * 1024 * 1024;
+    private readonly List<SpectreWebsocketNotification> postResponseNotifications = new();
+    private readonly object postResponseNotificationsLock = new();
+    private static readonly Int32 MAX_BUFFER_SIZE = 32 * 1024 * 1024;
 
     [SetsRequiredMembers]
     public SpectreWebsocket(HttpContext upgradeRequest, WebSocket webSocket)
@@ -39,6 +45,66 @@ public class SpectreWebsocket
             throw new InvalidDataException("No valid GUID on pragmaPlayerId claim");
         }
         PlayerId = (Guid)possiblePID;
+        ConnectionsByPlayerId[PlayerId] = this;
+    }
+
+    public void QueuePostResponseNotification(SpectreRpcType rpcType, SpectreWebsocketMessage payload)
+    {
+        lock (postResponseNotificationsLock)
+        {
+            postResponseNotifications.Add(new SpectreWebsocketNotification(rpcType, payload));
+        }
+    }
+
+    private List<SpectreWebsocketNotification> DrainPostResponseNotifications()
+    {
+        lock (postResponseNotificationsLock)
+        {
+            List<SpectreWebsocketNotification> notifications = new(postResponseNotifications);
+            postResponseNotifications.Clear();
+            return notifications;
+        }
+    }
+
+    public async Task SendNotificationAsync(SpectreRpcType rpcType, SpectreWebsocketMessage payload, CancellationToken cancellationToken = default)
+    {
+        await sendLock.WaitAsync(cancellationToken);
+        try
+        {
+            string fullMessage = "{\"sequenceNumber\":" + sequenceId.ToString() + ",\"notification\":{\"type\":\"" + rpcType.ToString() + "\",\"payload\":" + payload.GetData() + "}}";
+            await Socket.SendAsync(Encoding.UTF8.GetBytes(fullMessage), WebSocketMessageType.Text, true, cancellationToken);
+            sequenceId++;
+        }
+        finally
+        {
+            sendLock.Release();
+        }
+    }
+
+    public static async Task<bool> SendNotificationToPlayerAsync(Guid playerId, SpectreRpcType rpcType, SpectreWebsocketMessage payload, CancellationToken cancellationToken = default)
+    {
+        if (!ConnectionsByPlayerId.TryGetValue(playerId, out SpectreWebsocket? connection))
+        {
+            return false;
+        }
+
+        await connection.SendNotificationAsync(rpcType, payload, cancellationToken);
+        return true;
+    }
+
+    private async Task SendResponseAsync(SpectreWebsocketRequest request, SpectreWebsocketMessage payload, CancellationToken cancellationToken)
+    {
+        await sendLock.WaitAsync(cancellationToken);
+        try
+        {
+            string fullMessage = "{\"sequenceNumber\":" + sequenceId.ToString() + ",\"response\":{\"requestId\":" + request.RequestId.ToString() + ",\"type\":\"" + request.RpcType.GetResponseType().ToString() + "\",\"payload\":" + payload.GetData() + "}}";
+            await Socket.SendAsync(Encoding.UTF8.GetBytes(fullMessage), WebSocketMessageType.Text, true, cancellationToken);
+            sequenceId++;
+        }
+        finally
+        {
+            sendLock.Release();
+        }
     }
 
     public async Task HandleAsync(CancellationToken cancellationToken = default)
@@ -75,11 +141,11 @@ public class SpectreWebsocket
                     else
                     {
                         SpectreWebsocketMessage messageOut = await processor.ProcessPacket(wsReq, this);
-                        await sendLock.WaitAsync(cancellationToken);
-                        string fullMessage = "{\"sequenceNumber\":" + sequenceId.ToString() + ",\"response\":{\"requestId\":" + wsReq.RequestId.ToString() + ",\"type\":\"" + wsReq.RpcType.GetResponseType().ToString() + "\",\"payload\":" + messageOut.GetData() + "}}";
-                        Socket.SendAsync(Encoding.UTF8.GetBytes(fullMessage), WebSocketMessageType.Text, true, cancellationToken);
-                        sequenceId++;
-                        sendLock.Release();
+                        await SendResponseAsync(wsReq, messageOut, cancellationToken);
+                        foreach (SpectreWebsocketNotification notification in DrainPostResponseNotifications())
+                        {
+                            await SendNotificationAsync(notification.RpcType, notification.Payload, cancellationToken);
+                        }
                     }
                 }
                 else
@@ -94,6 +160,7 @@ public class SpectreWebsocket
         }
         finally
         {
+            ConnectionsByPlayerId.TryRemove(PlayerId, out _);
             sendLock.Dispose();
         }
     }
