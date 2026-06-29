@@ -56,16 +56,7 @@ public class UpdateItemsProcessor : WebsocketPacketProcessor, IWebsocketPacketPr
         }
         packet.DebugSeasonOffsetMillis = "0";
         Model.SeasonEntry entry = await Model.SeasonEntry.RetrieveFromDatabase(1);
-        Packets.SeasonEntry itemEntry = new()
-        {
-            SeasonNumber = entry.SeasonNumber,
-            StartTimestampMillis = entry.StartTime.ToUnixTimeMilliseconds().ToString(),
-            EndTimestampMillis = entry.EndTime.ToUnixTimeMilliseconds().ToString(),
-            LastWeekEndTimestampMillis = entry.LastWeekEnd.ToUnixTimeMilliseconds().ToString(),
-            FirstWeekStartTimestampMillis = entry.FirstWeekStart.ToUnixTimeMilliseconds().ToString(),
-            NumberOfWeeksInSeason = entry.NumberOfWeeksInSeason
-        };
-        packet.SeasonEntry = itemEntry;
+        packet.SeasonEntry = entry.ToPacket();
         return packet;
     }
 

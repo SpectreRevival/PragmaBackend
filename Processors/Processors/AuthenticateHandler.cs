@@ -72,7 +72,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         }
 
         // the jwt carries displayName, so the steam persona name has to be resolved and persisted before we build it.
-        string? steamApiKey = Request.RequestServices.GetRequiredService<IConfiguration>()["STEAM_WEB_API_KEY"];
+        string? steamApiKey = PostgresDatabase.Get().GetConfiguration()["STEAM_WEB_API_KEY"];
         if (!string.IsNullOrWhiteSpace(steamApiKey))
         {
             string? personaName = await ResolveSteamPersonaName(ticket.SteamId64, steamApiKey);

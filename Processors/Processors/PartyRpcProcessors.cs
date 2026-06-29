@@ -333,40 +333,12 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
             PlayerId = profile.PlayerId.ToString(),
             LoadoutId = profile.DefenderWeaponLoadoutId.ToString()
         };
-        data.AttackerOutfitLoadout = await CreatePacketOutfitLoadout(profile.AttackerOutfitLoadoutId);
-        data.DefenderOutfitLoadout = await CreatePacketOutfitLoadout(profile.DefenderOutfitLoadoutId);
+
+        data.AttackerOutfitLoadout = (await Model.OutfitLoadout.RetrieveFromDatabase(profile.AttackerOutfitLoadoutId)).ToPacket();
+        data.DefenderOutfitLoadout = (await Model.OutfitLoadout.RetrieveFromDatabase(profile.DefenderOutfitLoadoutId)).ToPacket();
         data.MatchmakingData = (await Model.PlayerMatchmakingData.RetrieveFromDatabase(profile.PlayerId)).ToPacket();
         data.Banner = await CreateFlatInstancedItem(profile.BannerItemId);
         return data;
-    }
-
-    private static async Task<OutfitLoadout> CreatePacketOutfitLoadout(Guid loadoutId)
-    {
-        Model.OutfitLoadout model = await Model.OutfitLoadout.RetrieveFromDatabase(loadoutId)
-                                    ?? throw new InvalidDataException($"No outfit loadout found for id {loadoutId}");
-
-        OutfitLoadout packet = new();
-        packet.PlayerId = model.PlayerId.ToString();
-        packet.LoadoutId = model.LoadoutId.ToString();
-        packet.HeadData = CreatePacketOutfitData(model.Head);
-        packet.HairData = CreatePacketOutfitData(model.Hair);
-        packet.FaceStyleData = CreatePacketOutfitData(model.FaceStyle);
-        packet.FaceAccessoryData = CreatePacketOutfitData(model.FaceAccessory);
-        packet.OutfitData = CreatePacketOutfitData(model.Outfit);
-        return packet;
-    }
-
-    private static OutfitData CreatePacketOutfitData(Model.OutfitData model)
-    {
-        OutfitData packet = new();
-        packet.ItemInstanceId = model.ItemInstanceId.ToString();
-        packet.ItemCatalogId = model.ItemCatalogId;
-        foreach (Model.ActiveAlterationData alteration in model.AlterationData)
-        {
-            packet.AlterationData.Add(CreatePacketActiveAlterationData(alteration));
-        }
-
-        return packet;
     }
 
     private static async Task<FlatInstancedItem> CreateFlatInstancedItem(Guid instanceId)
@@ -440,15 +412,6 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
         return items.ToArray();
     }
 
-    private static ActiveAlterationData CreatePacketActiveAlterationData(Model.ActiveAlterationData model)
-    {
-        return new ActiveAlterationData
-        {
-            ChannelId = model.ChannelId,
-            AlterationId = model.AlterationId
-        };
-    }
-
     private static async Task<bool> IsRankedModeUnlocked(Guid playerId)
     {
         Model.PlayerConfig? playerConfig = await Model.PlayerConfig.RetrieveFromDatabase(playerId);
@@ -501,13 +464,13 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
 
     private static string GetEnvString(string name, string defaultValue)
     {
-        string? value = Environment.GetEnvironmentVariable(name);
+        string? value = PostgresDatabase.Get().GetConfiguration()[name];
         return string.IsNullOrEmpty(value) ? defaultValue : value;
     }
 
     private static int GetEnvInt(string name, int defaultValue)
     {
-        string? value = Environment.GetEnvironmentVariable(name);
+        string? value = PostgresDatabase.Get().GetConfiguration()[name];
         return int.TryParse(value, out int parsed) ? parsed : defaultValue;
     }
 

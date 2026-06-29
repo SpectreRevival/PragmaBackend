@@ -13,18 +13,3 @@ BEGIN
 	END IF;
 END
 $$;
-
-DO $$
-BEGIN
-	IF NOT EXISTS (
-		SELECT 1
-		FROM pg_attribute a
-		JOIN pg_type t ON t.typrelid = a.attrelid
-		WHERE t.typname = 'partymember'
-		AND a.attname = 'region'
-		AND NOT a.attisdropped
-	) THEN
-		ALTER TYPE PartyMember ADD ATTRIBUTE region TEXT CASCADE;
-	END IF;
-END
-$$;
