@@ -1,4 +1,5 @@
 using Google.Protobuf;
+using Model;
 using Packets;
 using System.Diagnostics.CodeAnalysis;
 
@@ -6,11 +7,6 @@ namespace Processors.Processors;
 
 public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
-    // the item catalog that the client loads all item / cosmetic shit from.
-    // owned items come from the inventory service.
-    private static readonly string InventoryDataJson =
-        File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "staticdata", "login_inventorydata.json"));
-
     [SetsRequiredMembers]
     public GetLoginDataProcessor(SpectreRpcType rpcType) : base(rpcType)
     {
@@ -77,7 +73,7 @@ public class GetLoginDataProcessor : WebsocketPacketProcessor, IWebsocketPacketP
         playerConfigJson = playerConfigJson.Replace("\"", "\\\"");
         string extOnly = beforeData[0] + $"\"data\":\"{playerConfigJson}\"," + "\"matchmakingData\"" + afterData[1];
         
-        string finalString = extOnly[..^2] + ",\"inventoryData\":" + InventoryDataJson + "}}";
+        string finalString = extOnly[..^2] + ",\"inventoryData\":" + InventoryStore.Get().GetPacketString() + "}}";
         return SpectreWebsocketMessage.From(finalString);
     }
 }
