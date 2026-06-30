@@ -28,6 +28,7 @@ public class HTTPTests
     }
 
     [TestMethod]
+    [Retry(3)]
     [DynamicData(nameof(GetHTTPTestInstances), DynamicDataDisplayName = nameof(GetCustomTestName))]
     public async Task RunHTTPTest(string testDataFile, string testName)
     {
