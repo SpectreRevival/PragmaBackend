@@ -263,29 +263,25 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
     private static async Task<Model.ProfileData> CreateNewPlayerFromSteamId(string steamId)
     {
         Guid playerId = PlayerIdFromSteamId(steamId);
-        DefaultInventory defaultInv = JsonSerializer.Deserialize<DefaultInventory>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "Inventory.json")), new JsonSerializerOptions()
-        {
-            PropertyNameCaseInsensitive = true
-        });
-        foreach (Model.StackableItem stackableItem in defaultInv.StackableItems)
+        foreach (Model.StackableItem stackableItem in DefaultInventory.Get().StackableItems)
         {
             stackableItem.InstanceId = Guid.NewGuid();
             stackableItem.OwningPlayerId = playerId;
             await stackableItem.SyncToDatabase();
         }
-        foreach (CustomizedInstancedItem customizedInstancedItem in defaultInv.CustomizedInstancedItems)
+        foreach (CustomizedInstancedItem customizedInstancedItem in DefaultInventory.Get().CustomizedInstancedItems)
         {
             customizedInstancedItem.InstanceId = Guid.NewGuid();
             customizedInstancedItem.OwningPlayerId = playerId;
             await customizedInstancedItem.SyncToDatabase();
         }
-        foreach (ProgressionTrackingItem progressionTrackerItem in defaultInv.ProgresionTrackingItems)
+        foreach (ProgressionTrackingItem progressionTrackerItem in DefaultInventory.Get().ProgresionTrackingItems)
         {
             progressionTrackerItem.InstanceId = Guid.NewGuid();
             progressionTrackerItem.OwningPlayerId = playerId;
             await progressionTrackerItem.SyncToDatabase();
         }
-        foreach (SponsorUnlockTrackerItem sponsorTrackerItem in defaultInv.SponsorUnlockItems)
+        foreach (SponsorUnlockTrackerItem sponsorTrackerItem in DefaultInventory.Get().SponsorUnlockItems)
         {
             sponsorTrackerItem.InstanceId = Guid.NewGuid();
             sponsorTrackerItem.OwningPlayerId = playerId;

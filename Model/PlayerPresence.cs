@@ -2,11 +2,20 @@
 using Npgsql;
 using NpgsqlTypes;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
 public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Guid>, IEquatable<PlayerPresence>
 {
+    private static readonly PlayerPresence defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "PlayerPresence.json")))
+        .Deserialize<PlayerPresence>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter(), new UnixDateTimeOffsetConverter() }
+        });
+
     [SetsRequiredMembers]
     public PlayerPresence(Guid playerId, PlayerBasicPresence basicStatus, DateTimeOffset lastUpdatedTime, int advancedPresenceType, string advancedPresenceContext)
     {
@@ -75,9 +84,9 @@ public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Gu
         return hash.ToHashCode();
     }
 
-    public static PlayerPresence CreateDefault(Guid key)
+    public static PlayerPresence CreateDefault(Guid playerId)
     {
-        return new PlayerPresence(key, PlayerBasicPresence.Offline, DateTimeOffset.MinValue, 0, "");
+        return defaultData with { PlayerId = playerId };
     }
 }
 
