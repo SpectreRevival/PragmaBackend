@@ -5,7 +5,7 @@ namespace Model;
 
 public record class DefaultInventory
 {
-    private static readonly DefaultInventory defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "DefaultInventory.json")))
+    private static readonly DefaultInventory defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "Inventory.json")))
         .Deserialize<DefaultInventory>(new JsonSerializerOptions()
         {
             PropertyNameCaseInsensitive = true
