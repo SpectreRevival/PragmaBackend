@@ -7,10 +7,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using static Google.Protobuf.Reflection.FieldOptions.Types;
 
 namespace Processors;
-
-public record class SpectreWebsocketNotification(SpectreRpcType RpcType, SpectreWebsocketMessage Payload);
 
 public class SpectreWebsocket
 {
@@ -19,8 +18,6 @@ public class SpectreWebsocket
     private WebSocket Socket { get; init; }
     private int sequenceId = 0;
     private readonly SemaphoreSlim sendLock = new(1, 1);
-    private readonly List<SpectreWebsocketNotification> postResponseNotifications = [];
-    private readonly object postResponseNotificationsLock = new();
     private static readonly int MAX_BUFFER_SIZE = 32 * 1024 * 1024;
 
     [SetsRequiredMembers]
@@ -48,30 +45,12 @@ public class SpectreWebsocket
         ConnectionsByPlayerId[PlayerId] = this;
     }
 
-    public void QueuePostResponseNotification(SpectreRpcType rpcType, SpectreWebsocketMessage payload)
-    {
-        lock (postResponseNotificationsLock)
-        {
-            postResponseNotifications.Add(new SpectreWebsocketNotification(rpcType, payload));
-        }
-    }
-
-    private List<SpectreWebsocketNotification> DrainPostResponseNotifications()
-    {
-        lock (postResponseNotificationsLock)
-        {
-            List<SpectreWebsocketNotification> notifications = [.. postResponseNotifications];
-            postResponseNotifications.Clear();
-            return notifications;
-        }
-    }
-
-    public async Task SendNotificationAsync(SpectreRpcType rpcType, SpectreWebsocketMessage payload, CancellationToken cancellationToken = default)
+    public async Task SendNotificationAsync(SpectreRpcType rpcType, string payload, CancellationToken cancellationToken = default)
     {
         await sendLock.WaitAsync(cancellationToken);
         try
         {
-            string fullMessage = "{\"sequenceNumber\":" + sequenceId.ToString() + ",\"notification\":{\"type\":\"" + rpcType.ToString() + "\",\"payload\":" + payload.GetData() + "}}";
+            string fullMessage = "{\"sequenceNumber\":" + sequenceId.ToString() + ",\"notification\":{\"type\":\"" + rpcType.ToString() + "\",\"payload\":" + payload + "}}";
             await Socket.SendAsync(Encoding.UTF8.GetBytes(fullMessage), WebSocketMessageType.Text, true, cancellationToken);
             sequenceId++;
         }
@@ -81,7 +60,22 @@ public class SpectreWebsocket
         }
     }
 
-    public static async Task<bool> SendNotificationToPlayerAsync(Guid playerId, SpectreRpcType rpcType, SpectreWebsocketMessage payload, CancellationToken cancellationToken = default)
+    public async Task SendNotificationAsync(WebsocketNotification notif, CancellationToken cancellationToken = default)
+    {
+        await sendLock.WaitAsync(cancellationToken);
+        try
+        {
+            string fullMessage = "{\"sequenceNumber\":" + sequenceId.ToString() + ",\"notification\":{\"type\":\"" + notif.GetRpcType().ToString() + "\",\"payload\":" + notif.GetData() + "}}";
+            await Socket.SendAsync(Encoding.UTF8.GetBytes(fullMessage), WebSocketMessageType.Text, true, cancellationToken);
+            sequenceId++;
+        }
+        finally
+        {
+            sendLock.Release();
+        }
+    }
+
+    public static async Task<bool> SendNotificationToPlayerAsync(Guid playerId, SpectreRpcType rpcType, string payload, CancellationToken cancellationToken = default)
     {
         if (!ConnectionsByPlayerId.TryGetValue(playerId, out SpectreWebsocket? connection))
         {
@@ -89,6 +83,16 @@ public class SpectreWebsocket
         }
 
         await connection.SendNotificationAsync(rpcType, payload, cancellationToken);
+        return true;
+    }
+    public static async Task<bool> SendNotificationToPlayerAsync(Guid playerId, WebsocketNotification notif, CancellationToken cancellationToken = default)
+    {
+        if (!ConnectionsByPlayerId.TryGetValue(playerId, out SpectreWebsocket? connection))
+        {
+            return false;
+        }
+
+        await connection.SendNotificationAsync(notif, cancellationToken);
         return true;
     }
 
@@ -142,9 +146,9 @@ public class SpectreWebsocket
                     {
                         SpectreWebsocketMessage messageOut = await processor.ProcessPacket(wsReq, this);
                         await SendResponseAsync(wsReq, messageOut, cancellationToken);
-                        foreach (SpectreWebsocketNotification notification in DrainPostResponseNotifications())
+                        foreach(WebsocketNotification notif in messageOut.GetNotifications())
                         {
-                            await SendNotificationAsync(notification.RpcType, notification.Payload, cancellationToken);
+                            await SendNotificationAsync(notif.GetRpcType(), notif.GetData());
                         }
                     }
                 }
