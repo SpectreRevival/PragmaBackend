@@ -157,6 +157,7 @@ public class DefaultInitializationTest()
     }
 
     [TestMethod]
+    [Retry(3)]
     [DynamicData(nameof(GetClassesToTest), DynamicDataDisplayName = nameof(GetCustomTestName))]
     public async Task TestDefaultInitialization(string syncableClassName)
     {

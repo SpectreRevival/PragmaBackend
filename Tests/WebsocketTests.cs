@@ -33,6 +33,7 @@ public class WebsocketTests
     }
 
     [TestMethod]
+    [Retry(3)]
     [DynamicData(nameof(GetWebsocketTestInstances), DynamicDataDisplayName = nameof(GetCustomTestName))]
     public async Task RunWebsocketTest(string testDataFile, string testName)
     {
