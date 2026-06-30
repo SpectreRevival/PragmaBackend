@@ -8,6 +8,12 @@ namespace Model;
 
 public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid>, IEquatable<WeaponLoadout>, IInterchangeable<WeaponLoadout, Packets.WeaponLoadout>
 {
+    private static readonly WeaponLoadout defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "WeaponLoadout.json")))
+        .Deserialize<WeaponLoadout>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
     [SetsRequiredMembers]
     public WeaponLoadout(Guid playerId, Guid loadoutId, WeaponData semiAutoPistol, WeaponData suppressedPistol, WeaponData autoPistol, WeaponData highcalPistol, WeaponData heavyShotgun, WeaponData autoShotgun, WeaponData tacticalSMG, WeaponData rapidfireSMG, WeaponData suppressedSMG, WeaponData standardAR, WeaponData semiAutoAR, WeaponData burstAR, WeaponData tacticalAR, WeaponData suppressedAR, WeaponData heavyAR, WeaponData highcalMG, WeaponData rapidfireMG, WeaponData semiAutoSniper, WeaponData boltActionSniper, WeaponData melee)
     {
@@ -178,15 +184,7 @@ public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid
 
     public static WeaponLoadout CreateDefault(Guid playerId)
     {
-        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "WeaponLoadout.json")));
-        defaultJson[nameof(PlayerId)] = playerId;
-        JsonSerializerOptions options = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-        WeaponLoadout defaultValue = defaultJson.Deserialize<WeaponLoadout>(options);
-        defaultValue.LoadoutId = Guid.NewGuid();
-        return defaultValue;
+        return defaultData with { PlayerId = playerId, LoadoutId = Guid.NewGuid() };
     }
 
     public static WeaponLoadout FromPacket(Packets.WeaponLoadout inst)

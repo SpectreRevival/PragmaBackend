@@ -8,6 +8,12 @@ namespace Model;
 
 public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid>, IEquatable<OutfitLoadout>, IInterchangeable<OutfitLoadout, Packets.OutfitLoadout>
 {
+    private static readonly OutfitLoadout defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "OutfitLoadout.json")))
+        .Deserialize<OutfitLoadout>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
     [SetsRequiredMembers]
     public OutfitLoadout(Guid playerId, Guid loadoutId, OutfitData head, OutfitData hair, OutfitData faceStyle, OutfitData faceAccessory, OutfitData outfit)
     {
@@ -90,15 +96,7 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
 
     public static OutfitLoadout CreateDefault(Guid playerId)
     {
-        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "OutfitLoadout.json")));
-        defaultJson[nameof(PlayerId)] = playerId;
-        JsonSerializerOptions options = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-        OutfitLoadout defaultValue = defaultJson.Deserialize<OutfitLoadout>(options);
-        defaultValue.LoadoutId = Guid.NewGuid();
-        return defaultValue;
+        return defaultData with { PlayerId = playerId, LoadoutId = Guid.NewGuid() };
     }
 
     public static OutfitLoadout FromPacket(Packets.OutfitLoadout inst)

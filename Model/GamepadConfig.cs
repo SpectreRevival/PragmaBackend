@@ -8,6 +8,13 @@ namespace Model;
 
 public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<GamepadConfig, Guid>, IEquatable<GamepadConfig>, IInterchangeableKeyed<GamepadConfig, Packets.GamepadConfig, Guid>
 {
+    private static readonly GamepadConfig defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "GamepadConfig.json")))
+        .Deserialize<GamepadConfig>(
+        new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
     [SetsRequiredMembers]
     public GamepadConfig(Guid playerId, int inputSchemeIndex, int gamepadGlyphIndex, int lookPresetIndex, LookConfig customLookConfig, ResponseCurve customResponseCurve, bool invertLook, int controllerFeedbackValue, bool turnAccel, bool aimAssist, int responseCurveIndex, double responseCurveArcDeg, double responseCurveSlope, double responseCurveLinearBlendPow, double customScaleADS, bool toggleCrouch, bool toggleWalk, bool togglePlantDefuse, bool toggleADS, string endWalkWhenFiringBehavior, double aDSTriggerThreshold, string deadZoneMoveAmount, double customDeadZoneMoveAmount, string deadZoneLookAmount, double customDeadZoneLookAmount, double walkRunDeflectionThreshold, long version) : base(version)
     {
@@ -206,13 +213,7 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
 
     public static GamepadConfig CreateDefault(Guid playerId)
     {
-        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "GamepadConfig.json")));
-        defaultJson[nameof(PlayerId)] = playerId;
-        JsonSerializerOptions options = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-        return defaultJson.Deserialize<GamepadConfig>(options);
+        return defaultData with { PlayerId = playerId };
     }
 
     public static GamepadConfig FromPacket(Packets.GamepadConfig inst, Guid id)

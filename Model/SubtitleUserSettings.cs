@@ -8,6 +8,12 @@ namespace Model;
 
 public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefault<SubtitleUserSettings, Guid>, IEquatable<SubtitleUserSettings>, IInterchangeableKeyed<SubtitleUserSettings, Packets.SubtitleUserSettings, Guid>
 {
+    private static readonly SubtitleUserSettings defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "SubtitleUserSettings.json")))
+        .Deserialize<SubtitleUserSettings>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
     [SetsRequiredMembers]
     public SubtitleUserSettings(Guid playerId, int fontSize, double backgroundOpacity, string speakerQualifierDisplay, bool postPlayerSubtitles, bool postPlayerSubtitlesToChat, int namesToShowMask, long version) : base(version)
     {
@@ -94,13 +100,7 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
 
     public static SubtitleUserSettings CreateDefault(Guid playerId)
     {
-        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "SubtitleUserSettings.json")));
-        defaultJson[nameof(PlayerId)] = playerId;
-        JsonSerializerOptions options = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-        return defaultJson.Deserialize<SubtitleUserSettings>(options);
+        return defaultData with { PlayerId = playerId };
     }
 
     public static SubtitleUserSettings FromPacket(Packets.SubtitleUserSettings inst, Guid id)

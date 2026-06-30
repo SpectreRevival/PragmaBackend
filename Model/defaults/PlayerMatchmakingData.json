@@ -1,0 +1,18 @@
+{
+  "PlayerId": "00000000-0000-0000-0000-000000000000",
+  "CasualMMR": 0.0,
+  "RankedMMR": 0.0,
+  "SoloRankPoints": 0,
+  "CasualMatchesPlayed": 0,
+  "RankedMatchesPlayed": 0,
+  "CasualMatchesPlayedSeasonal": 0,
+  "RankedMatchesPlayedSeasonal": 0,
+  "RankedPlacementMatches": [],
+  "CurrentSoloRank": 0,
+  "HighestTeamRank": 0,
+  "CasualMatchesWon": 0,
+  "RankedMatchesWon": 0,
+  "PriorityMatchmakingUntil": "0",
+  "RestrictMatchmakingUntil": "0",
+  "MapHistory": ""
+}

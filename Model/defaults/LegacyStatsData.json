@@ -1,0 +1,22 @@
+{
+  "PlayerId": "00000000-0000-0000-0000-000000000000",
+  "StatsType": "Ranked",
+  "KillCount": 0,
+  "DeathCount": 0,
+  "AceCount": 0,
+  "DualityKillCount": 0,
+  "FirstKillCount": 0,
+  "FirstDeathCount": 0,
+  "KAST": 0.0,
+  "DualityRating": 0.0,
+  "ImpactCount": 0,
+  "TotalMatchesPlayedCount": 0,
+  "FanCount": 0,
+  "WinCount": 0,
+  "TotalRoundsPlayedCount": 0,
+  "HeadshotsCount": 0,
+  "TotalDamagingShotsCount": 0,
+  "TotalDamageCount": 0,
+  "TopSponsors": [],
+  "TopWeapons": []
+}

@@ -1,11 +1,18 @@
 ﻿using Model.Persistence;
 using Npgsql;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
 public record class FriendsList : VersionedData, IDatabaseSyncableDefault<FriendsList, Guid>, IEquatable<FriendsList>, IInterchangeableKeyed<FriendsList, Packets.FriendsList, Guid>
 {
+    private static readonly FriendsList defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "FriendsList.json"))).Deserialize<FriendsList>(new JsonSerializerOptions()
+    {
+        PropertyNameCaseInsensitive = true
+    });
+
     [SetsRequiredMembers]
     public FriendsList(Guid playerId, bool acceptingFriendInvites, Guid[] friends, Guid[] blocked, Guid[] sentFriendInvites, Guid[] receivedFriendInvites, long version) : base(version)
     {
@@ -84,9 +91,9 @@ public record class FriendsList : VersionedData, IDatabaseSyncableDefault<Friend
         return hash.ToHashCode();
     }
 
-    public static FriendsList CreateDefault(Guid key)
+    public static FriendsList CreateDefault(Guid playerId)
     {
-        return new FriendsList(key, true, [], [], [], [], 0);
+        return defaultData with { PlayerId = playerId };
     }
 
     public static FriendsList FromPacket(Packets.FriendsList inst, Guid id)
