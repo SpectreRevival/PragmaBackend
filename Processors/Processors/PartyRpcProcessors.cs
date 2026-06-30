@@ -38,10 +38,10 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
         return party is null ? throw new InvalidDataException($"No party found for id {partyId}") : party;
     }
 
-    protected static async Task<SpectreWebsocketMessage> CreatePartyMessage(Model.Party party)
+    protected static async Task<SpectreWebsocketMessage> CreatePartyMessage(Model.Party party, WebsocketNotification[]? notifs = null)
     {
         PartyResponse response = await BuildPartyResponse(party);
-        return SpectreWebsocketMessage.From(PostProcessPartyJson(ProtoFormatter.Format(response)));
+        return SpectreWebsocketMessage.From(PostProcessPartyJson(ProtoFormatter.Format(response)), notifs);
     }
 
     protected static async Task<Model.Party> CreateParty(CreatePartyRequest request, Guid playerId)
@@ -162,11 +162,11 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
         }
     }
 
-    protected static async Task QueueMatchmakingNotifications(Model.Party party, SpectreWebsocket connection)
+    protected static async Task<WebsocketNotification[]> QueueMatchmakingNotifications(Model.Party party, SpectreWebsocket connection)
     {
         GameConnectionDetails details = CreateGameConnectionDetails();
-        SpectreWebsocketNotification[] leaderNotifications = CreateMatchmakingNotifications(details, true);
-        SpectreWebsocketNotification[] memberNotifications = CreateMatchmakingNotifications(details, false);
+        WebsocketNotification[] leaderNotifications = CreateMatchmakingNotifications(details, true);
+        WebsocketNotification[] memberNotifications = CreateMatchmakingNotifications(details, false);
 
         foreach (Model.PartyMember member in party.Members)
         {
@@ -175,20 +175,16 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
                 continue;
             }
 
-            foreach (SpectreWebsocketNotification notification in memberNotifications)
+            foreach (WebsocketNotification notification in memberNotifications)
             {
-                await SpectreWebsocket.SendNotificationToPlayerAsync(member.PlayerId, notification.RpcType,
-                    notification.Payload);
+                await SpectreWebsocket.SendNotificationToPlayerAsync(member.PlayerId, notification);
             }
         }
 
-        foreach (SpectreWebsocketNotification notification in leaderNotifications)
-        {
-            connection.QueuePostResponseNotification(notification.RpcType, notification.Payload);
-        }
+        return leaderNotifications;
     }
 
-    private static SpectreWebsocketNotification[] CreateMatchmakingNotifications(GameConnectionDetails details,
+    private static WebsocketNotification[] CreateMatchmakingNotifications(GameConnectionDetails details,
         bool matchLeader)
     {
         AddedToGameV1Notification addedToGame = new()
@@ -204,15 +200,17 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
 
         return
         [
-            new SpectreWebsocketNotification(
-                new SpectreRpcType("GameInstanceRpc.GameInstanceEnteredMatchmakingV1Notification"),
-                SpectreWebsocketMessage.From("{}")),
-            new SpectreWebsocketNotification(
-                new SpectreRpcType("GameInstanceRpc.AddedToGameV1Notification"),
-                SpectreWebsocketMessage.From(addedToGame)),
-            new SpectreWebsocketNotification(
-                new SpectreRpcType("GameInstanceRpc.HostConnectionDetailsV1Notification"),
-                SpectreWebsocketMessage.From(hostDetails))
+            new WebsocketNotification(
+                "{}",
+                new SpectreRpcType("GameInstanceRpc.GameInstanceEnteredMatchmakingV1Notification")),
+            new WebsocketNotification(
+                addedToGame,
+                                new SpectreRpcType("GameInstanceRpc.AddedToGameV1Notification")
+),
+            new WebsocketNotification(
+                hostDetails,
+                                new SpectreRpcType("GameInstanceRpc.HostConnectionDetailsV1Notification")
+)
         ];
     }
 
@@ -626,7 +624,7 @@ public class EnterMatchmakingProcessor : PartyRpcProcessorBase, IWebsocketPacket
     {
         EnterMatchmakingRequest request = Packet.GetPayloadAsMessage<EnterMatchmakingRequest>();
         Model.Party party = await GetPartyOrThrow(request.PartyId);
-        await QueueMatchmakingNotifications(party, ConnectionHandler);
-        return await CreatePartyMessage(party);
+        var postNotifs = await QueueMatchmakingNotifications(party, ConnectionHandler);
+        return await CreatePartyMessage(party, postNotifs);
     }
 }
