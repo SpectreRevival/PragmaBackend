@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+message FetchDisplayNameReq {
+	string gameShardId = 1;
+	string pragmaPlayerId = 2;
+}
