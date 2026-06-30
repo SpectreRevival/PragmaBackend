@@ -1,11 +1,19 @@
 ﻿using Model.Persistence;
 using Npgsql;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
 public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData, Guid>, IEquatable<LegacySeasonData>, IInterchangeableKeyed<LegacySeasonData, Packets.LegacySeasonData, Guid>
 {
+    private static readonly LegacySeasonData defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "LegacySeasonData.json")))
+        .Deserialize<LegacySeasonData>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
     [SetsRequiredMembers]
     public LegacySeasonData(Guid playerId, long soloRankedPoints, long currentSoloRank)
     {
@@ -60,9 +68,9 @@ public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData
         return hash.ToHashCode();
     }
 
-    public static LegacySeasonData CreateDefault(Guid key)
+    public static LegacySeasonData CreateDefault(Guid playerId)
     {
-        return new LegacySeasonData(key, 0, 0);
+        return defaultData with { PlayerId = playerId };
     }
 
     public static LegacySeasonData FromPacket(Packets.LegacySeasonData inst, Guid id)

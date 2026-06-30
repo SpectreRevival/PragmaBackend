@@ -8,6 +8,12 @@ namespace Model;
 
 public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, IEquatable<ProfileData>
 {
+    private static readonly ProfileData defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ProfileData.json")))
+        .Deserialize<ProfileData>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
     [SetsRequiredMembers]
     public ProfileData(Guid playerId, DisplayName displayName, Guid bannerItemId, Guid preSprayItemId, Guid matchSprayItemId, Guid postSprayItemId, Guid attackerOutfitLoadoutId, Guid defenderOutfitLoadoutId, Guid attackerWeaponLoadoutId, Guid defenderWeaponLoadoutId, DateTimeOffset lastUpdated, DateTimeOffset nextNewDayRollover, DateTimeOffset lastLogin, int playerFlags, long crewScore, int currentSoloRank, int highestTeamRank, string divisionType, long inventoryVersion, Guid crewId, string accountIdProvider, string platformName, string providerAccountId, string crossplayPlatformKind, int gamesRemainingUntilCrewJoin)
     {
@@ -198,12 +204,6 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
 
     public static ProfileData CreateDefault(Guid playerId)
     {
-        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ProfileData.json")));
-        defaultJson[nameof(PlayerId)] = playerId;
-        JsonSerializerOptions options = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-        return defaultJson.Deserialize<ProfileData>(options);
+        return defaultData with { PlayerId = playerId };
     }
 }
