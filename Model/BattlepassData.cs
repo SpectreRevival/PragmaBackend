@@ -8,6 +8,7 @@ namespace Model;
 
 public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Guid>
 {
+    private static readonly BattlepassData defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "BattlepassData.json"))).Deserialize<BattlepassData>();
     [SetsRequiredMembers]
     public BattlepassData(Guid playerId, Guid[] activeBattlePasses, Guid[] battlepassQuests, Guid[] activeBattlepassQuests, int battlepassLevel)
     {
@@ -77,9 +78,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
 
     public static BattlepassData CreateDefault(Guid playerId)
     {
-        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "BattlepassData.json")));
-        defaultJson[nameof(PlayerId)] = playerId;
-        return defaultJson.Deserialize<BattlepassData>();
+        return defaultData with { PlayerId = playerId };
     }
 
     public Packets.BattlepassData ToPacket()

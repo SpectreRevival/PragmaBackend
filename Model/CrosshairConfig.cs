@@ -9,6 +9,11 @@ namespace Model;
 
 public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<CrosshairConfig, Guid>, IEquatable<CrosshairConfig>, IInterchangeableKeyed<CrosshairConfig, Packets.CrosshairConfig, Guid>
 {
+    private static readonly CrosshairConfig defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "CrosshairConfig.json")))
+        .Deserialize<CrosshairConfig>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
     [SetsRequiredMembers]
     public CrosshairConfig(Guid playerId, int colorIndex, bool advancedCrosshairSettings, RGBAColor customColor, bool fireAccuracyFade, bool followRecoil, bool showOutlines, double outlineThickness, double outlineOpacity, bool showCenterDot, bool useADSSettings, CrosshairDot centerDot, CrosshairDot centerDotADS, CrosshairDot sniperDot, PipConfig innerPip, PipConfig outerPip, long version) : base(version)
     {
@@ -147,13 +152,7 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
 
     public static CrosshairConfig CreateDefault(Guid playerId)
     {
-        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "CrosshairConfig.json")));
-        defaultJson[nameof(PlayerId)] = playerId;
-        JsonSerializerOptions options = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-        return defaultJson.Deserialize<CrosshairConfig>(options);
+        return defaultData with { PlayerId = playerId };
     }
 
     public static CrosshairConfig FromPacket(Packets.CrosshairConfig inst, Guid id)

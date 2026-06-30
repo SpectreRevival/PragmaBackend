@@ -1,6 +1,8 @@
 ﻿using Model.Persistence;
 using Npgsql;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
@@ -26,6 +28,13 @@ public record class LegacyStatsDataKey
 
 public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, LegacyStatsDataKey>, IEquatable<LegacyStatsData>, IInterchangeableKeyed<LegacyStatsData, Packets.LegacyStatsData, LegacyStatsDataKey>
 {
+    private static readonly LegacyStatsData defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "LegacyStatsData.json")))
+        .Deserialize<LegacyStatsData>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        });
+
     [SetsRequiredMembers]
     public LegacyStatsData(Guid playerId, LegacyStatsType statsType, long killCount, long deathCount, long aceCount, long dualityKillCount, long firstKillCount, long firstDeathCount, double kAST, double dualityRating, long impactCount, long totalMatchesPlayedCount, long fanCount, long winCount, long totalRoundsPlayedCount, long headshotsCount, long totalDamagingShotsCount, long totalDamageCount, string[] topSponsors, string[] topWeapons)
     {
@@ -185,7 +194,7 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
 
     public static LegacyStatsData CreateDefault(LegacyStatsDataKey key)
     {
-        return new LegacyStatsData(key.PlayerId, key.StatsType, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, [], []);
+        return defaultData with { PlayerId = key.PlayerId, StatsType = key.StatsType };
     }
 
     public static LegacyStatsData FromPacket(Packets.LegacyStatsData inst, LegacyStatsDataKey key)

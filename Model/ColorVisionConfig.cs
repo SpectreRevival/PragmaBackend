@@ -8,6 +8,12 @@ namespace Model;
 
 public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<ColorVisionConfig, Guid>, IEquatable<ColorVisionConfig>, IInterchangeableKeyed<ColorVisionConfig, Packets.ColorVisionConfig, Guid>
 {
+    private static readonly ColorVisionConfig defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ColorVisionConfig.json"))).Deserialize<ColorVisionConfig>(
+        new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        }
+        );
     [SetsRequiredMembers]
     public ColorVisionConfig(Guid playerId, string colorVisionType, int severity, bool correctDeficiency, bool showCorrectDeficiency, bool useComfortSwapEffect, bool useCustomOutlineColor, RGBAColor outlineColor, RGBAColor outlineColorLower, double outlineThicknessScale, double outlineBrightnessScale, long version) : base(version)
     {
@@ -26,13 +32,7 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
 
     public static ColorVisionConfig CreateDefault(Guid playerId)
     {
-        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ColorVisionConfig.json")));
-        defaultJson[nameof(PlayerId)] = playerId;
-        JsonSerializerOptions options = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-        return defaultJson.Deserialize<ColorVisionConfig>(options);
+        return defaultData with { PlayerId = playerId };
     }
 
     public required Guid PlayerId { get; set; }

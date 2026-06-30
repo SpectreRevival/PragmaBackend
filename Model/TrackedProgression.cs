@@ -28,6 +28,12 @@ public abstract record class TrackedProgression
 
 public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<TeamTrackedProgression, Guid>, IEquatable<TeamTrackedProgression>, IInterchangeableKeyed<TeamTrackedProgression, Packets.TrackedProgression, Guid>
 {
+    private static readonly TeamTrackedProgression defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "TeamTrackedProgression.json")))
+        .Deserialize<TeamTrackedProgression>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
     [SetsRequiredMembers]
     public TeamTrackedProgression(Guid playerId, Guid[] activeDailyQuests, Guid[] activeWeeklyQuests, Guid[] activeEventQuests, DateTimeOffset lastRolloverTimestamp, Guid teamId) : base(playerId, activeDailyQuests, activeWeeklyQuests, activeEventQuests, lastRolloverTimestamp)
     {
@@ -96,13 +102,7 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
     public static TeamTrackedProgression CreateDefault(Guid playerId)
     {
-        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "TeamTrackedProgression.json")));
-        defaultJson[nameof(PlayerId)] = playerId;
-        JsonSerializerOptions options = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-        return defaultJson.Deserialize<TeamTrackedProgression>(options);
+        return defaultData with { PlayerId = playerId };
     }
 
     public static TeamTrackedProgression FromPacket(Packets.TrackedProgression inst, Guid playerId)
@@ -138,6 +138,12 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
 public record class IndividualTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<IndividualTrackedProgression, Guid>, IEquatable<IndividualTrackedProgression>
 {
+    private static readonly IndividualTrackedProgression defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "IndividualTrackedProgression.json")))
+        .Deserialize<IndividualTrackedProgression>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
     [SetsRequiredMembers]
     public IndividualTrackedProgression(Guid playerId, Guid[] activeDailyQuests, Guid[] activeWeeklyQuests, Guid[] activeEventQuests, DateTimeOffset lastRolloverTimestamp, Guid activeEndorsement) : base(playerId, activeDailyQuests, activeWeeklyQuests, activeEventQuests, lastRolloverTimestamp)
     {
@@ -204,13 +210,7 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
 
     public static IndividualTrackedProgression CreateDefault(Guid playerId)
     {
-        JsonNode? defaultJson = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "IndividualTrackedProgression.json")));
-        defaultJson[nameof(PlayerId)] = playerId;
-        JsonSerializerOptions options = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-        return defaultJson.Deserialize<IndividualTrackedProgression>(options);
+        return defaultData with { PlayerId = playerId };
     }
 
     public async Task<Packets.TrackedProgression> AssemblePacketIndividualProgression()

@@ -1,6 +1,8 @@
 ﻿using Model.Persistence;
 using Npgsql;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
@@ -8,6 +10,13 @@ namespace Model;
 
 public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatchmakingData, Guid>, IEquatable<PlayerMatchmakingData>, IInterchangeable<PlayerMatchmakingData, Packets.PlayerMatchmakingData>
 {
+    private static readonly PlayerMatchmakingData defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "PlayerMatchmakingData.json")))
+        .Deserialize<PlayerMatchmakingData>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = {new UnixDateTimeOffsetConverter()}
+        });
+
     [SetsRequiredMembers]
     public PlayerMatchmakingData(Guid playerId, double casualMMR, double rankedMMR, long soloRankPoints, long casualMatchesPlayed, long rankedMatchesPlayed, long casualMatchesPlayedSeasonal, long rankedMatchesPlayedSeasonal, string[] rankedPlacementMatches, long currentSoloRank, long highestTeamRank, long casualMatchesWon, long rankedMatchesWon, DateTimeOffset priorityMatchmakingUntil, DateTimeOffset restrictMatchmakingUntil, string mapHistory)
     {
@@ -142,9 +151,9 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
         return hash.ToHashCode();
     }
 
-    public static PlayerMatchmakingData CreateDefault(Guid key)
+    public static PlayerMatchmakingData CreateDefault(Guid playerId)
     {
-        return new PlayerMatchmakingData(key, 0, 0, 0, 0, 0, 0, 0, [], 0, 0, 0, 0, DateTimeOffset.FromUnixTimeMilliseconds(0), DateTimeOffset.FromUnixTimeMilliseconds(0), "");
+        return defaultData with { PlayerId = playerId };
     }
 
     public static PlayerMatchmakingData FromPacket(Packets.PlayerMatchmakingData inst)
