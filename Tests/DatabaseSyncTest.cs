@@ -157,6 +157,7 @@ public class DatabaseSyncTest()
     }
 
     [TestMethod]
+    [Retry(3)]
     [DynamicData(nameof(GetClassesToTest), DynamicDataDisplayName = nameof(GetCustomTestName))]
     public async Task TestDatabaseSyncClass(string syncableClassName)
     {

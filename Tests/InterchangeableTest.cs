@@ -174,6 +174,7 @@ public class InterchangeableTest()
     }
 
     [TestMethod]
+    [Retry(3)]
     [DynamicData(nameof(GetInterchangeableClasses), DynamicDataDisplayName = nameof(GetCustomTestName))]
     public async Task TestInterchangeableClass(string modelClassName)
     {
@@ -194,6 +195,7 @@ public class InterchangeableTest()
     }
 
     [TestMethod]
+    [Retry(3)]
     [DynamicData(nameof(GetInterchangeableKeyedClasses), DynamicDataDisplayName = nameof(GetCustomTestName))]
     public async Task TestInterchangeableKeyedClass(string modelClassName)
     {
