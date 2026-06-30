@@ -1,10 +1,11 @@
 ﻿using Model.Persistence;
 using Npgsql;
+using Packets;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEquatable<ClientMessage>
+public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEquatable<ClientMessage>, IInterchangeable<ClientMessage, Packets.ClientMessage>
 {
     [SetsRequiredMembers]
     public ClientMessage(Guid messageId, Guid playerId, string messageType, string messageSender, string messageSenderType, string campaignId, string messageTitle, string messageBody, string? itemAttachmentCatalogId, DateTimeOffset sentTime, DateTimeOffset readTime, DateTimeOffset expirationTime)
@@ -112,5 +113,53 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
             && MessageTitle == other.MessageTitle && MessageBody == other.MessageBody
             && ItemAttachmentCatalogId == other.ItemAttachmentCatalogId && SentTime.ToUnixTimeMilliseconds() == other.SentTime.ToUnixTimeMilliseconds()
             && ReadTime.ToUnixTimeMilliseconds() == other.ReadTime.ToUnixTimeMilliseconds() && ExpirationTime.ToUnixTimeMilliseconds() == other.ExpirationTime.ToUnixTimeMilliseconds();
+    }
+
+    public static ClientMessage FromPacket(Packets.ClientMessage inst)
+    {
+        return new ClientMessage(Guid.Parse(inst.MessageId), Guid.Parse(inst.MessageData.PlayerId), inst.MessageData.MessageType, inst.MessageData.SentBy.Value, inst.MessageData.SentBy.Type,
+            inst.MessageData.CampaignId, inst.MessageData.MessageTitle, inst.MessageData.MessageBody, inst.MessageData.InstancedItemGrantAttachment != null ? inst.MessageData.InstancedItemGrantAttachment.CatalogId : null,
+            DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(inst.MessageData.SentTimestamp)),
+            DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(inst.MessageData.ReadTimestamp)),
+            DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(inst.MessageData.ExpirationTimestamp)));
+    }
+
+    public Packets.ClientMessage ToPacket()
+    {
+        var packet = new Packets.ClientMessage()
+        {
+            MessageId = MessageId.ToString()
+        };
+        var msgData = new Packets.MessageData()
+        {
+            PlayerId = PlayerId.ToString(),
+            MessageType = MessageType,
+            MessageTitle = MessageTitle,
+            CampaignId = CampaignId,
+            MessageBody = MessageBody,
+            SentDate = SentTime.ToString("yyyy-MM-dd HH:mm:ss.fff"),
+            SentTimestamp = SentTime.ToUnixTimeMilliseconds().ToString(),
+            ReadDate = ReadTime.ToString("yyyy-MM-dd HH:mm:ss.fff"),
+            ReadTimestamp = ReadTime.ToUnixTimeMilliseconds().ToString(),
+            ExpirationDate = ExpirationTime.ToString("yyyy-MM-dd HH:mm:ss.fff"),
+            ExpirationTimestamp = ExpirationTime.ToUnixTimeMilliseconds().ToString()
+        };
+        var sender = new MessageSender()
+        {
+            Type = MessageSenderType,
+            Value = MessageSender
+        };
+        msgData.SentBy = sender;
+        if(ItemAttachmentCatalogId != null)
+        {
+            var itemAttachment = new MessageItemGrant()
+            {
+                CatalogId = ItemAttachmentCatalogId,
+                InstanceId = "00000000-0000-0000-0000-000000000000"
+            };
+            msgData.InstancedItemGrantAttachment = itemAttachment;
+        }
+        packet.MessageData = msgData;
+        return packet;
     }
 }

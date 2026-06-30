@@ -1,0 +1,37 @@
+syntax = "proto3";
+package Packets;
+
+message ClientMessage {
+	string messageId = 1;
+	MessageData messageData = 2;
+}
+
+message MessageData {
+	string playerId = 1;
+	MessageSender sentBy = 2;
+	string messageType = 3;
+	string campaignId = 4;
+	string messageTitle = 5;
+	string messageBody = 6;
+	optional MessageItemGrant instancedItemGrantAttachment = 7;
+	string sentDate = 8;
+	string sentTimestamp = 9;
+	string readDate = 10;
+	string readTimestamp = 11;
+	string expirationDate = 12;
+	string expirationTimestamp = 13;
+}
+
+message MessageSender {
+	string type = 1;
+	string value = 2;
+}
+
+message MessageItemGrant {
+	string catalogId = 1;
+	string instanceId = 2;
+}
+
+message GetMessagesResponse {
+	repeated ClientMessage messages = 1;
+}
