@@ -1,0 +1,12 @@
+syntax = "proto3";
+package Packets;
+
+message LoginToChatResponse {
+	bool success = 1;
+	string token = 2;
+	string generalchatroom = 3;
+	string generalchattoken = 4;
+	string chatserver = 5;
+	string chatdomain = 6;
+	string chatissuer = 7;
+}
