@@ -27,7 +27,12 @@ public class StaticWebsocketResponder : WebsocketPacketProcessor
         string staticWsDir = Path.Combine(AppContext.BaseDirectory, "staticws");
         foreach (string filePath in Directory.EnumerateFiles(staticWsDir, "*", SearchOption.AllDirectories))
         {
-            _responders.Add(new StaticWebsocketResponder(new SpectreRpcType(Path.GetFileNameWithoutExtension(filePath)), filePath));
+            SpectreRpcType rpcType = new(Path.GetFileNameWithoutExtension(filePath));
+            if (WebsocketPacketProcessor.GetProcessorForRequestType(rpcType) != null)
+            {
+                continue;
+            }
+            _responders.Add(new StaticWebsocketResponder(rpcType, filePath));
         }
     }
 }
