@@ -149,7 +149,7 @@ public class UpdateItemsProcessor : WebsocketPacketProcessor, IWebsocketPacketPr
             itemDelta.Operation = "UPDATED";
             delta.Stackables.Add(itemDelta);
         }
-        var profileData = await Model.ProfileData.RetrieveFromDatabase(ConnectionHandler.PlayerId);
+        Model.ProfileData? profileData = await Model.ProfileData.RetrieveFromDatabase(ConnectionHandler.PlayerId);
         profileData.InventoryVersion++;
         await profileData.SyncToDatabase();
         // TODO: Send InventoryUpdated notification

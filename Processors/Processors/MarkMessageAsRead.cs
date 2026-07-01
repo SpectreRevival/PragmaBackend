@@ -17,7 +17,7 @@ public class MarkMessageAsRead : WebsocketPacketProcessor, IWebsocketPacketProce
 
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
-        var req = Packet.GetPayloadAsMessage<ReadMessageRequest>();
+        ReadMessageRequest req = Packet.GetPayloadAsMessage<ReadMessageRequest>();
         Model.ClientMessage msg = await Model.ClientMessage.RetrieveFromDatabase(Guid.Parse(req.MessageId));
         msg.ReadTime = DateTimeOffset.UtcNow;
         await msg.SyncToDatabase();

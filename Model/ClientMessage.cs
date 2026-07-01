@@ -22,14 +22,12 @@ public record class ClientMessageSender : IEquatable<ClientMessageSender>, IInte
 
     public virtual bool Equals(ClientMessageSender? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return SenderType == other.SenderType && Sender == other.Sender;
+        return other is not null && (ReferenceEquals(this, other) || (SenderType == other.SenderType && Sender == other.Sender));
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(Sender);
         hash.Add(SenderType);
         return hash.ToHashCode();
@@ -84,11 +82,10 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_client_message.sql");
         cmd.Parameters.AddWithValue("message_id", messageId);
-        using var reader = await cmd.ExecuteReaderAsync();
-        if(!await reader.ReadAsync()){
-            return null;
-        }
-        return new ClientMessage(
+        using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+        return !await reader.ReadAsync()
+            ? null
+            : new ClientMessage(
              await reader.GetFieldValueAsync<Guid>(0),
              await reader.GetFieldValueAsync<Guid>(1),
              await reader.GetFieldValueAsync<string>(2),
@@ -127,7 +124,7 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(MessageId);
         hash.Add(PlayerId);
         hash.Add(MessageType);
@@ -144,21 +141,18 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
 
     public virtual bool Equals(ClientMessage? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        return MessageId == other.MessageId && PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (MessageId == other.MessageId && PlayerId == other.PlayerId
             && MessageType == other.MessageType && Senders.SequenceEqual(other.Senders)
             && CampaignId == other.CampaignId
             && MessageTitle == other.MessageTitle && MessageBody == other.MessageBody
             && ItemAttachmentCatalogId == other.ItemAttachmentCatalogId && SentTime.ToUnixTimeMilliseconds() == other.SentTime.ToUnixTimeMilliseconds()
-            && ReadTime.ToUnixTimeMilliseconds() == other.ReadTime.ToUnixTimeMilliseconds() && ExpirationTime.ToUnixTimeMilliseconds() == other.ExpirationTime.ToUnixTimeMilliseconds();
+            && ReadTime.ToUnixTimeMilliseconds() == other.ReadTime.ToUnixTimeMilliseconds() && ExpirationTime.ToUnixTimeMilliseconds() == other.ExpirationTime.ToUnixTimeMilliseconds()));
     }
 
     public static ClientMessage FromPacket(Packets.ClientMessage inst)
     {
         return new ClientMessage(Guid.Parse(inst.MessageId), Guid.Parse(inst.MessageData.PlayerId), inst.MessageData.MessageType, inst.MessageData.SentBy.Select(sender => ClientMessageSender.FromPacket(sender)).ToArray(),
-            inst.MessageData.CampaignId, inst.MessageData.MessageTitle, inst.MessageData.MessageBody, inst.MessageData.InstancedItemGrantAttachment != null ? inst.MessageData.InstancedItemGrantAttachment.CatalogId : null,
+            inst.MessageData.CampaignId, inst.MessageData.MessageTitle, inst.MessageData.MessageBody, inst.MessageData.InstancedItemGrantAttachment?.CatalogId,
             DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(inst.MessageData.SentTimestamp)),
             DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(inst.MessageData.ReadTimestamp)),
             DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(inst.MessageData.ExpirationTimestamp)));
@@ -166,11 +160,11 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
 
     public Packets.ClientMessage ToPacket()
     {
-        var packet = new Packets.ClientMessage()
+        Packets.ClientMessage packet = new()
         {
             MessageId = MessageId.ToString()
         };
-        var msgData = new Packets.MessageData()
+        MessageData msgData = new()
         {
             PlayerId = PlayerId.ToString(),
             MessageType = MessageType,
@@ -185,9 +179,9 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
             ExpirationTimestamp = ExpirationTime.ToUnixTimeMilliseconds().ToString()
         };
         msgData.SentBy.AddRange(Senders.Select(sender => sender.ToPacket()));
-        if(ItemAttachmentCatalogId != null)
+        if (ItemAttachmentCatalogId != null)
         {
-            var itemAttachment = new MessageItemGrant()
+            MessageItemGrant itemAttachment = new()
             {
                 CatalogId = ItemAttachmentCatalogId,
                 InstanceId = "00000000-0000-0000-0000-000000000000"
