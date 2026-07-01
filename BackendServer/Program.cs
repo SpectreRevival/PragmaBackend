@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Model.Persistence;
+using Packets;
 using Processors;
 using Processors.Processors;
 using Serilog;
@@ -70,6 +71,10 @@ HTTPPacketHandler.InstantiateSingletons();
 WebsocketPacketProcessor.InstantiateSingletons();
 StaticHTTPResponder.InstantiateResponders();
 StaticWebsocketResponder.InstantiateResponders();
+if (VivoxTokenGenerator.LoadConfiguration(PostgresDatabase.Get().GetConfiguration()))
+{
+    WebsocketPacketProcessor.singletons.Add(new LoginToChatProcessor(LoginToChatProcessor.GetRpcType()));
+}
 
 try
 {
