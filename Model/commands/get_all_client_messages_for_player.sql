@@ -1,0 +1,1 @@
+SELECT message_id FROM client_messages WHERE player_id=@player_id
