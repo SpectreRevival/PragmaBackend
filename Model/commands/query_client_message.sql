@@ -1,0 +1,1 @@
+SELECT * FROM client_messages WHERE message_id=@message_id

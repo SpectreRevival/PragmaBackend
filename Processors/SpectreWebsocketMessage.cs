@@ -36,6 +36,11 @@ public class SpectreWebsocketMessage
         return new SpectreWebsocketMessage(json.ToJsonString(), postSendNotifications ?? []);
     }
 
+    public static SpectreWebsocketMessage Empty()
+    {
+        return new SpectreWebsocketMessage("{}", []);
+    }
+
     public string GetData()
     {
         return _data;
