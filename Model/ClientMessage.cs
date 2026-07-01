@@ -1,20 +1,64 @@
 ﻿using Model.Persistence;
 using Npgsql;
+using NpgsqlTypes;
 using Packets;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
+public record class ClientMessageSender : IEquatable<ClientMessageSender>, IInterchangeable<ClientMessageSender, Packets.MessageSender>
+{
+    [SetsRequiredMembers]
+    public ClientMessageSender(string senderType, string sender)
+    {
+        SenderType = senderType ?? throw new ArgumentNullException(nameof(senderType));
+        Sender = sender ?? throw new ArgumentNullException(nameof(sender));
+    }
+
+    [PgName("sender_type")]
+    public required string SenderType { get; set; }
+    [PgName("sender")]
+    public required string Sender { get; set; }
+
+    public virtual bool Equals(ClientMessageSender? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return SenderType == other.SenderType && Sender == other.Sender;
+    }
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(Sender);
+        hash.Add(SenderType);
+        return hash.ToHashCode();
+    }
+
+    public static ClientMessageSender FromPacket(MessageSender inst)
+    {
+        return new ClientMessageSender(inst.Type, inst.Value);
+    }
+
+    public MessageSender ToPacket()
+    {
+        return new Packets.MessageSender()
+        {
+            Type = SenderType,
+            Value = Sender
+        };
+    }
+}
+
 public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEquatable<ClientMessage>, IInterchangeable<ClientMessage, Packets.ClientMessage>
 {
     [SetsRequiredMembers]
-    public ClientMessage(Guid messageId, Guid playerId, string messageType, string messageSender, string messageSenderType, string campaignId, string messageTitle, string messageBody, string? itemAttachmentCatalogId, DateTimeOffset sentTime, DateTimeOffset readTime, DateTimeOffset expirationTime)
+    public ClientMessage(Guid messageId, Guid playerId, string messageType, ClientMessageSender[] senders, string campaignId, string messageTitle, string messageBody, string? itemAttachmentCatalogId, DateTimeOffset sentTime, DateTimeOffset readTime, DateTimeOffset expirationTime)
     {
         MessageId = messageId;
         PlayerId = playerId;
         MessageType = messageType ?? throw new ArgumentNullException(nameof(messageType));
-        MessageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
-        MessageSenderType = messageSenderType ?? throw new ArgumentNullException(nameof(messageSenderType));
+        Senders = senders ?? throw new ArgumentNullException(nameof(senders));
         CampaignId = campaignId ?? throw new ArgumentNullException(nameof(campaignId));
         MessageTitle = messageTitle ?? throw new ArgumentNullException(nameof(messageTitle));
         MessageBody = messageBody ?? throw new ArgumentNullException(nameof(messageBody));
@@ -27,8 +71,7 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
     public required Guid MessageId { get; set; }
     public required Guid PlayerId { get; set; }
     public required string MessageType { get; set; }
-    public required string MessageSender { get; set; }
-    public required string MessageSenderType { get; set; }
+    public required ClientMessageSender[] Senders { get; set; }
     public required string CampaignId { get; set; }
     public required string MessageTitle { get; set; }
     public required string MessageBody { get; set; }
@@ -49,15 +92,14 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
              await reader.GetFieldValueAsync<Guid>(0),
              await reader.GetFieldValueAsync<Guid>(1),
              await reader.GetFieldValueAsync<string>(2),
-             await reader.GetFieldValueAsync<string>(3),
+             await reader.GetFieldValueAsync<ClientMessageSender[]>(3),
              await reader.GetFieldValueAsync<string>(4),
              await reader.GetFieldValueAsync<string>(5),
              await reader.GetFieldValueAsync<string>(6),
-             await reader.GetFieldValueAsync<string>(7),
-             await reader.IsDBNullAsync(8) ? null : await reader.GetFieldValueAsync<string>(8),
+             await reader.IsDBNullAsync(8) ? null : await reader.GetFieldValueAsync<string>(7),
+             await reader.GetFieldValueAsync<DateTimeOffset>(8),
              await reader.GetFieldValueAsync<DateTimeOffset>(9),
-             await reader.GetFieldValueAsync<DateTimeOffset>(10),
-             await reader.GetFieldValueAsync<DateTimeOffset>(11)
+             await reader.GetFieldValueAsync<DateTimeOffset>(10)
         );
     }
 
@@ -72,8 +114,7 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
         cmd.Parameters.AddWithValue("message_id", MessageId);
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("message_type", MessageType);
-        cmd.Parameters.AddWithValue("message_sender", MessageSender);
-        cmd.Parameters.AddWithValue("message_sender_type", MessageSenderType);
+        cmd.Parameters.AddWithValue("senders", Senders);
         cmd.Parameters.AddWithValue("campaign_id", CampaignId);
         cmd.Parameters.AddWithValue("message_title", MessageTitle);
         cmd.Parameters.AddWithValue("message_body", MessageBody);
@@ -90,8 +131,7 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
         hash.Add(MessageId);
         hash.Add(PlayerId);
         hash.Add(MessageType);
-        hash.Add(MessageSender);
-        hash.Add(MessageSenderType);
+        hash.Add(Senders);
         hash.Add(CampaignId);
         hash.Add(MessageTitle);
         hash.Add(MessageBody);
@@ -108,8 +148,8 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
         if (ReferenceEquals(this, other)) return true;
 
         return MessageId == other.MessageId && PlayerId == other.PlayerId
-            && MessageType == other.MessageType && MessageSender == other.MessageSender
-            && MessageSenderType == other.MessageSenderType && CampaignId == other.CampaignId
+            && MessageType == other.MessageType && Senders.SequenceEqual(other.Senders)
+            && CampaignId == other.CampaignId
             && MessageTitle == other.MessageTitle && MessageBody == other.MessageBody
             && ItemAttachmentCatalogId == other.ItemAttachmentCatalogId && SentTime.ToUnixTimeMilliseconds() == other.SentTime.ToUnixTimeMilliseconds()
             && ReadTime.ToUnixTimeMilliseconds() == other.ReadTime.ToUnixTimeMilliseconds() && ExpirationTime.ToUnixTimeMilliseconds() == other.ExpirationTime.ToUnixTimeMilliseconds();
@@ -117,7 +157,7 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
 
     public static ClientMessage FromPacket(Packets.ClientMessage inst)
     {
-        return new ClientMessage(Guid.Parse(inst.MessageId), Guid.Parse(inst.MessageData.PlayerId), inst.MessageData.MessageType, inst.MessageData.SentBy.Value, inst.MessageData.SentBy.Type,
+        return new ClientMessage(Guid.Parse(inst.MessageId), Guid.Parse(inst.MessageData.PlayerId), inst.MessageData.MessageType, inst.MessageData.SentBy.Select(sender => ClientMessageSender.FromPacket(sender)).ToArray(),
             inst.MessageData.CampaignId, inst.MessageData.MessageTitle, inst.MessageData.MessageBody, inst.MessageData.InstancedItemGrantAttachment != null ? inst.MessageData.InstancedItemGrantAttachment.CatalogId : null,
             DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(inst.MessageData.SentTimestamp)),
             DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(inst.MessageData.ReadTimestamp)),
@@ -137,19 +177,14 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
             MessageTitle = MessageTitle,
             CampaignId = CampaignId,
             MessageBody = MessageBody,
-            SentDate = SentTime.ToString("yyyy-MM-dd HH:mm:ss.fff"),
+            SentDate = SentTime.ToString("yyyy-MM-dd HH:mm:ss.ff"),
             SentTimestamp = SentTime.ToUnixTimeMilliseconds().ToString(),
-            ReadDate = ReadTime.ToString("yyyy-MM-dd HH:mm:ss.fff"),
+            ReadDate = ReadTime.ToUnixTimeMilliseconds() == 0 ? "" : ReadTime.ToString("yyyy-MM-dd HH:mm:ss.fff"),
             ReadTimestamp = ReadTime.ToUnixTimeMilliseconds().ToString(),
             ExpirationDate = ExpirationTime.ToString("yyyy-MM-dd HH:mm:ss.fff"),
             ExpirationTimestamp = ExpirationTime.ToUnixTimeMilliseconds().ToString()
         };
-        var sender = new MessageSender()
-        {
-            Type = MessageSenderType,
-            Value = MessageSender
-        };
-        msgData.SentBy = sender;
+        msgData.SentBy.AddRange(Senders.Select(sender => sender.ToPacket()));
         if(ItemAttachmentCatalogId != null)
         {
             var itemAttachment = new MessageItemGrant()

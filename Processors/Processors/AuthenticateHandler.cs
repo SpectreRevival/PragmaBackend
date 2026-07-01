@@ -341,6 +341,14 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         playerProfile.PostSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
         playerProfile.BannerItemId = GetInstanceIdByCatalogId("SpectreBannerItemDef:BannerID_Track_Kit01_District_01", playerId);
         await playerProfile.SyncToDatabase();
+        ClientMessage cyberlordKnifeMessage = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "staticdata", "CyberlordMessage.json"))).Deserialize<ClientMessage>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = {new UnixDateTimeOffsetConverter()}
+        });
+        cyberlordKnifeMessage.PlayerId = playerId;
+        cyberlordKnifeMessage.MessageId = Guid.NewGuid();
+        await cyberlordKnifeMessage.SyncToDatabase();
         return playerProfile;
     }
 

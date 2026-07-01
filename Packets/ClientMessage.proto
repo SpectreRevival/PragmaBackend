@@ -8,7 +8,7 @@ message ClientMessage {
 
 message MessageData {
 	string playerId = 1;
-	MessageSender sentBy = 2;
+	repeated MessageSender sentBy = 2;
 	string messageType = 3;
 	string campaignId = 4;
 	string messageTitle = 5;
@@ -34,4 +34,8 @@ message MessageItemGrant {
 
 message GetMessagesResponse {
 	repeated ClientMessage messages = 1;
+}
+
+message ReadMessageRequest {
+	string messageId = 1;
 }
