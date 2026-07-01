@@ -85,6 +85,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         builder.MapComposite<PartyMember>("partymember");
         builder.MapEnum<ObjectiveContributionSourceType>("objectivecontributionsourcetype");
         builder.MapComposite<ObjectiveContribution>("objectivecontribution");
+        builder.MapComposite<ClientMessageSender>("clientmessagesender");
         _dataSource = builder.Build();
         while (true)
         {

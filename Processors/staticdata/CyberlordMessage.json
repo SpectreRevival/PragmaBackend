@@ -1,0 +1,18 @@
+{
+  "MessageId": "00000000-0000-0000-0000-000000000000",
+  "PlayerId": "00000000-0000-0000-0000-000000000000",
+  "CampaignId": "CyberlordKnife_20250225",
+  "ExpirationTime": "1740636000001",
+  "ItemAttachmentCatalogId": "SpectreWeaponCosmeticItemDef:WeaponID_Knife_Cyberlord",
+  "MessageBody": "Cyberlord Knife",
+  "MessageTitle": "Cyberlord Knife",
+  "MessageType": "ITEM",
+  "Senders": [
+    {
+      "Sender": "Postman",
+      "SenderType": "bulk_message"
+    }
+  ],
+  "SentTime": "1740500424810",
+  "ReadTime": "0"
+}

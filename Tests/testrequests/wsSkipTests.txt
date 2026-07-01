@@ -1,6 +1,5 @@
 MtnCrewServiceRpc.GetCrewLegacyDataV1Request
 MtnCrewServiceRpc.GetCrewDashboardDataV1Request
-MtnInboxServiceRpc.GetMessagesClientV1Request
 MtnCrewServiceRpc.GetDivisionRulesV1Request
 MtnCrewServiceRpc.GetCrewChatRoomV1Request
 MtnChatServiceRpc.LoginToChatV2Request
