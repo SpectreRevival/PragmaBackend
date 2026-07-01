@@ -163,8 +163,29 @@ public class SpectreWebsocket
         }
         finally
         {
-            ConnectionsByPlayerId.TryRemove(PlayerId, out _);
+            if (ConnectionsByPlayerId.TryGetValue(PlayerId, out SpectreWebsocket? activeConnection) && ReferenceEquals(activeConnection, this))
+            {
+                ConnectionsByPlayerId.TryRemove(PlayerId, out _);
+                await RegisterOfflineAsync();
+            }
             sendLock.Dispose();
+        }
+    }
+
+    private async Task RegisterOfflineAsync()
+    {
+        try
+        {
+            Model.PlayerPresence presence = await Model.PlayerPresence.RetrieveFromDatabase(PlayerId)
+                ?? Model.PlayerPresence.CreateDefault(PlayerId);
+            presence.BasicStatus = Model.PlayerBasicPresence.Offline;
+            presence.LastUpdatedTime = DateTimeOffset.UtcNow;
+            await presence.SyncToDatabase();
+            await FriendPresenceNotifications.SendPresenceUpdateToFriends(PlayerId, presence);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Failed to register player {PlayerId} offline: {ex.Message}");
         }
     }
 }

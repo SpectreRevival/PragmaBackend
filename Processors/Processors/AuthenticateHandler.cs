@@ -42,9 +42,19 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         {
             return Results.BadRequest();
         }
+        if (string.IsNullOrWhiteSpace(reqData.providerId))
+        {
+            return Results.BadRequest();
+        }
+
+        string providerId = reqData.providerId.ToUpperInvariant();
+        if (providerId != "STEAM")
+        {
+            return Results.BadRequest($"Unsupported providerId {reqData.providerId}");
+        }
 
         NpgsqlCommand cmd = PostgresDatabase.Get().GetRaw().CreateCommand(
-            "SELECT player_id FROM profile_data WHERE provider_account_id = @provider_account_id");
+            "SELECT player_id FROM profile_data WHERE account_id_provider = @account_id_provider AND provider_account_id = @provider_account_id");
         SteamAuthTicket ticket;
         try
         {
@@ -54,6 +64,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         {
             return Results.BadRequest(ex);
         }
+        cmd.Parameters.AddWithValue("account_id_provider", providerId);
         cmd.Parameters.AddWithValue("provider_account_id", ticket.SteamId64);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         Model.ProfileData playerProfile;
