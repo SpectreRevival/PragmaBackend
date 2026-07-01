@@ -21,7 +21,7 @@ public abstract class WebsocketPacketProcessor
         return processors.TryGetValue(rpcType, out WebsocketPacketProcessor? processor) ? processor : null;
     }
 
-    private static readonly List<WebsocketPacketProcessor> singletons = [];
+    public static readonly List<WebsocketPacketProcessor> singletons = [];
 
     public static void InstantiateSingletons()
     {
