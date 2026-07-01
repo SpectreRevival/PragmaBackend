@@ -344,7 +344,7 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         ClientMessage cyberlordKnifeMessage = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "staticdata", "CyberlordMessage.json"))).Deserialize<ClientMessage>(new JsonSerializerOptions()
         {
             PropertyNameCaseInsensitive = true,
-            Converters = {new UnixDateTimeOffsetConverter()}
+            Converters = { new UnixDateTimeOffsetConverter() }
         });
         cyberlordKnifeMessage.PlayerId = playerId;
         cyberlordKnifeMessage.MessageId = Guid.NewGuid();

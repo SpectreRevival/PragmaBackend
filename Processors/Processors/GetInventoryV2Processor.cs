@@ -4,7 +4,7 @@ using Npgsql;
 using Packets;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Processors;
+namespace Processors.Processors;
 
 public class GetInventoryV2Processor : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
@@ -24,7 +24,7 @@ public class GetInventoryV2Processor : WebsocketPacketProcessor, IWebsocketPacke
         FullInventory res = new();
         NpgsqlCommand stackablesCmd = PostgresDatabase.LoadCommandFromFile("get_all_stackables_for_player.sql");
         stackablesCmd.Parameters.AddWithValue("player_id", ConnectionHandler.PlayerId);
-        using var stackablesReader = await stackablesCmd.ExecuteReaderAsync();
+        using NpgsqlDataReader stackablesReader = await stackablesCmd.ExecuteReaderAsync();
         while (await stackablesReader.ReadAsync())
         {
             Guid stackableInstanceId = stackablesReader.GetGuid(0);
@@ -33,29 +33,29 @@ public class GetInventoryV2Processor : WebsocketPacketProcessor, IWebsocketPacke
         }
         NpgsqlCommand customizedInstancedCmd = PostgresDatabase.LoadCommandFromFile("get_all_customized_instanced_for_player.sql");
         customizedInstancedCmd.Parameters.AddWithValue("player_id", ConnectionHandler.PlayerId);
-        using var customizedInstancedReader = await customizedInstancedCmd.ExecuteReaderAsync();
+        using NpgsqlDataReader customizedInstancedReader = await customizedInstancedCmd.ExecuteReaderAsync();
         while (await customizedInstancedReader.ReadAsync())
         {
             Guid instanceId = customizedInstancedReader.GetGuid(0);
-            var item = await CustomizedInstancedItem.RetrieveFromDatabase(instanceId);
+            CustomizedInstancedItem? item = await CustomizedInstancedItem.RetrieveFromDatabase(instanceId);
             res.Instanced.Add(item.ToPacket());
         }
         NpgsqlCommand progTrackingCmd = PostgresDatabase.LoadCommandFromFile("get_all_progression_tracking_items.sql");
         progTrackingCmd.Parameters.AddWithValue("player_id", ConnectionHandler.PlayerId);
-        using var progTrackingReader = await progTrackingCmd.ExecuteReaderAsync();
+        using NpgsqlDataReader progTrackingReader = await progTrackingCmd.ExecuteReaderAsync();
         while (await progTrackingReader.ReadAsync())
         {
             Guid instanceId = progTrackingReader.GetGuid(0);
-            var item = await ProgressionTrackingItem.RetrieveFromDatabase(instanceId);
+            ProgressionTrackingItem? item = await ProgressionTrackingItem.RetrieveFromDatabase(instanceId);
             res.Instanced.Add(item.ToPacket());
         }
         NpgsqlCommand sponsorTrackingCmd = PostgresDatabase.LoadCommandFromFile("get_all_sponsor_tracking_items.sql");
         sponsorTrackingCmd.Parameters.AddWithValue("player_id", ConnectionHandler.PlayerId);
-        using var sponsorTrackingReader = await sponsorTrackingCmd.ExecuteReaderAsync();
+        using NpgsqlDataReader sponsorTrackingReader = await sponsorTrackingCmd.ExecuteReaderAsync();
         while (await sponsorTrackingReader.ReadAsync())
         {
             Guid instanceId = sponsorTrackingReader.GetGuid(0);
-            var item = await SponsorUnlockTrackerItem.RetrieveFromDatabase(instanceId);
+            SponsorUnlockTrackerItem? item = await SponsorUnlockTrackerItem.RetrieveFromDatabase(instanceId);
             res.Instanced.Add(item.ToPacket());
         }
         Model.TeamTrackedProgression teamProg = await Model.TeamTrackedProgression.RetrieveFromDatabase(ConnectionHandler.PlayerId);

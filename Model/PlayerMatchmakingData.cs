@@ -14,7 +14,7 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
         .Deserialize<PlayerMatchmakingData>(new JsonSerializerOptions()
         {
             PropertyNameCaseInsensitive = true,
-            Converters = {new UnixDateTimeOffsetConverter()}
+            Converters = { new UnixDateTimeOffsetConverter() }
         });
 
     [SetsRequiredMembers]

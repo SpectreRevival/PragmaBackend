@@ -7,7 +7,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using static Google.Protobuf.Reflection.FieldOptions.Types;
 
 namespace Processors;
 
@@ -146,7 +145,7 @@ public class SpectreWebsocket
                     {
                         SpectreWebsocketMessage messageOut = await processor.ProcessPacket(wsReq, this);
                         await SendResponseAsync(wsReq, messageOut, cancellationToken);
-                        foreach(WebsocketNotification notif in messageOut.GetNotifications())
+                        foreach (WebsocketNotification notif in messageOut.GetNotifications())
                         {
                             await SendNotificationAsync(notif.GetRpcType(), notif.GetData());
                         }

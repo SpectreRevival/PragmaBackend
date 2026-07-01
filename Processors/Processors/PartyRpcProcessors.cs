@@ -624,7 +624,7 @@ public class EnterMatchmakingProcessor : PartyRpcProcessorBase, IWebsocketPacket
     {
         EnterMatchmakingRequest request = Packet.GetPayloadAsMessage<EnterMatchmakingRequest>();
         Model.Party party = await GetPartyOrThrow(request.PartyId);
-        var postNotifs = await QueueMatchmakingNotifications(party, ConnectionHandler);
+        WebsocketNotification[] postNotifs = await QueueMatchmakingNotifications(party, ConnectionHandler);
         return await CreatePartyMessage(party, postNotifs);
     }
 }

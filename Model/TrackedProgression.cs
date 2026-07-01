@@ -78,14 +78,12 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
     public virtual bool Equals(TeamTrackedProgression? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return PlayerId == other.PlayerId
+        return other is not null && (ReferenceEquals(this, other) || (PlayerId == other.PlayerId
             && ActiveDailyQuests.SequenceEqual(other.ActiveDailyQuests)
             && ActiveWeeklyQuests.SequenceEqual(other.ActiveWeeklyQuests)
             && ActiveEventQuests.SequenceEqual(other.ActiveEventQuests)
             && LastRolloverTimestamp.ToUnixTimeMilliseconds() == other.LastRolloverTimestamp.ToUnixTimeMilliseconds()
-            && TeamId == other.TeamId;
+            && TeamId == other.TeamId));
     }
 
     public override int GetHashCode()
@@ -112,7 +110,7 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
     public Packets.TrackedProgression ToPacket()
     {
-        var packet = new Packets.TrackedProgression();
+        Packets.TrackedProgression packet = new();
         packet.ActiveDailyQuests.AddRange(ActiveDailyQuests.Select(q => q.ToString()));
         packet.ActiveWeeklyQuests.AddRange(ActiveWeeklyQuests.Select(q => q.ToString()));
         packet.ActiveEventQuests.AddRange(ActiveEventQuests.Select(q => q.ToString()));
@@ -123,7 +121,7 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
     public Packets.InstancedItem ToProgressionTrackerItem()
     {
-        var packet = new Packets.InstancedItem()
+        Packets.InstancedItem packet = new()
         {
             CatalogId = "MtnManualItem:TeamProgressionTracker",
             InstanceId = Guid.NewGuid().ToString()
@@ -215,8 +213,10 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
 
     public async Task<Packets.TrackedProgression> AssemblePacketIndividualProgression()
     {
-        var packet = new Packets.TrackedProgression();
-        packet.ActiveEndorsement = ActiveEndorsement.ToString();
+        Packets.TrackedProgression packet = new()
+        {
+            ActiveEndorsement = ActiveEndorsement.ToString()
+        };
         packet.ActiveDailyQuests.AddRange(ActiveDailyQuests.Select(q => q.ToString()));
         packet.ActiveWeeklyQuests.AddRange(ActiveWeeklyQuests.Select(q => q.ToString()));
         packet.ActiveEventQuests.AddRange(ActiveEventQuests.Select(q => q.ToString()));
@@ -228,13 +228,15 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
 
     public async Task<Packets.InstancedItem> ToProgressionTrackerItem()
     {
-        var packet = new Packets.InstancedItem()
+        Packets.InstancedItem packet = new()
         {
             CatalogId = "MtnManualItem:ProgressionTracker",
             InstanceId = Guid.NewGuid().ToString()
         };
-        InstanceExtData ext = new();
-        ext.TrackedProgression = await AssemblePacketIndividualProgression();
+        InstanceExtData ext = new()
+        {
+            TrackedProgression = await AssemblePacketIndividualProgression()
+        };
         packet.Ext = ext;
         return packet;
     }
