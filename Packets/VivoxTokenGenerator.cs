@@ -8,11 +8,11 @@ namespace Packets;
 
 public class VivoxTokenGenerator
 {
-    private static string secretKey;
-    public static string issuer;
-    public static string domain;
+    private static string? secretKey;
+    public static string? issuer;
+    public static string? domain;
     private static int _globalVxi = 0;
-    public static string server;
+    public static string? server;
 
     public static string GenerateToken(Guid playerId, VivoxTokenAction action, string channel)
     {
@@ -21,7 +21,7 @@ public class VivoxTokenGenerator
 
         string from = $"sip:.{issuer}.{playerId}.@{domain}";
 
-        var payloadObj = new Dictionary<string, object>
+        Dictionary<string, object> payloadObj = new()
         {
             { "iss", issuer },
             { "exp", exp },
@@ -44,13 +44,11 @@ public class VivoxTokenGenerator
         byte[] secretBytes = Encoding.UTF8.GetBytes(secretKey);
         byte[] inputBytes = Encoding.UTF8.GetBytes(signingInput);
 
-        using (var hmac = new HMACSHA256(secretBytes))
-        {
-            byte[] hashBytes = hmac.ComputeHash(inputBytes);
-            string signature = Base64UrlEncoder.Encode(hashBytes);
+        using HMACSHA256 hmac = new(secretBytes);
+        byte[] hashBytes = hmac.ComputeHash(inputBytes);
+        string signature = Base64UrlEncoder.Encode(hashBytes);
 
-            return $"{signingInput}.{signature}";
-        }
+        return $"{signingInput}.{signature}";
     }
 
     public static bool LoadConfiguration(IConfiguration config)
@@ -59,11 +57,7 @@ public class VivoxTokenGenerator
         issuer = config.GetSection("Vivox").GetSection("Issuer").ToString();
         domain = config.GetSection("Vivox").GetSection("Domain").ToString();
         server = config.GetSection("Vivox").GetSection("Server").ToString();
-        if(secretKey is null || issuer is null || domain is null || server is null)
-        {
-            return false;
-        }
-        return true;
+        return secretKey is not null && issuer is not null && domain is not null && server is not null;
     }
 }
 

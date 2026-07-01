@@ -174,15 +174,17 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
 
     public Packets.InstancedItem ToPacket()
     {
-        var packet = new Packets.InstancedItem()
+        Packets.InstancedItem packet = new()
         {
             InstanceId = InstanceId.ToString(),
             CatalogId = CatalogId
         };
-        var ext = new InstanceExtData();
-        ext.Viewed = Viewed;
-        var customizationData = new InstancedCustomizationData();
-        foreach (var altChannel in AlterationChannels)
+        InstanceExtData ext = new()
+        {
+            Viewed = Viewed
+        };
+        InstancedCustomizationData customizationData = new();
+        foreach (AlterationChannel altChannel in AlterationChannels)
         {
             customizationData.InstancedAlterationChannels.Add(altChannel.ToPacket());
         }
@@ -324,7 +326,7 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
 
     public Packets.InstancedItem ToPacket()
     {
-        var packet = new Packets.InstancedItem()
+        Packets.InstancedItem packet = new()
         {
             InstanceId = InstanceId.ToString(),
             CatalogId = CatalogId
@@ -423,15 +425,19 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
 
     public Packets.InstancedItem ToPacket()
     {
-        var packet = new Packets.InstancedItem()
+        Packets.InstancedItem packet = new()
         {
             CatalogId = CatalogId,
             InstanceId = InstanceId.ToString()
         };
-        InstanceExtData ext = new();
-        ext.Viewed = Viewed;
-        SponsorUnlockData sponsorData = new();
-        sponsorData.SponsorName = SponsorName;
+        InstanceExtData ext = new()
+        {
+            Viewed = Viewed
+        };
+        SponsorUnlockData sponsorData = new()
+        {
+            SponsorName = SponsorName
+        };
         ext.SponsorUnlockData = sponsorData;
         packet.Ext = ext;
         return packet;

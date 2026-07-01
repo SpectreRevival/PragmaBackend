@@ -83,7 +83,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
 
     public Packets.BattlepassData ToPacket()
     {
-        var packet = new Packets.BattlepassData();
+        Packets.BattlepassData packet = new();
         packet.ActiveBattlePasses.AddRange(ActiveBattlePasses.Select(b => b.ToString()));
         packet.BpQuests.AddRange(BattlepassQuests.Select(q => q.ToString()));
         packet.ActiveBpQuests.AddRange(ActiveBattlepassQuests.Select(q => q.ToString()));

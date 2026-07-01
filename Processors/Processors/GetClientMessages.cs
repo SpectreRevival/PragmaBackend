@@ -1,10 +1,9 @@
 ﻿using Model.Persistence;
 using Npgsql;
 using Packets;
-using Processors;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Processor.Processors;
+namespace Processors.Processors;
 
 public class GetClientMessages : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
@@ -22,9 +21,9 @@ public class GetClientMessages : WebsocketPacketProcessor, IWebsocketPacketProce
     {
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("get_all_client_messages_for_player.sql");
         cmd.Parameters.AddWithValue("player_id", ConnectionHandler.PlayerId);
-        using var reader = await cmd.ExecuteReaderAsync();
-        GetMessagesResponse res = new GetMessagesResponse();
-        while(await reader.ReadAsync())
+        using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+        GetMessagesResponse res = new();
+        while (await reader.ReadAsync())
         {
             Guid messageId = reader.GetGuid(0);
             Model.ClientMessage msg = await Model.ClientMessage.RetrieveFromDatabase(messageId);

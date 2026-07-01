@@ -1,8 +1,7 @@
 ﻿using Model;
-using Processors;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Processor.Processors;
+namespace Processors.Processors;
 
 public class FetchDisplayName : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
@@ -18,7 +17,7 @@ public class FetchDisplayName : WebsocketPacketProcessor, IWebsocketPacketProces
 
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
-        var req = Packet.GetPayloadAsMessage<FetchDisplayNameReq>();
+        FetchDisplayNameReq req = Packet.GetPayloadAsMessage<FetchDisplayNameReq>();
         ProfileData playerProfileData = await Model.ProfileData.RetrieveFromDatabase(Guid.Parse(req.PragmaPlayerId));
         return SpectreWebsocketMessage.From(playerProfileData.DisplayName.ToPacket());
     }
