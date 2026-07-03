@@ -72,6 +72,36 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
         );
     }
 
+    public static async Task<Guid?> FindPartyIdByInviteCode(string inviteCode)
+    {
+        await using NpgsqlCommand cmd = PostgresDatabase.CreateCommand(
+            "SELECT party_id FROM parties WHERE upper(invite_code) = upper(@invite_code) LIMIT 1");
+        cmd.Parameters.AddWithValue("invite_code", inviteCode);
+        object? result = await cmd.ExecuteScalarAsync();
+        return result is Guid id ? id : null;
+    }
+
+    public static async Task<List<Guid>> FindPartyIdsContainingPlayer(Guid playerId)
+    {
+        await using NpgsqlCommand cmd = PostgresDatabase.CreateCommand(
+            "SELECT party_id FROM parties WHERE EXISTS (SELECT 1 FROM unnest(members) m WHERE m.player_id = @player_id)");
+        cmd.Parameters.AddWithValue("player_id", playerId);
+        List<Guid> ids = [];
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            ids.Add(reader.GetGuid(0));
+        }
+        return ids;
+    }
+
+    public static async Task DeleteFromDatabase(Guid partyId)
+    {
+        await using NpgsqlCommand cmd = PostgresDatabase.CreateCommand("DELETE FROM parties WHERE party_id = @party_id");
+        cmd.Parameters.AddWithValue("party_id", partyId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
     public Guid GetKey()
     {
         return PartyId;
