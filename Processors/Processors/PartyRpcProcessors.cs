@@ -2,6 +2,8 @@ using Google.Protobuf;
 using Model.Persistence;
 using Npgsql;
 using Packets;
+using Serilog;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -15,8 +17,19 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
     private const string DefaultLobbyMode = "standard_casual";
     private const string DefaultCrossplayPlatform = "CROSS_PLAY_PLATFORM_PC";
     private const string DefaultPreferredZone = "uscentral-1";
+    private const string DefaultPreferredTeam = "TEAM0";
     private const string InviteCodeChars = "ABCDEFGHIJgKLMNOPQRSTUVWXYZ";
     private const int InviteCodeLength = 6;
+
+    protected static readonly ConcurrentDictionary<Guid, SemaphoreSlim> PartyLocks = new();
+    protected static readonly ConcurrentDictionary<Guid, PendingPartyInvite> PendingInvites = new();
+
+    private static readonly SpectreRpcType PartyDetailsNotificationType =
+        new("PartyRpc.PartyDetailsV1Notification");
+    protected static readonly SpectreRpcType InviteReceivedNotificationType =
+        new("PartyRpc.InviteReceivedV1Notification");
+    protected static readonly SpectreRpcType InviteResponseNotificationType =
+        new("PartyRpc.InviteResponseV1Notification");
 
     private static readonly JsonFormatter ProtoFormatter = new(
         new JsonFormatter.Settings(true)
@@ -26,6 +39,14 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
             .WithPreserveProtoFieldNames(true));
 
     private static readonly JsonParser ProtoParser = new(JsonParser.Settings.Default);
+    private static readonly JsonParser ProtoParserTolerant = new(JsonParser.Settings.Default.WithIgnoreUnknownFields(true));
+
+    protected sealed record PendingPartyInvite(
+        Guid InviteId,
+        Guid PartyId,
+        Guid InviterPlayerId,
+        Guid InviteePlayerId,
+        string Blob);
 
     [SetsRequiredMembers]
     protected PartyRpcProcessorBase(SpectreRpcType rpcType) : base(rpcType)
@@ -40,8 +61,189 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
 
     protected static async Task<SpectreWebsocketMessage> CreatePartyMessage(Model.Party party, WebsocketNotification[]? notifs = null)
     {
+        return SpectreWebsocketMessage.From(await BuildPartyJson(party), notifs);
+    }
+
+    protected static async Task<SpectreWebsocketMessage> CreatePartyMessageWithMemberFanout(Model.Party party, Guid excludePlayerId)
+    {
+        string partyJson = await BuildPartyJson(party);
+        return SpectreWebsocketMessage.From(partyJson, postResponseActions:
+        [
+            async () => await NotifyOtherMembersBestEffort(party, excludePlayerId, partyJson)
+        ]);
+    }
+
+    protected static async Task<string> BuildPartyJson(Model.Party party)
+    {
         PartyResponse response = await BuildPartyResponse(party);
-        return SpectreWebsocketMessage.From(PostProcessPartyJson(ProtoFormatter.Format(response)), notifs);
+        return PostProcessPartyJson(ProtoFormatter.Format(response));
+    }
+
+    protected static async Task NotifyOtherMembersBestEffort(Model.Party party, Guid excludePlayerId, string partyJson)
+    {
+        WebsocketNotification notification = new(partyJson, PartyDetailsNotificationType);
+        foreach (Model.PartyMember member in party.Members)
+        {
+            if (member.PlayerId == excludePlayerId)
+            {
+                continue;
+            }
+
+            try
+            {
+                await SpectreWebsocket.SendNotificationToPlayerAsync(member.PlayerId, notification);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning("Failed to send party details notification to {PlayerId}: {Message}", member.PlayerId, ex.Message);
+            }
+        }
+    }
+
+    protected static async Task<T> WithPartyLock<T>(Guid partyId, Func<Task<T>> action)
+    {
+        SemaphoreSlim partyLock = PartyLocks.GetOrAdd(partyId, _ => new SemaphoreSlim(1, 1));
+        await partyLock.WaitAsync();
+        try
+        {
+            return await action();
+        }
+        finally
+        {
+            partyLock.Release();
+        }
+    }
+
+    protected static async Task<Model.Party> JoinPartyById(Guid partyId, Guid joinerId, JoinRequest joinExt)
+    {
+        await RemovePlayerFromParties(joinerId, partyId);
+
+        return await WithPartyLock(partyId, async () =>
+        {
+            Model.Party party = await GetPartyOrThrow(partyId.ToString());
+            if (Array.Exists(party.Members, m => m.PlayerId == joinerId))
+            {
+                return party;
+            }
+
+            Model.PartyMember member = new(
+                joinerId,
+                false,
+                false,
+                StringOrDefault(joinExt.PreferredTeam, DefaultPreferredTeam),
+                await IsRankedModeUnlocked(joinerId),
+                ParseVersionOrDefault(joinExt.Version, ParseVersionOrDefault(party.PartyExtVersion, 0)),
+                joinExt.Region);
+
+            party.Members = [.. party.Members, member];
+            party.Version++;
+            await party.SyncToDatabase();
+            return party;
+        });
+    }
+
+    protected static async Task RemovePlayerFromParties(Guid playerId, Guid? exceptPartyId)
+    {
+        List<Guid> partyIds = await Model.Party.FindPartyIdsContainingPlayer(playerId);
+        foreach (Guid partyId in partyIds)
+        {
+            if (exceptPartyId is Guid keep && partyId == keep)
+            {
+                continue;
+            }
+
+            await WithPartyLock(partyId, async () =>
+            {
+                Model.Party? party = await Model.Party.RetrieveFromDatabase(partyId);
+                Model.PartyMember? leaving = party is null ? null : Array.Find(party.Members, m => m.PlayerId == playerId);
+                if (party is null || leaving is null)
+                {
+                    return true;
+                }
+
+                Model.PartyMember[] remaining = party.Members.Where(m => m.PlayerId != playerId).ToArray();
+                if (remaining.Length == 0)
+                {
+                    await Model.Party.DeleteFromDatabase(partyId);
+                    return true;
+                }
+
+                if (leaving.IsLeader && !Array.Exists(remaining, m => m.IsLeader))
+                {
+                    remaining[0] = remaining[0] with { IsLeader = true };
+                }
+
+                party.Members = remaining;
+                party.Version++;
+                await party.SyncToDatabase();
+                await NotifyOtherMembersBestEffort(party, playerId, await BuildPartyJson(party));
+                return true;
+            });
+        }
+    }
+
+    protected static string? ReadStringField(JsonObject payload, params string[] keys)
+    {
+        foreach (string key in keys)
+        {
+            if (payload.TryGetPropertyValue(key, out JsonNode? node)
+                && node is JsonValue value
+                && value.TryGetValue(out string? parsed)
+                && !string.IsNullOrEmpty(parsed))
+            {
+                return parsed;
+            }
+        }
+        return null;
+    }
+
+    protected static bool ReadBoolField(JsonObject payload, bool defaultValue, params string[] keys)
+    {
+        foreach (string key in keys)
+        {
+            if (payload.TryGetPropertyValue(key, out JsonNode? node)
+                && node is JsonValue value
+                && value.TryGetValue(out bool parsed))
+            {
+                return parsed;
+            }
+        }
+        return defaultValue;
+    }
+
+    protected static JoinRequest ReadJoinExt(JsonObject payload)
+    {
+        foreach (string key in new[] { "playerJoinRequestExt", "playerJoinRequest", "joinRequestExt", "requestExt" })
+        {
+            if (payload.TryGetPropertyValue(key, out JsonNode? node) && node is JsonObject ext)
+            {
+                try
+                {
+                    return ProtoParserTolerant.Parse<JoinRequest>(ext.ToJsonString());
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning("Failed to parse party join ext, using defaults: {Message}", ex.Message);
+                }
+            }
+        }
+        return new JoinRequest();
+    }
+
+    protected static async Task<JsonObject> CreatePlayerInfoJson(Guid playerId)
+    {
+        Model.ProfileData profile = await Model.ProfileData.RetrieveFromDatabase(playerId)
+            ?? throw new InvalidDataException($"No profile found for player {playerId}");
+        return new JsonObject
+        {
+            ["playerId"] = playerId.ToString(),
+            ["socialId"] = playerId.ToString(),
+            ["displayName"] = new JsonObject
+            {
+                ["displayName"] = profile.DisplayName.PlayerName,
+                ["discriminator"] = profile.DisplayName.Discriminator
+            }
+        };
     }
 
     protected static async Task<Model.Party> CreateParty(CreatePartyRequest request, Guid playerId)
@@ -532,9 +734,215 @@ public class CreatePartyProcessor : PartyRpcProcessorBase, IWebsocketPacketProce
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet,
         SpectreWebsocket ConnectionHandler)
     {
+        await RemovePlayerFromParties(ConnectionHandler.PlayerId, null);
         Model.Party party =
             await CreateParty(Packet.GetPayloadAsMessage<CreatePartyRequest>(), ConnectionHandler.PlayerId);
         return await CreatePartyMessage(party);
+    }
+}
+
+public class JoinWithInviteCodeProcessor : PartyRpcProcessorBase, IWebsocketPacketProcessorSingleton
+{
+    [SetsRequiredMembers]
+    public JoinWithInviteCodeProcessor(SpectreRpcType rpcType) : base(rpcType)
+    {
+    }
+
+    public static SpectreRpcType GetRpcType()
+    {
+        return new SpectreRpcType("PartyRpc.JoinWithInviteCodeV1Request");
+    }
+
+    public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet,
+        SpectreWebsocket ConnectionHandler)
+    {
+        string? inviteCode = ReadStringField(Packet.RequestPayload, "inviteCode", "invite_code", "code");
+        if (string.IsNullOrEmpty(inviteCode))
+        {
+            throw new InvalidDataException("JoinWithInviteCode request had no invite code");
+        }
+
+        Guid? partyId = await Model.Party.FindPartyIdByInviteCode(inviteCode);
+        if (partyId is null)
+        {
+            throw new InvalidDataException($"No party found for invite code {inviteCode}");
+        }
+
+        Model.Party party = await JoinPartyById(partyId.Value, ConnectionHandler.PlayerId, ReadJoinExt(Packet.RequestPayload));
+        return await CreatePartyMessageWithMemberFanout(party, ConnectionHandler.PlayerId);
+    }
+}
+
+public class JoinWithPartyIdProcessor : PartyRpcProcessorBase, IWebsocketPacketProcessorSingleton
+{
+    [SetsRequiredMembers]
+    public JoinWithPartyIdProcessor(SpectreRpcType rpcType) : base(rpcType)
+    {
+    }
+
+    public static SpectreRpcType GetRpcType()
+    {
+        return new SpectreRpcType("PartyRpc.JoinWithPartyIdV1Request");
+    }
+
+    public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet,
+        SpectreWebsocket ConnectionHandler)
+    {
+        string? partyId = ReadStringField(Packet.RequestPayload, "partyId", "party_id");
+        if (string.IsNullOrEmpty(partyId))
+        {
+            throw new InvalidDataException("JoinWithPartyId request had no party id");
+        }
+
+        Model.Party party = await JoinPartyById(Guid.Parse(partyId), ConnectionHandler.PlayerId, ReadJoinExt(Packet.RequestPayload));
+        return await CreatePartyMessageWithMemberFanout(party, ConnectionHandler.PlayerId);
+    }
+}
+
+public class SendInviteProcessor : PartyRpcProcessorBase, IWebsocketPacketProcessorSingleton
+{
+    [SetsRequiredMembers]
+    public SendInviteProcessor(SpectreRpcType rpcType) : base(rpcType)
+    {
+    }
+
+    public static SpectreRpcType GetRpcType()
+    {
+        return new SpectreRpcType("PartyRpc.SendInviteV1Request");
+    }
+
+    public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet,
+        SpectreWebsocket ConnectionHandler)
+    {
+        string? partyIdString = ReadStringField(Packet.RequestPayload, "partyId", "party_id");
+        string? inviteeString = ReadStringField(Packet.RequestPayload, "inviteePlayerId", "invitee_player_id", "playerId", "player_id");
+        if (string.IsNullOrEmpty(partyIdString) || string.IsNullOrEmpty(inviteeString))
+        {
+            throw new InvalidDataException("SendInvite request missing party id or invitee player id");
+        }
+
+        Guid partyId = Guid.Parse(partyIdString);
+        Guid inviteeId = Guid.Parse(inviteeString);
+        Model.Party party = await GetPartyOrThrow(partyIdString);
+        if (!Array.Exists(party.Members, m => m.PlayerId == ConnectionHandler.PlayerId))
+        {
+            throw new InvalidDataException($"Player {ConnectionHandler.PlayerId} is not in party {partyId}");
+        }
+
+        Guid inviteId = Guid.NewGuid();
+        string blob = "";
+        if (Packet.RequestPayload["extPartyInviteData"] is JsonObject extData)
+        {
+            blob = ReadStringField(extData, "blob") ?? "";
+        }
+
+        PendingInvites[inviteId] = new PendingPartyInvite(inviteId, partyId, ConnectionHandler.PlayerId, inviteeId, blob);
+        JsonObject response = new()
+        {
+            ["inviteId"] = inviteId.ToString()
+        };
+
+        JsonObject notification = new()
+        {
+            ["inviteId"] = inviteId.ToString(),
+            ["partyId"] = partyId.ToString(),
+            ["inviterInfo"] = await CreatePlayerInfoJson(ConnectionHandler.PlayerId),
+            ["extPartyInviteData"] = new JsonObject
+            {
+                ["blob"] = blob
+            }
+        };
+
+        return SpectreWebsocketMessage.From(response, postResponseActions:
+        [
+            async () => await SpectreWebsocket.SendNotificationToPlayerAsync(
+                inviteeId,
+                InviteReceivedNotificationType,
+                notification.ToJsonString())
+        ]);
+    }
+}
+
+public class RespondToInviteProcessor : PartyRpcProcessorBase, IWebsocketPacketProcessorSingleton
+{
+    [SetsRequiredMembers]
+    public RespondToInviteProcessor(SpectreRpcType rpcType) : base(rpcType)
+    {
+    }
+
+    public static SpectreRpcType GetRpcType()
+    {
+        return new SpectreRpcType("PartyRpc.RespondToInviteV1Request");
+    }
+
+    public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet,
+        SpectreWebsocket ConnectionHandler)
+    {
+        string? inviteIdString = ReadStringField(Packet.RequestPayload, "inviteId", "invite_id");
+        if (string.IsNullOrEmpty(inviteIdString))
+        {
+            throw new InvalidDataException("RespondToInvite request had no invite id");
+        }
+
+        Guid inviteId = Guid.Parse(inviteIdString);
+        bool accepted = ReadBoolField(Packet.RequestPayload, false, "accepted", "accept", "bAccept");
+        if (!PendingInvites.TryRemove(inviteId, out PendingPartyInvite? invite))
+        {
+            throw new InvalidDataException($"No pending party invite found for id {inviteId}");
+        }
+        if (invite.InviteePlayerId != ConnectionHandler.PlayerId)
+        {
+            throw new InvalidDataException($"Player {ConnectionHandler.PlayerId} cannot respond to invite {inviteId}");
+        }
+
+        JsonObject responseNotification = new()
+        {
+            ["inviteId"] = inviteId.ToString(),
+            ["accepted"] = accepted,
+            ["inviteeInfo"] = await CreatePlayerInfoJson(ConnectionHandler.PlayerId)
+        };
+
+        if (!accepted)
+        {
+            return SpectreWebsocketMessage.From(new JsonObject(), postResponseActions:
+            [
+                async () => await SpectreWebsocket.SendNotificationToPlayerAsync(
+                    invite.InviterPlayerId,
+                    InviteResponseNotificationType,
+                    responseNotification.ToJsonString())
+            ]);
+        }
+
+        Model.Party party = await JoinPartyById(invite.PartyId, ConnectionHandler.PlayerId, ReadJoinExt(Packet.RequestPayload));
+        string partyJson = await BuildPartyJson(party);
+        return SpectreWebsocketMessage.From(partyJson, postResponseActions:
+        [
+            async () => await SpectreWebsocket.SendNotificationToPlayerAsync(
+                invite.InviterPlayerId,
+                InviteResponseNotificationType,
+                responseNotification.ToJsonString()),
+            async () => await NotifyOtherMembersBestEffort(party, ConnectionHandler.PlayerId, partyJson)
+        ]);
+    }
+}
+
+public class LeavePartyProcessor : PartyRpcProcessorBase, IWebsocketPacketProcessorSingleton
+{
+    [SetsRequiredMembers]
+    public LeavePartyProcessor(SpectreRpcType rpcType) : base(rpcType)
+    {
+    }
+
+    public static SpectreRpcType GetRpcType()
+    {
+        return new SpectreRpcType("PartyRpc.LeaveV1Request");
+    }
+
+    public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet,
+        SpectreWebsocket ConnectionHandler)
+    {
+        await RemovePlayerFromParties(ConnectionHandler.PlayerId, null);
+        return SpectreWebsocketMessage.Empty();
     }
 }
 
@@ -557,7 +965,7 @@ public class UpdatePartyProcessor : PartyRpcProcessorBase, IWebsocketPacketProce
         Model.Party party = await GetPartyOrThrow(request.PartyId);
         ApplyPartyUpdate(party, request.RequestExt ?? new PartyUpdate());
         await party.SyncToDatabase();
-        return await CreatePartyMessage(party);
+        return await CreatePartyMessageWithMemberFanout(party, ConnectionHandler.PlayerId);
     }
 }
 
@@ -580,7 +988,7 @@ public class UpdatePartyPlayerProcessor : PartyRpcProcessorBase, IWebsocketPacke
         Model.Party party = await GetPartyOrThrow(request.PartyId);
         ApplyPartyPlayerUpdate(party, ConnectionHandler.PlayerId, request.RequestExt ?? new PartyPlayerUpdateData());
         await party.SyncToDatabase();
-        return await CreatePartyMessage(party);
+        return await CreatePartyMessageWithMemberFanout(party, ConnectionHandler.PlayerId);
     }
 }
 
@@ -603,7 +1011,7 @@ public class SetReadyProcessor : PartyRpcProcessorBase, IWebsocketPacketProcesso
         Model.Party party = await GetPartyOrThrow(request.PartyId);
         ApplyReadyState(party, ConnectionHandler.PlayerId, request.Ready);
         await party.SyncToDatabase();
-        return await CreatePartyMessage(party);
+        return await CreatePartyMessageWithMemberFanout(party, ConnectionHandler.PlayerId);
     }
 }
 

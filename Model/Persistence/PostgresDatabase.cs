@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Npgsql;
 using Serilog;
+using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 
@@ -10,6 +11,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
 {
     private readonly NpgsqlDataSource _dataSource;
     private static PostgresDatabase? inst;
+    private static readonly ConcurrentDictionary<string, string> CommandTextCache = new();
     private readonly IConfiguration config;
 
     public PostgresDatabase(IConfiguration config)
@@ -27,7 +29,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
             Port = port,
             Username = user,
             Password = password,
-            Pooling = false,
+            Pooling = true,
             IncludeErrorDetail = config["SENSITIVE_LOGGING"] == "true"
         };
 
@@ -128,8 +130,11 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
      */
     public static NpgsqlCommand LoadCommandFromFile(string relPath)
     {
-        string fullPath = Path.Combine(Path.Combine(AppContext.BaseDirectory, "commands"), relPath);
-        string sqlCommandText = File.ReadAllText(fullPath);
+        string sqlCommandText = CommandTextCache.GetOrAdd(relPath, path =>
+        {
+            string fullPath = Path.Combine(Path.Combine(AppContext.BaseDirectory, "commands"), path);
+            return File.ReadAllText(fullPath);
+        });
         return Get().GetRaw().CreateCommand(sqlCommandText);
     }
 

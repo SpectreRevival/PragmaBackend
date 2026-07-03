@@ -6,6 +6,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(DO_RPC_TRACER)' == 'true'">
+    <DefineConstants>$(DefineConstants);DO_RPC_TRACER</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(DO_TICKET_BYPASS)' == 'true'">
+    <DefineConstants>$(DefineConstants);DO_TICKET_BYPASS</DefineConstants>
+  </PropertyGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\Model\Model.csproj"></ProjectReference>
 		<ProjectReference Include="..\Packets\Packets.csproj"></ProjectReference>
