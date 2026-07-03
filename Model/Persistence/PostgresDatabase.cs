@@ -22,6 +22,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         string password = config["DB_PASSWORD"] ?? throw new InvalidDataException("No password for db provided");
         _ = config["DB_DATABASE"] ?? throw new InvalidDataException("No db name provided");
         this.config = config;
+        PreloadCommandTextCache();
 
         NpgsqlConnectionStringBuilder ConnStr = new()
         {
@@ -130,12 +131,50 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
      */
     public static NpgsqlCommand LoadCommandFromFile(string relPath)
     {
-        string sqlCommandText = CommandTextCache.GetOrAdd(relPath, path =>
+        string normalizedPath = NormalizeCommandPath(relPath);
+        if (!CommandTextCache.TryGetValue(normalizedPath, out string? sqlCommandText))
         {
-            string fullPath = Path.Combine(Path.Combine(AppContext.BaseDirectory, "commands"), path);
-            return File.ReadAllText(fullPath);
-        });
+            string fullPath = Path.Combine(Path.Combine(AppContext.BaseDirectory, "commands"), normalizedPath);
+            sqlCommandText = File.ReadAllText(fullPath);
+            CacheCommandText(normalizedPath, sqlCommandText);
+        }
+
         return Get().GetRaw().CreateCommand(sqlCommandText);
+    }
+
+    private static void PreloadCommandTextCache()
+    {
+        string commandsPath = Path.Combine(AppContext.BaseDirectory, "commands");
+        if (!Directory.Exists(commandsPath))
+        {
+            Log.Warning("SQL commands directory not found at {CommandsPath}", commandsPath);
+            return;
+        }
+
+        int loaded = 0;
+        foreach (string fullPath in Directory.EnumerateFiles(commandsPath, "*.sql", SearchOption.AllDirectories))
+        {
+            string relPath = Path.GetRelativePath(commandsPath, fullPath);
+            CacheCommandText(relPath, File.ReadAllText(fullPath));
+            loaded++;
+        }
+
+        Log.Information("Preloaded {CommandCount} SQL command files", loaded);
+    }
+
+    private static void CacheCommandText(string relPath, string sqlCommandText)
+    {
+        string normalizedPath = NormalizeCommandPath(relPath);
+        CommandTextCache[normalizedPath] = sqlCommandText;
+        CommandTextCache[normalizedPath.Replace('\\', '/')] = sqlCommandText;
+        CommandTextCache[normalizedPath.Replace('/', '\\')] = sqlCommandText;
+    }
+
+    private static string NormalizeCommandPath(string relPath)
+    {
+        return relPath
+            .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
+            .TrimStart(Path.DirectorySeparatorChar);
     }
 
     public static NpgsqlCommand CreateCommand(string cmd)

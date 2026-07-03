@@ -97,7 +97,7 @@ public partial class SpectreWebsocket
             catch (Exception ex) when (ex is WebSocketException or ObjectDisposedException or OperationCanceledException)
             {
                 Log.Warning("Dropping stale websocket notification target {ConnectionId} for player {PlayerId}: {Message}", pair.Key, playerId, ex.Message);
-                RemoveConnection(playerId, pair.Key, pair.Value);
+                UnregisterConnection(playerId, pair.Key, pair.Value);
             }
         }
         return delivered;
@@ -166,7 +166,6 @@ public partial class SpectreWebsocket
                         string error = $"No websocket processor recognized for rpc type {wsReq.RpcType}";
                         Log.Warning("{Message}", error);
                         TraceProcessorError(wsReq.RpcType.ToString(), wsReq.RequestId, error);
-                        await SendEmptyResponseBestEffort(wsReq, cancellationToken);
                         continue;
                     }
 
@@ -179,7 +178,6 @@ public partial class SpectreWebsocket
                     {
                         Log.Warning(ex, "Processor for {RpcType} request {RequestId} failed for player {PlayerId}", wsReq.RpcType, wsReq.RequestId, PlayerId);
                         TraceProcessorError(wsReq.RpcType.ToString(), wsReq.RequestId, ex.Message);
-                        await SendEmptyResponseBestEffort(wsReq, cancellationToken);
                         continue;
                     }
                     TraceAfterProcess();
@@ -223,7 +221,7 @@ public partial class SpectreWebsocket
         }
         finally
         {
-            bool wasLastConnection = RemoveConnection(PlayerId, ConnectionId, this);
+            bool wasLastConnection = UnregisterConnection(PlayerId, ConnectionId, this);
             if (wasLastConnection)
             {
                 await RegisterOfflineAsync();
@@ -233,20 +231,7 @@ public partial class SpectreWebsocket
         }
     }
 
-    private async Task SendEmptyResponseBestEffort(SpectreWebsocketRequest request, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await SendResponseAsync(request, SpectreWebsocketMessage.Empty(), cancellationToken);
-            TraceAfterResponse();
-        }
-        catch (Exception ex) when (ex is WebSocketException or ObjectDisposedException or OperationCanceledException)
-        {
-            Log.Warning("Failed to send empty error response for {RpcType} request {RequestId}: {Message}", request.RpcType, request.RequestId, ex.Message);
-        }
-    }
-
-    private static bool RemoveConnection(Guid playerId, Guid connectionId, SpectreWebsocket connection)
+    private static bool UnregisterConnection(Guid playerId, Guid connectionId, SpectreWebsocket connection)
     {
         if (!ConnectionsByPlayerId.TryGetValue(playerId, out ConcurrentDictionary<Guid, SpectreWebsocket>? connections))
         {

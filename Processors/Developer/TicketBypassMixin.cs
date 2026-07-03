@@ -1,4 +1,5 @@
 #if DO_TICKET_BYPASS
+using Model.Persistence;
 using Serilog;
 using System.Buffers.Binary;
 using System.Text.RegularExpressions;
@@ -7,37 +8,58 @@ namespace Processors.Processors;
 
 public partial class AuthenticateHandler
 {
-    private const ulong SteamId64Base = 76561197960265728UL;
-    private static readonly Regex SteamIdPattern = new(@"7656119\d{10}", RegexOptions.Compiled);
+    private const string SteamAuthWhitelistKey = "STEAM_AUTH_WHITELIST";
+    private static readonly Regex SteamId64Pattern = new(@"7656119\d{10}", RegexOptions.Compiled);
+    private static readonly Lazy<HashSet<string>> SteamAuthWhitelist = new(LoadSteamAuthWhitelist);
 
-    partial void ApplyTicketBypass(AuthenticateHandlerRequest request, TicketBypassContext context)
+    partial void ApplySteamAuthWhitelistFallback(AuthenticateHandlerRequest request, ref string? steamId64)
     {
-        string token = request.providerToken ?? string.Empty;
-
-        string? steamId = ExtractSteamId64(token, out int candidateCount);
-        if (steamId == null)
+        HashSet<string> whitelist = SteamAuthWhitelist.Value;
+        if (whitelist.Count == 0)
         {
-            Log.Warning("DO_TICKET_BYPASS rejected a Steam auth ticket because candidate count was {CandidateCount}",
-                candidateCount);
             return;
         }
 
-        context.Enabled = true;
-        context.SteamId64 = steamId;
+        string[] matchingSteamIds = ExtractSteamIdCandidates(request.providerToken)
+            .Where(whitelist.Contains)
+            .Distinct()
+            .Take(2)
+            .ToArray();
 
-        Log.Warning(
-            "DO_TICKET_BYPASS accepted a Steam auth ticket using token SteamID extraction. steamId64={SteamId64} candidateCount={CandidateCount}",
-            steamId, candidateCount);
+        if (matchingSteamIds.Length == 1)
+        {
+            steamId64 = matchingSteamIds[0];
+            Log.Warning("Accepted Steam auth ticket using compiled {WhitelistKey}. steamId64={SteamId64}",
+                SteamAuthWhitelistKey, steamId64);
+            return;
+        }
+
+        if (matchingSteamIds.Length > 1)
+        {
+            Log.Warning("Rejected Steam auth ticket because it matched multiple whitelisted SteamIDs");
+        }
     }
 
-    private static string? ExtractSteamId64(string token, out int candidateCount)
+    private static HashSet<string> LoadSteamAuthWhitelist()
     {
-        List<string> candidates = [];
+        string? value = PostgresDatabase.Get().GetConfiguration()[SteamAuthWhitelistKey];
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return [];
+        }
 
-        Match match = SteamIdPattern.Match(token);
+        return value
+            .Split([',', ';', ' ', '\r', '\n', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet(StringComparer.Ordinal);
+    }
+
+    private static HashSet<string> ExtractSteamIdCandidates(string authTicket)
+    {
+        HashSet<string> candidates = [];
+        Match match = SteamId64Pattern.Match(authTicket);
         while (match.Success)
         {
-            if (IsValidSteamId64(match.Value))
+            if (IsSteamId64(match.Value))
             {
                 candidates.Add(match.Value);
             }
@@ -45,38 +67,16 @@ public partial class AuthenticateHandler
             match = match.NextMatch();
         }
 
-        candidates.AddRange(ExtractSteamIdsFromHex(token));
-
-        string[] uniqueCandidates = candidates.Distinct().ToArray();
-        candidateCount = uniqueCandidates.Length;
-        return uniqueCandidates.Length == 1 ? uniqueCandidates[0] : null;
-    }
-
-    private static List<string> ExtractSteamIdsFromHex(string token)
-    {
-        if (token.Length < 16 || (token.Length & 1) != 0)
+        byte[]? bytes = TryDecodeHex(authTicket);
+        if (bytes is null)
         {
-            return [];
+            return candidates;
         }
 
-        byte[] bytes = new byte[token.Length / 2];
-        for (int i = 0; i < bytes.Length; i++)
-        {
-            int hi = HexNibble(token[i * 2]);
-            int lo = HexNibble(token[(i * 2) + 1]);
-            if (hi < 0 || lo < 0)
-            {
-                return [];
-            }
-
-            bytes[i] = (byte)((hi << 4) | lo);
-        }
-
-        List<string> candidates = [];
         for (int offset = 0; offset + sizeof(ulong) <= bytes.Length; offset++)
         {
             string candidate = BinaryPrimitives.ReadUInt64LittleEndian(bytes.AsSpan(offset, sizeof(ulong))).ToString();
-            if (IsValidSteamId64(candidate))
+            if (IsSteamId64(candidate))
             {
                 candidates.Add(candidate);
             }
@@ -85,11 +85,27 @@ public partial class AuthenticateHandler
         return candidates;
     }
 
-    private static bool IsValidSteamId64(string? value)
+    private static byte[]? TryDecodeHex(string value)
     {
-        return ulong.TryParse(value, out ulong steamId)
-               && steamId > SteamId64Base
-               && steamId <= SteamId64Base + uint.MaxValue;
+        if (value.Length < 16 || (value.Length & 1) != 0)
+        {
+            return null;
+        }
+
+        byte[] bytes = new byte[value.Length / 2];
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            int hi = HexNibble(value[i * 2]);
+            int lo = HexNibble(value[(i * 2) + 1]);
+            if (hi < 0 || lo < 0)
+            {
+                return null;
+            }
+
+            bytes[i] = (byte)((hi << 4) | lo);
+        }
+
+        return bytes;
     }
 
     private static int HexNibble(char c)
