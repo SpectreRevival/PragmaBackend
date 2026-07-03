@@ -59,12 +59,15 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
 
         string steamId64;
         string authSource;
-        TicketBypassContext ticketBypass = new();
-        string? steamApiKey = PostgresDatabase.Get().GetConfiguration()["STEAM_WEB_API_KEY"];
+        Microsoft.Extensions.Configuration.IConfiguration config = PostgresDatabase.Get().GetConfiguration();
+        string? steamApiKey = config["STEAM_WEB_API_KEY"];
+        string? whitelistedSteamId = null;
+        ApplySteamAuthWhitelistFallback(reqData, ref whitelistedSteamId);
+        SteamTicketAuthenticationResult authResult = new(SteamTicketAuthenticationStatus.Unavailable);
 
         if (!string.IsNullOrWhiteSpace(steamApiKey))
         {
-            SteamTicketAuthenticationResult authResult = await AuthenticateSteamUserTicket(reqData.providerToken, steamApiKey, SteamAppId);
+            authResult = await AuthenticateSteamUserTicket(reqData.providerToken, steamApiKey, SteamAppId);
             if (authResult.Status == SteamTicketAuthenticationStatus.Success && !string.IsNullOrWhiteSpace(authResult.SteamId64))
             {
                 steamId64 = authResult.SteamId64;
@@ -73,34 +76,27 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
             }
             else
             {
-                if (authResult.Status == SteamTicketAuthenticationStatus.Unavailable)
+                if (string.IsNullOrWhiteSpace(whitelistedSteamId))
                 {
-                    return Results.BadRequest("Steam ticket authentication was unavailable");
+                    return authResult.Status == SteamTicketAuthenticationStatus.Unavailable
+                        ? Results.BadRequest("Steam ticket authentication was unavailable")
+                        : Results.BadRequest("Invalid Steam auth ticket");
                 }
 
-                try
-                {
-                    steamId64 = ExtractSteamIdFromTicketOrBypass(reqData, ticketBypass);
-                    authSource = ticketBypass.Enabled ? "DO_TICKET_BYPASS" : "LocalTicket";
-                }
-                catch (Exception ex)
-                {
-                    return Results.BadRequest(ex);
-                }
+                steamId64 = whitelistedSteamId;
+                authSource = "SteamAuthWhitelist";
             }
         }
         else
         {
-            Log.Warning("STEAM_WEB_API_KEY not configured; using local ticket parsing");
-            try
+            if (string.IsNullOrWhiteSpace(whitelistedSteamId))
             {
-                steamId64 = ExtractSteamIdFromTicketOrBypass(reqData, ticketBypass);
-                authSource = ticketBypass.Enabled ? "DO_TICKET_BYPASS" : "LocalTicket";
+                Log.Warning("STEAM_WEB_API_KEY not configured and auth ticket did not match compiled Steam auth whitelist");
+                return Results.BadRequest("Steam Web API key is required unless ticket matches Steam auth whitelist");
             }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(ex);
-            }
+
+            steamId64 = whitelistedSteamId;
+            authSource = "SteamAuthWhitelist";
         }
 
         NpgsqlCommand cmd = PostgresDatabase.Get().GetRaw().CreateCommand(
@@ -148,34 +144,6 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
             )));
     }
 
-    private sealed class TicketBypassContext
-    {
-        public bool Enabled { get; set; }
-        public string? SteamId64 { get; set; }
-    }
-
-    partial void ApplyTicketBypass(AuthenticateHandlerRequest request, TicketBypassContext context);
-
-    private string ExtractSteamIdFromTicketOrBypass(AuthenticateHandlerRequest request, TicketBypassContext ticketBypass)
-    {
-        try
-        {
-            SteamAuthTicket ticket = new(request.providerToken);
-            return ticket.SteamId64;
-        }
-        catch (Exception ex)
-        {
-            ApplyTicketBypass(request, ticketBypass);
-            if (ticketBypass.Enabled && !string.IsNullOrWhiteSpace(ticketBypass.SteamId64))
-            {
-                Log.Warning("Using DO_TICKET_BYPASS after local Steam ticket parsing failed: {Message}", ex.Message);
-                return ticketBypass.SteamId64;
-            }
-
-            throw;
-        }
-    }
-
     private enum SteamTicketAuthenticationStatus
     {
         Success,
@@ -184,6 +152,8 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
     }
 
     private sealed record SteamTicketAuthenticationResult(SteamTicketAuthenticationStatus Status, string? SteamId64 = null);
+
+    partial void ApplySteamAuthWhitelistFallback(AuthenticateHandlerRequest request, ref string? steamId64);
 
     private static string BuildJWT(string backendType, Model.ProfileData profile)
     {
