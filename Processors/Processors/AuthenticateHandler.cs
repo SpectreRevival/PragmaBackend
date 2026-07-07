@@ -11,10 +11,14 @@ using System.Text.Json.Nodes;
 
 namespace Processors.Processors;
 
-public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleton
+public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleton
 {
+    private const string SteamAppId = "2641470";
+
     // short timeout so a slow/down steam web api can't hang the auth request; we fall back to the stored name.
     private static readonly HttpClient SteamHttpClient = new() { Timeout = TimeSpan.FromSeconds(5) };
+    private static readonly RSA PragmaSigningKey = RSA.Create(2048);
+    private static readonly object PragmaSigningKeyLock = new();
 
     [SetsRequiredMembers]
     public AuthenticateHandler(HttpMethod method, string route) : base(method, route)
@@ -53,24 +57,57 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
             return Results.BadRequest($"Unsupported providerId {reqData.providerId}");
         }
 
+        string steamId64;
+        string authSource;
+        Microsoft.Extensions.Configuration.IConfiguration config = PostgresDatabase.Get().GetConfiguration();
+        string? steamApiKey = config["STEAM_WEB_API_KEY"];
+        string? whitelistedSteamId = null;
+        ApplySteamAuthWhitelistFallback(reqData, ref whitelistedSteamId);
+        SteamTicketAuthenticationResult authResult = new(SteamTicketAuthenticationStatus.Unavailable);
+
+        if (!string.IsNullOrWhiteSpace(steamApiKey))
+        {
+            authResult = await AuthenticateSteamUserTicket(reqData.providerToken, steamApiKey, SteamAppId);
+            if (authResult.Status == SteamTicketAuthenticationStatus.Success && !string.IsNullOrWhiteSpace(authResult.SteamId64))
+            {
+                steamId64 = authResult.SteamId64;
+                authSource = "SteamWebApi";
+                Log.Information("Steam AuthenticateUserTicket accepted ticket. steamId64={SteamId64}", steamId64);
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(whitelistedSteamId))
+                {
+                    return authResult.Status == SteamTicketAuthenticationStatus.Unavailable
+                        ? Results.BadRequest("Steam ticket authentication was unavailable")
+                        : Results.BadRequest("Invalid Steam auth ticket");
+                }
+
+                steamId64 = whitelistedSteamId;
+                authSource = "SteamAuthWhitelist";
+            }
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(whitelistedSteamId))
+            {
+                Log.Warning("STEAM_WEB_API_KEY not configured and auth ticket did not match compiled Steam auth whitelist");
+                return Results.BadRequest("Steam Web API key is required unless ticket matches Steam auth whitelist");
+            }
+
+            steamId64 = whitelistedSteamId;
+            authSource = "SteamAuthWhitelist";
+        }
+
         NpgsqlCommand cmd = PostgresDatabase.Get().GetRaw().CreateCommand(
             "SELECT player_id FROM profile_data WHERE account_id_provider = @account_id_provider AND provider_account_id = @provider_account_id");
-        SteamAuthTicket ticket;
-        try
-        {
-            ticket = new(reqData.providerToken);
-        }
-        catch (Exception ex)
-        {
-            return Results.BadRequest(ex);
-        }
         cmd.Parameters.AddWithValue("account_id_provider", providerId);
-        cmd.Parameters.AddWithValue("provider_account_id", ticket.SteamId64);
+        cmd.Parameters.AddWithValue("provider_account_id", steamId64);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         Model.ProfileData playerProfile;
         if (!await reader.ReadAsync())
         {
-            playerProfile = await CreateNewPlayerFromSteamId(ticket.SteamId64);
+            playerProfile = await CreateNewPlayerFromSteamId(steamId64);
         }
         else
         {
@@ -80,10 +117,9 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         }
 
         // the jwt carries displayName, so the steam persona name has to be resolved and persisted before we build it.
-        string? steamApiKey = PostgresDatabase.Get().GetConfiguration()["STEAM_WEB_API_KEY"];
         if (!string.IsNullOrWhiteSpace(steamApiKey))
         {
-            string? personaName = await ResolveSteamPersonaName(ticket.SteamId64, steamApiKey);
+            string? personaName = await ResolveSteamPersonaName(steamId64, steamApiKey);
             if (!string.IsNullOrEmpty(personaName) && personaName != playerProfile.DisplayName.PlayerName)
             {
                 playerProfile.DisplayName.PlayerName = personaName;
@@ -95,11 +131,29 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
             Log.Warning("STEAM_WEB_API_KEY not configured; using stored display name");
         }
 
+        Log.Information(
+            "Authenticated Steam player. playerId={PlayerId} steamId64={SteamId64} displayName={DisplayName} authSource={AuthSource}",
+            playerProfile.PlayerId,
+            steamId64,
+            playerProfile.DisplayName.PlayerName,
+            authSource);
+
         return Results.Json(new AuthenticateHandlerResponse(new PragmaTokenPair(
             BuildJWT("GAME", playerProfile),
             BuildJWT("SOCIAL", playerProfile)
             )));
     }
+
+    private enum SteamTicketAuthenticationStatus
+    {
+        Success,
+        Rejected,
+        Unavailable
+    }
+
+    private sealed record SteamTicketAuthenticationResult(SteamTicketAuthenticationStatus Status, string? SteamId64 = null);
+
+    partial void ApplySteamAuthWhitelistFallback(AuthenticateHandlerRequest request, ref string? steamId64);
 
     private static string BuildJWT(string backendType, Model.ProfileData profile)
     {
@@ -139,8 +193,11 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
         string encodedPayload = Base64UrlEncode(Encoding.UTF8.GetBytes(payloadString));
         string stringToSign = $"{encodedHeader}.{encodedPayload}";
         byte[] bytesToSign = Encoding.UTF8.GetBytes(stringToSign);
-        RSA pragmaKey = RSA.Create(2048); // Just create a new 2048 bit key every time, the client actually doesn't care who the signature is from so long as its signed
-        byte[] signature = pragmaKey.SignData(bytesToSign, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        byte[] signature;
+        lock (PragmaSigningKeyLock)
+        {
+            signature = PragmaSigningKey.SignData(bytesToSign, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        }
         string encodedSignature = Base64UrlEncode(signature);
         return $"{stringToSign}.{encodedSignature}";
     }
@@ -151,6 +208,63 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
             .Replace("+", "-")
             .Replace("/", "_")
             .TrimEnd('=');
+    }
+
+    private static async Task<SteamTicketAuthenticationResult> AuthenticateSteamUserTicket(string authTicket, string apiKey, string appId)
+    {
+        try
+        {
+            string url = $"https://api.steampowered.com/ISteamUserAuth/AuthenticateUserTicket/v1/?key={apiKey}&appid={Uri.EscapeDataString(appId)}&ticket={Uri.EscapeDataString(authTicket)}";
+            using HttpResponseMessage resp = await SteamHttpClient.GetAsync(url);
+            if (!resp.IsSuccessStatusCode)
+            {
+                Log.Warning("Steam AuthenticateUserTicket returned {StatusCode}", (int)resp.StatusCode);
+                return new SteamTicketAuthenticationResult(SteamTicketAuthenticationStatus.Unavailable);
+            }
+
+            using Stream stream = await resp.Content.ReadAsStreamAsync();
+            using JsonDocument doc = await JsonDocument.ParseAsync(stream);
+            if (!doc.RootElement.TryGetProperty("response", out JsonElement response))
+            {
+                Log.Warning("Steam AuthenticateUserTicket response did not contain a response object");
+                return new SteamTicketAuthenticationResult(SteamTicketAuthenticationStatus.Unavailable);
+            }
+
+            if (response.TryGetProperty("params", out JsonElement parameters))
+            {
+                string? result = parameters.TryGetProperty("result", out JsonElement resultElement)
+                    ? resultElement.GetString()
+                    : null;
+                string? steamId = parameters.TryGetProperty("steamid", out JsonElement steamIdElement)
+                    ? steamIdElement.GetString()
+                    : null;
+
+                if (string.Equals(result, "OK", StringComparison.OrdinalIgnoreCase) && IsSteamId64(steamId))
+                {
+                    return new SteamTicketAuthenticationResult(SteamTicketAuthenticationStatus.Success, steamId);
+                }
+
+                Log.Warning("Steam AuthenticateUserTicket rejected ticket with result {Result}", result ?? "<missing>");
+                return new SteamTicketAuthenticationResult(SteamTicketAuthenticationStatus.Rejected);
+            }
+
+            if (response.TryGetProperty("error", out JsonElement error))
+            {
+                string? errorDescription = error.TryGetProperty("errordesc", out JsonElement errorDescElement)
+                    ? errorDescElement.GetString()
+                    : null;
+                Log.Warning("Steam AuthenticateUserTicket rejected ticket: {ErrorDescription}", errorDescription ?? "<missing>");
+                return new SteamTicketAuthenticationResult(SteamTicketAuthenticationStatus.Rejected);
+            }
+
+            Log.Warning("Steam AuthenticateUserTicket response did not contain params or error");
+            return new SteamTicketAuthenticationResult(SteamTicketAuthenticationStatus.Unavailable);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning("Failed to authenticate Steam ticket: {Message}", ex.Message);
+            return new SteamTicketAuthenticationResult(SteamTicketAuthenticationStatus.Unavailable);
+        }
     }
 
     private static async Task<string?> ResolveSteamPersonaName(string steamId64, string apiKey)
@@ -179,6 +293,14 @@ public class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandlerSingleto
             Log.Warning($"Failed to resolve steam persona name for {steamId64}: {ex.Message}");
             return null;
         }
+    }
+
+    private static bool IsSteamId64(string? value)
+    {
+        const ulong steamId64Base = 76561197960265728UL;
+        return ulong.TryParse(value, out ulong steamId)
+            && steamId > steamId64Base
+            && steamId <= steamId64Base + uint.MaxValue;
     }
 
     private static Guid PlayerIdFromSteamId(string steamId)
