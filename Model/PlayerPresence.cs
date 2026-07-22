@@ -55,7 +55,7 @@ public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Gu
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_player_presence.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/player_presence.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("basic_status", BasicStatus);
         cmd.Parameters.AddWithValue("last_updated_time", LastUpdatedTime);
@@ -91,7 +91,7 @@ public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Gu
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_player_presence.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/player_presence.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("basic_status", BasicStatus);
         cmd.Parameters.AddWithValue("last_updated_time", LastUpdatedTime);

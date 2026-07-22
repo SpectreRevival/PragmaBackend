@@ -119,7 +119,7 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile($"save_legacy_stats_data_{StatsType.ToString().ToLower()}.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile($"save/legacy_stats_data_{StatsType.ToString().ToLower()}.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("kill_count", KillCount);
         cmd.Parameters.AddWithValue("death_count", DeathCount);
@@ -237,7 +237,7 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile($"save_legacy_stats_data_{StatsType.ToString().ToLower()}.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile($"save/legacy_stats_data_{StatsType.ToString().ToLower()}.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("kill_count", KillCount);
         cmd.Parameters.AddWithValue("death_count", DeathCount);

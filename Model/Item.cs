@@ -52,7 +52,7 @@ public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_stackable_item.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/stackable_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("amount", Amount);
@@ -95,7 +95,7 @@ public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_stackable_item.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/stackable_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("amount", Amount);
@@ -158,7 +158,7 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_customized_instanced_item.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/customized_instanced_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
@@ -215,7 +215,7 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_customized_instanced_item.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/customized_instanced_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
@@ -292,7 +292,7 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_progression_tracking_item.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/progression_tracking_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
@@ -396,7 +396,7 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_progression_tracking_item.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/progression_tracking_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
@@ -457,7 +457,7 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_sponsor_unlock_tracker_item.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/sponsor_unlock_tracker_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
@@ -515,7 +515,7 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_sponsor_unlock_tracker_item.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/sponsor_unlock_tracker_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);

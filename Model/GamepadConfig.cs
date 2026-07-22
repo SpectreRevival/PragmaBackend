@@ -118,7 +118,7 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_gamepad_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/gamepad_config.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("input_scheme_index", InputSchemeIndex);
         cmd.Parameters.AddWithValue("gamepad_glyph_index", GamepadGlyphIndex);
@@ -272,7 +272,7 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_gamepad_config.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/gamepad_config.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("input_scheme_index", InputSchemeIndex);
         cmd.Parameters.AddWithValue("gamepad_glyph_index", GamepadGlyphIndex);

@@ -107,7 +107,7 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_client_message.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/client_message.sql");
         cmd.Parameters.AddWithValue("message_id", MessageId);
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("message_type", MessageType);
@@ -194,7 +194,7 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_client_message.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/client_message.sql");
         cmd.Parameters.AddWithValue("message_id", MessageId);
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("message_type", MessageType);

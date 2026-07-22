@@ -308,7 +308,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_player_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/player_config.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("unlock_all_play_modes", UnlockAllPlayModes);
         cmd.Parameters.AddWithValue("unlock_all_menu_tabs", UnlockAllMenuTabs);
@@ -751,7 +751,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_player_config.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/player_config.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("unlock_all_play_modes", UnlockAllPlayModes);
         cmd.Parameters.AddWithValue("unlock_all_menu_tabs", UnlockAllMenuTabs);

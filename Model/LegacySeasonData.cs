@@ -47,7 +47,7 @@ public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_legacy_season_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/legacy_season_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("solo_ranked_points", SoloRankedPoints);
         cmd.Parameters.AddWithValue("current_solo_rank", CurrentSoloRank);
@@ -89,7 +89,7 @@ public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_legacy_season_data.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/legacy_season_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("solo_ranked_points", SoloRankedPoints);
         cmd.Parameters.AddWithValue("current_solo_rank", CurrentSoloRank);

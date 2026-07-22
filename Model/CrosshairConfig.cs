@@ -87,7 +87,7 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_crosshair_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/crosshair_config.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("color_index", ColorIndex);
         cmd.Parameters.AddWithValue("advanced_crosshair_settings", AdvancedCrosshairSettings);
@@ -196,7 +196,7 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_crosshair_config.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/crosshair_config.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("color_index", ColorIndex);
         cmd.Parameters.AddWithValue("advanced_crosshair_settings", AdvancedCrosshairSettings);
