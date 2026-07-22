@@ -90,6 +90,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         builder.MapEnum<ObjectiveContributionSourceType>("objectivecontributionsourcetype");
         builder.MapComposite<ObjectiveContribution>("objectivecontribution");
         builder.MapComposite<ClientMessageSender>("clientmessagesender");
+        builder.MapComposite<OverrideInput>("overrideinput");
         _dataSource = builder.Build();
         if (connectTimeout == 0)
         {
