@@ -14,12 +14,14 @@ public partial class SpectreWebsocket
 {
     private static readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Guid, SpectreWebsocket>> ConnectionsByPlayerId = new();
     public required Guid PlayerId { get; init; }
+    public bool IsPartnerSession { get; }
     public Guid ConnectionId { get; } = Guid.NewGuid();
     private WebSocket Socket { get; init; }
     private int sequenceId = 0;
     private readonly SemaphoreSlim sendLock = new(1, 1);
     private static readonly int MAX_BUFFER_SIZE = 32 * 1024 * 1024;
 
+    partial void ResolveSessionIdentity(JwtSecurityToken jwt, ref Guid playerId, ref bool isPartnerSession);
     partial void InitTracing();
     partial void TraceConnect();
     partial void TraceRequestReceived(string rpcType, int requestId);
@@ -46,13 +48,24 @@ public partial class SpectreWebsocket
         }
         string rawJwt = bearer[7..].Trim();
         JwtSecurityToken jwt = new JwtSecurityTokenHandler().ReadJwtToken(rawJwt);
-        Guid? possiblePID = Guid.Parse(jwt.Claims.FirstOrDefault(c => c.Type == "pragmaPlayerId")?.Value ?? throw new InvalidDataException("failed to get value for pragmaPlayerId claim"));
-        if (possiblePID == null)
+        Guid sessionPlayerId = Guid.Empty;
+        bool isPartnerSession = false;
+        ResolveSessionIdentity(jwt, ref sessionPlayerId, ref isPartnerSession);
+        IsPartnerSession = isPartnerSession;
+        if (!IsPartnerSession)
         {
-            throw new InvalidDataException("No valid GUID on pragmaPlayerId claim");
+            Guid? possiblePID = Guid.Parse(jwt.Claims.FirstOrDefault(c => c.Type == "pragmaPlayerId")?.Value ?? throw new InvalidDataException("failed to get value for pragmaPlayerId claim"));
+            if (possiblePID == null)
+            {
+                throw new InvalidDataException("No valid GUID on pragmaPlayerId claim");
+            }
+            sessionPlayerId = (Guid)possiblePID;
         }
-        PlayerId = (Guid)possiblePID;
-        ConnectionsByPlayerId.GetOrAdd(PlayerId, _ => new ConcurrentDictionary<Guid, SpectreWebsocket>())[ConnectionId] = this;
+        PlayerId = sessionPlayerId;
+        if (!IsPartnerSession)
+        {
+            ConnectionsByPlayerId.GetOrAdd(PlayerId, _ => new ConcurrentDictionary<Guid, SpectreWebsocket>())[ConnectionId] = this;
+        }
         InitTracing();
     }
 
@@ -166,6 +179,7 @@ public partial class SpectreWebsocket
                         string error = $"No websocket processor recognized for rpc type {wsReq.RpcType}";
                         Log.Warning("{Message}", error);
                         TraceProcessorError(wsReq.RpcType.ToString(), wsReq.RequestId, error);
+                        await TrySendFallbackResponseAsync(wsReq, cancellationToken);
                         continue;
                     }
 
@@ -178,6 +192,7 @@ public partial class SpectreWebsocket
                     {
                         Log.Warning(ex, "Processor for {RpcType} request {RequestId} failed for player {PlayerId}", wsReq.RpcType, wsReq.RequestId, PlayerId);
                         TraceProcessorError(wsReq.RpcType.ToString(), wsReq.RequestId, ex.Message);
+                        await TrySendFallbackResponseAsync(wsReq, cancellationToken);
                         continue;
                     }
                     TraceAfterProcess();
@@ -221,13 +236,44 @@ public partial class SpectreWebsocket
         }
         finally
         {
-            bool wasLastConnection = UnregisterConnection(PlayerId, ConnectionId, this);
+            bool wasLastConnection = !IsPartnerSession && UnregisterConnection(PlayerId, ConnectionId, this);
             if (wasLastConnection)
             {
                 await RegisterOfflineAsync();
+                _ = CleanupPartiesAfterDisconnectAsync(PlayerId);
             }
             TraceDisconnect();
             sendLock.Dispose();
+        }
+    }
+
+    private async Task TrySendFallbackResponseAsync(SpectreWebsocketRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await SendResponseAsync(request, SpectreWebsocketMessage.From("{}"), cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning("Failed to send fallback response for {RpcType} request {RequestId}: {Message}", request.RpcType, request.RequestId, ex.Message);
+        }
+    }
+
+    private static async Task CleanupPartiesAfterDisconnectAsync(Guid playerId)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(60));
+        if (ConnectionsByPlayerId.ContainsKey(playerId))
+        {
+            return;
+        }
+        try
+        {
+            Log.Information("PARTYDIAG: evicting disconnected player {PlayerId} from parties", playerId);
+            await global::Processors.Processors.PartyRpcProcessorBase.RemovePlayerFromParties(playerId, null);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning("Party cleanup after disconnect failed for {PlayerId}: {Message}", playerId, ex.Message);
         }
     }
 
