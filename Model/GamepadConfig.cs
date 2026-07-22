@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<GamepadConfig, Guid>, IEquatable<GamepadConfig>, IInterchangeableKeyed<GamepadConfig, Packets.GamepadConfig, Guid>
+public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<GamepadConfig, Guid>, IEquatable<GamepadConfig>, IInterchangeableKeyed<GamepadConfig, Packets.GamepadConfig, Guid>, IBulkWriteable
 {
     private static readonly GamepadConfig defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "GamepadConfig.json")))
         .Deserialize<GamepadConfig>(
@@ -75,7 +75,7 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
 
     public static async Task<GamepadConfig?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_gamepad_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/gamepad_config.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -303,13 +303,40 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(InputSchemeIndex);
+        await importer.WriteAsync(GamepadGlyphIndex);
+        await importer.WriteAsync(LookPresetIndex);
+        await importer.WriteAsync(CustomLookConfig);
+        await importer.WriteAsync(CustomResponseCurve);
+        await importer.WriteAsync(InvertLook);
+        await importer.WriteAsync(ControllerFeedbackValue);
+        await importer.WriteAsync(TurnAccel);
+        await importer.WriteAsync(AimAssist);
+        await importer.WriteAsync(ResponseCurveIndex);
+        await importer.WriteAsync(ResponseCurveArcDeg);
+        await importer.WriteAsync(ResponseCurveSlope);
+        await importer.WriteAsync(ResponseCurveLinearBlendPow);
+        await importer.WriteAsync(CustomScaleADS);
+        await importer.WriteAsync(ToggleCrouch);
+        await importer.WriteAsync(ToggleWalk);
+        await importer.WriteAsync(TogglePlantDefuse);
+        await importer.WriteAsync(ToggleADS);
+        await importer.WriteAsync(EndWalkWhenFiringBehavior);
+        await importer.WriteAsync(ADSTriggerThreshold);
+        await importer.WriteAsync(DeadZoneMoveAmount);
+        await importer.WriteAsync(CustomDeadZoneMoveAmount);
+        await importer.WriteAsync(DeadZoneLookAmount);
+        await importer.WriteAsync(CustomDeadZoneLookAmount);
+        await importer.WriteAsync(WalkRunDeflectionThreshold);
+        await importer.WriteAsync(Version);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/gamepad_config.sql");
     }
 }
