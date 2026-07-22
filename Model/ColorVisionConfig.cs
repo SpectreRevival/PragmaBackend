@@ -77,7 +77,7 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_color_vision_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/color_vision_config.sql");
         cmd.Parameters.AddWithValue("playerid", PlayerId);
         cmd.Parameters.AddWithValue("colorvisiontype", ColorVisionType);
         cmd.Parameters.AddWithValue("severity", Severity);
@@ -167,7 +167,7 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_color_vision_config.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/color_vision_config.sql");
         cmd.Parameters.AddWithValue("playerid", PlayerId);
         cmd.Parameters.AddWithValue("colorvisiontype", ColorVisionType);
         cmd.Parameters.AddWithValue("severity", Severity);

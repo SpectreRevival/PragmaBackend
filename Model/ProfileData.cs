@@ -113,7 +113,7 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_profile_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/profile_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("display_name", DisplayName);
         cmd.Parameters.AddWithValue("banner_item_id", BannerItemId);
@@ -209,7 +209,7 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_profile_data.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/profile_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("display_name", DisplayName);
         cmd.Parameters.AddWithValue("banner_item_id", BannerItemId);

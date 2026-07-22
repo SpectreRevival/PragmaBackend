@@ -48,7 +48,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_battlepass_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/battlepass_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("active_battle_passes", ActiveBattlePasses);
         cmd.Parameters.AddWithValue("battlepass_quests", BattlepassQuests);
@@ -94,7 +94,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_battlepass_data.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/battlepass_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("active_battle_passes", ActiveBattlePasses);
         cmd.Parameters.AddWithValue("battlepass_quests", BattlepassQuests);

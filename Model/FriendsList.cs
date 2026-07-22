@@ -56,7 +56,7 @@ public record class FriendsList : VersionedData, IDatabaseSyncableDefault<Friend
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_friends_list.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/friends_list.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("accepting_friend_invites", AcceptingFriendInvites);
         cmd.Parameters.AddWithValue("friends", Friends);
@@ -132,7 +132,7 @@ public record class FriendsList : VersionedData, IDatabaseSyncableDefault<Friend
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_friends_list.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/friends_list.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("accepting_friend_invites", AcceptingFriendInvites);
         cmd.Parameters.AddWithValue("friends", Friends);
