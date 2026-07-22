@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefault<SubtitleUserSettings, Guid>, IEquatable<SubtitleUserSettings>, IInterchangeableKeyed<SubtitleUserSettings, Packets.SubtitleUserSettings, Guid>
+public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefault<SubtitleUserSettings, Guid>, IEquatable<SubtitleUserSettings>, IInterchangeableKeyed<SubtitleUserSettings, Packets.SubtitleUserSettings, Guid>, IBulkWriteable
 {
     private static readonly SubtitleUserSettings defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "SubtitleUserSettings.json")))
         .Deserialize<SubtitleUserSettings>(new JsonSerializerOptions()
@@ -36,7 +36,7 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
 
     public static async Task<SubtitleUserSettings?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_subtitle_settings.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/subtitle_settings.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -137,13 +137,21 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(FontSize);
+        await importer.WriteAsync(BackgroundOpacity);
+        await importer.WriteAsync(SpeakerQualifierDisplay);
+        await importer.WriteAsync(PostPlayerSubtitles);
+        await importer.WriteAsync(PostPlayerSubtitlesToChat);
+        await importer.WriteAsync(NamesToShowMask);
+        await importer.WriteAsync(Version);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/subtitle_user_settings.sql");
     }
 }

@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, IEquatable<ProfileData>
+public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, IEquatable<ProfileData>, IBulkWriteable
 {
     private static readonly ProfileData defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ProfileData.json")))
         .Deserialize<ProfileData>(new JsonSerializerOptions()
@@ -72,7 +72,7 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
 
     public static async Task<ProfileData?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_profile_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/profile_data.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -238,13 +238,38 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(DisplayName);
+        await importer.WriteAsync(BannerItemId);
+        await importer.WriteAsync(PreSprayItemId);
+        await importer.WriteAsync(MatchSprayItemId);
+        await importer.WriteAsync(PostSprayItemId);
+        await importer.WriteAsync(AttackerOutfitLoadoutId);
+        await importer.WriteAsync(DefenderOutfitLoadoutId);
+        await importer.WriteAsync(AttackerWeaponLoadoutId);
+        await importer.WriteAsync(DefenderWeaponLoadoutId);
+        await importer.WriteAsync(LastUpdated);
+        await importer.WriteAsync(NextNewDayRollover);
+        await importer.WriteAsync(LastLogin);
+        await importer.WriteAsync(PlayerFlags);
+        await importer.WriteAsync(CrewScore);
+        await importer.WriteAsync(CurrentSoloRank);
+        await importer.WriteAsync(HighestTeamRank);
+        await importer.WriteAsync(DivisionType);
+        await importer.WriteAsync(InventoryVersion);
+        await importer.WriteAsync(CrewId);
+        await importer.WriteAsync(AccountIdProvider);
+        await importer.WriteAsync(PlatformName);
+        await importer.WriteAsync(ProviderAccountId);
+        await importer.WriteAsync(CrossplayPlatformKind);
+        await importer.WriteAsync(GamesRemainingUntilCrewJoin);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/profile_data.sql");
     }
 }

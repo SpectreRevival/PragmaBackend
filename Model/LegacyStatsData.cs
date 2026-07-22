@@ -83,7 +83,7 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
 
     public static async Task<LegacyStatsData?> RetrieveFromDatabase(LegacyStatsDataKey key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile($"query_legacy_stats_data_{key.StatsType.ToString().ToLower()}.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile($"query/legacy_stats_data_{key.StatsType.ToString().ToLower()}.sql");
         cmd.Parameters.AddWithValue("player_id", key.PlayerId);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -258,15 +258,5 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
         cmd.Parameters.AddWithValue("top_sponsors", TopSponsors);
         cmd.Parameters.AddWithValue("top_weapons", TopWeapons);
         return cmd;
-    }
-
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
-    {
-        throw new NotImplementedException();
-    }
-
-    public static NpgsqlBinaryImporter CreateBulkWriter()
-    {
-        throw new NotImplementedException();
     }
 }

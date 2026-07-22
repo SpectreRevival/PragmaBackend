@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<ColorVisionConfig, Guid>, IEquatable<ColorVisionConfig>, IInterchangeableKeyed<ColorVisionConfig, Packets.ColorVisionConfig, Guid>
+public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<ColorVisionConfig, Guid>, IEquatable<ColorVisionConfig>, IInterchangeableKeyed<ColorVisionConfig, Packets.ColorVisionConfig, Guid>, IBulkWriteable
 {
     private static readonly ColorVisionConfig defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ColorVisionConfig.json"))).Deserialize<ColorVisionConfig>(
         new JsonSerializerOptions()
@@ -49,7 +49,7 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
 
     public static async Task<ColorVisionConfig?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_color_vision_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/color_vision_config.sql");
         cmd.Parameters.AddWithValue("playerid", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -183,13 +183,25 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(ColorVisionType);
+        await importer.WriteAsync(Severity);
+        await importer.WriteAsync(CorrectDeficiency);
+        await importer.WriteAsync(ShowCorrectDeficiency);
+        await importer.WriteAsync(UseComfortSwapEffect);
+        await importer.WriteAsync(UseCustomOutlineColor);
+        await importer.WriteAsync(OutlineColor);
+        await importer.WriteAsync(OutlineColorLower);
+        await importer.WriteAsync(OutlineThicknessScale);
+        await importer.WriteAsync(OutlineBrightnessScale);
+        await importer.WriteAsync(Version);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/color_vision_config.sql");
     }
 }

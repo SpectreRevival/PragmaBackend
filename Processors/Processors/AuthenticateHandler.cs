@@ -19,6 +19,11 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
     private static readonly HttpClient SteamHttpClient = new() { Timeout = TimeSpan.FromSeconds(5) };
     private static readonly RSA PragmaSigningKey = RSA.Create(2048);
     private static readonly object PragmaSigningKeyLock = new();
+    private static readonly ClientMessage cyberlordKnifeMessageDefault = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "staticdata", "CyberlordMessage.json"))).Deserialize<ClientMessage>(new JsonSerializerOptions()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new UnixDateTimeOffsetConverter() }
+    });
 
     [SetsRequiredMembers]
     public AuthenticateHandler(HttpMethod method, string route) : base(method, route)
@@ -395,9 +400,8 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
 
     private static async Task<Model.ProfileData> CreateNewPlayerFromSteamId(string steamId)
     {
-        NpgsqlBatch batch = new NpgsqlBatch(PostgresDatabase.Get().GetRaw().CreateConnection());
+        NpgsqlBatch batch = PostgresDatabase.CreateBatch();
         Guid playerId = PlayerIdFromSteamId(steamId);
-        using var conn = PostgresDatabase.Get().GetRaw().CreateConnection();
         using var stackableBulkWriter = Model.StackableItem.CreateBulkWriter();
         foreach (Model.StackableItem stackableItem in DefaultInventory.Get().StackableItems)
         {
@@ -405,6 +409,7 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
             stackableItem.OwningPlayerId = playerId;
             await stackableItem.WriteToBulkWriter(stackableBulkWriter);
         }
+        await stackableBulkWriter.CompleteAsync();
         using var instancedItemWriter = Model.CustomizedInstancedItem.CreateBulkWriter();
         foreach (CustomizedInstancedItem customizedInstancedItem in DefaultInventory.Get().CustomizedInstancedItems)
         {
@@ -412,6 +417,7 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
             customizedInstancedItem.OwningPlayerId = playerId;
             await customizedInstancedItem.WriteToBulkWriter(instancedItemWriter);
         }
+        await instancedItemWriter.CompleteAsync();
         using var progressionItemWriter = Model.ProgressionTrackingItem.CreateBulkWriter();
         foreach (ProgressionTrackingItem progressionTrackerItem in DefaultInventory.Get().ProgresionTrackingItems)
         {
@@ -419,6 +425,7 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
             progressionTrackerItem.OwningPlayerId = playerId;
             await progressionTrackerItem.WriteToBulkWriter(progressionItemWriter);
         }
+        await progressionItemWriter.CompleteAsync();
         using var sponsorUnlockItemWriter = Model.SponsorUnlockTrackerItem.CreateBulkWriter();
         foreach (SponsorUnlockTrackerItem sponsorTrackerItem in DefaultInventory.Get().SponsorUnlockItems)
         {
@@ -426,6 +433,7 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
             sponsorTrackerItem.OwningPlayerId = playerId;
             await sponsorTrackerItem.WriteToBulkWriter(sponsorUnlockItemWriter);
         }
+        await sponsorUnlockItemWriter.CompleteAsync();
         Model.BattlepassData bpData = Model.BattlepassData.CreateDefault(playerId);
         batch.BatchCommands.Add(bpData.CreateBatchSyncCommand());
         Model.ColorVisionConfig colorVisionConfig = Model.ColorVisionConfig.CreateDefault(playerId);
@@ -480,13 +488,7 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
         playerProfile.PostSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
         playerProfile.BannerItemId = GetInstanceIdByCatalogId("SpectreBannerItemDef:BannerID_Track_Kit01_District_01", playerId);
         batch.BatchCommands.Add(playerProfile.CreateBatchSyncCommand());
-        ClientMessage cyberlordKnifeMessage = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "staticdata", "CyberlordMessage.json"))).Deserialize<ClientMessage>(new JsonSerializerOptions()
-        {
-            PropertyNameCaseInsensitive = true,
-            Converters = { new UnixDateTimeOffsetConverter() }
-        });
-        cyberlordKnifeMessage.PlayerId = playerId;
-        cyberlordKnifeMessage.MessageId = Guid.NewGuid();
+        ClientMessage cyberlordKnifeMessage = cyberlordKnifeMessageDefault with { PlayerId = playerId, MessageId = Guid.NewGuid() };
         batch.BatchCommands.Add(cyberlordKnifeMessage.CreateBatchSyncCommand());
         await batch.ExecuteNonQueryAsync();
         return playerProfile;

@@ -26,7 +26,7 @@ public abstract record class TrackedProgression
     public required DateTimeOffset LastRolloverTimestamp { get; set; }
 }
 
-public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<TeamTrackedProgression, Guid>, IEquatable<TeamTrackedProgression>, IInterchangeableKeyed<TeamTrackedProgression, Packets.TrackedProgression, Guid>
+public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<TeamTrackedProgression, Guid>, IEquatable<TeamTrackedProgression>, IInterchangeableKeyed<TeamTrackedProgression, Packets.TrackedProgression, Guid>, IBulkWriteable
 {
     private static readonly TeamTrackedProgression defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "TeamTrackedProgression.json")))
         .Deserialize<TeamTrackedProgression>(new JsonSerializerOptions()
@@ -44,7 +44,7 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
     public static async Task<TeamTrackedProgression?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_team_progression.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/team_progression.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -145,18 +145,24 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(TeamId);
+        await importer.WriteAsync(ActiveDailyQuests);
+        await importer.WriteAsync(ActiveWeeklyQuests);
+        await importer.WriteAsync(ActiveEventQuests);
+        await importer.WriteAsync(LastRolloverTimestamp);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/team_progression.sql");
     }
 }
 
-public record class IndividualTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<IndividualTrackedProgression, Guid>, IEquatable<IndividualTrackedProgression>
+public record class IndividualTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<IndividualTrackedProgression, Guid>, IEquatable<IndividualTrackedProgression>, IBulkWriteable
 {
     private static readonly IndividualTrackedProgression defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "IndividualTrackedProgression.json")))
         .Deserialize<IndividualTrackedProgression>(new JsonSerializerOptions()
@@ -174,7 +180,7 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
 
     public static async Task<IndividualTrackedProgression?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_individual_progression.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/individual_progression.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -275,13 +281,19 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(ActiveDailyQuests);
+        await importer.WriteAsync(ActiveWeeklyQuests);
+        await importer.WriteAsync(ActiveEventQuests);
+        await importer.WriteAsync(ActiveEndorsement);
+        await importer.WriteAsync(LastRolloverTimestamp);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/individual_progression.sql");
     }
 }

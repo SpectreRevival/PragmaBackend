@@ -8,7 +8,7 @@ namespace Model;
 
 // Ohm - Intentionally removed country, subdivision, primary/secondary geographic region and address fields from this struct since we aren't going to store those for privacy reasons.
 
-public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatchmakingData, Guid>, IEquatable<PlayerMatchmakingData>, IInterchangeable<PlayerMatchmakingData, Packets.PlayerMatchmakingData>
+public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatchmakingData, Guid>, IEquatable<PlayerMatchmakingData>, IInterchangeable<PlayerMatchmakingData, Packets.PlayerMatchmakingData>, IBulkWriteable
 {
     private static readonly PlayerMatchmakingData defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "PlayerMatchmakingData.json")))
         .Deserialize<PlayerMatchmakingData>(new JsonSerializerOptions()
@@ -57,7 +57,7 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
 
     public static async Task<PlayerMatchmakingData?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_player_matchmaking_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/player_matchmaking_data.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -217,13 +217,29 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(CasualMMR);
+        await importer.WriteAsync(RankedMMR);
+        await importer.WriteAsync(SoloRankPoints);
+        await importer.WriteAsync(CasualMatchesPlayed);
+        await importer.WriteAsync(RankedMatchesPlayed);
+        await importer.WriteAsync(CasualMatchesPlayedSeasonal);
+        await importer.WriteAsync(RankedMatchesPlayedSeasonal);
+        await importer.WriteAsync(RankedPlacementMatches);
+        await importer.WriteAsync(CurrentSoloRank);
+        await importer.WriteAsync(HighestTeamRank);
+        await importer.WriteAsync(CasualMatchesWon);
+        await importer.WriteAsync(RankedMatchesWon);
+        await importer.WriteAsync(PriorityMatchmakingUntil);
+        await importer.WriteAsync(RestrictMatchmakingUntil);
+        await importer.WriteAsync(MapHistory);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/player_matchmaking_data.sql");
     }
 }

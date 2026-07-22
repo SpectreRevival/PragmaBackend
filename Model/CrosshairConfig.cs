@@ -7,7 +7,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<CrosshairConfig, Guid>, IEquatable<CrosshairConfig>, IInterchangeableKeyed<CrosshairConfig, Packets.CrosshairConfig, Guid>
+public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<CrosshairConfig, Guid>, IEquatable<CrosshairConfig>, IInterchangeableKeyed<CrosshairConfig, Packets.CrosshairConfig, Guid>, IBulkWriteable
 {
     private static readonly CrosshairConfig defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "CrosshairConfig.json")))
         .Deserialize<CrosshairConfig>(new JsonSerializerOptions()
@@ -54,7 +54,7 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
 
     public static async Task<CrosshairConfig?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_crosshair_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/crosshair_config.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -217,13 +217,30 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(ColorIndex);
+        await importer.WriteAsync(AdvancedCrosshairSettings);
+        await importer.WriteAsync(CustomColor);
+        await importer.WriteAsync(FireAccuracyFade);
+        await importer.WriteAsync(FollowRecoil);
+        await importer.WriteAsync(ShowOutlines);
+        await importer.WriteAsync(OutlineThickness);
+        await importer.WriteAsync(OutlineOpacity);
+        await importer.WriteAsync(ShowCenterDot);
+        await importer.WriteAsync(UseADSSettings);
+        await importer.WriteAsync(CenterDot);
+        await importer.WriteAsync(CenterDotADS);
+        await importer.WriteAsync(SniperDot);
+        await importer.WriteAsync(InnerPip);
+        await importer.WriteAsync(OuterPip);
+        await importer.WriteAsync(Version);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/crosshair_config.sql");
     }
 }
