@@ -38,6 +38,10 @@
         {
           "enabled": "*",
           "featureName": "RegionSelectorEnabled"
+        },
+        {
+          "featureName": "BuyMenuV3",
+          "enabled": true
         }
       ],
       "lastUpdatedCurrentNewsPublicationId": "*",
