@@ -261,7 +261,7 @@ public partial class SpectreWebsocket
 
     private static async Task CleanupPartiesAfterDisconnectAsync(Guid playerId)
     {
-        await Task.Delay(TimeSpan.FromSeconds(60));
+        await Task.Delay(TimeSpan.FromSeconds(60)); // Waiting in case they reconnect
         if (ConnectionsByPlayerId.ContainsKey(playerId))
         {
             return;
