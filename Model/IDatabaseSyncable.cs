@@ -1,8 +1,11 @@
-﻿namespace Model;
+﻿using Npgsql;
+
+namespace Model;
 
 public interface IDatabaseSyncable<T, KeyType> : IKeyed<KeyType>
 {
     Task SyncToDatabase();
+    NpgsqlBatchCommand CreateBatchSyncCommand();
     static abstract Task<T?> RetrieveFromDatabase(KeyType key);
 }
 

@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefault<SubtitleUserSettings, Guid>, IEquatable<SubtitleUserSettings>, IInterchangeableKeyed<SubtitleUserSettings, Packets.SubtitleUserSettings, Guid>
+public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefault<SubtitleUserSettings, Guid>, IEquatable<SubtitleUserSettings>, IInterchangeableKeyed<SubtitleUserSettings, Packets.SubtitleUserSettings, Guid>, IBulkWriteable
 {
     private static readonly SubtitleUserSettings defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "SubtitleUserSettings.json")))
         .Deserialize<SubtitleUserSettings>(new JsonSerializerOptions()
@@ -36,7 +36,7 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
 
     public static async Task<SubtitleUserSettings?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_subtitle_settings.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/subtitle_settings.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -60,7 +60,7 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_subtitle_user_settings.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/subtitle_user_settings.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("font_size", FontSize);
         cmd.Parameters.AddWithValue("background_opacity", BackgroundOpacity);
@@ -121,5 +121,37 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
             NamesToShowMask = NamesToShowMask
         };
         return packet;
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/subtitle_user_settings.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("font_size", FontSize);
+        cmd.Parameters.AddWithValue("background_opacity", BackgroundOpacity);
+        cmd.Parameters.AddWithValue("speaker_qualifier_display", SpeakerQualifierDisplay);
+        cmd.Parameters.AddWithValue("post_player_subtitles", PostPlayerSubtitles);
+        cmd.Parameters.AddWithValue("post_player_subtitles_to_chat", PostPlayerSubtitlesToChat);
+        cmd.Parameters.AddWithValue("names_to_show_mask", NamesToShowMask);
+        cmd.Parameters.AddWithValue("version", Version);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(FontSize);
+        await importer.WriteAsync(BackgroundOpacity);
+        await importer.WriteAsync(SpeakerQualifierDisplay);
+        await importer.WriteAsync(PostPlayerSubtitles);
+        await importer.WriteAsync(PostPlayerSubtitlesToChat);
+        await importer.WriteAsync(NamesToShowMask);
+        await importer.WriteAsync(Version);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/subtitle_user_settings.sql");
     }
 }

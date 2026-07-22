@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<GamepadConfig, Guid>, IEquatable<GamepadConfig>, IInterchangeableKeyed<GamepadConfig, Packets.GamepadConfig, Guid>
+public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<GamepadConfig, Guid>, IEquatable<GamepadConfig>, IInterchangeableKeyed<GamepadConfig, Packets.GamepadConfig, Guid>, IBulkWriteable
 {
     private static readonly GamepadConfig defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "GamepadConfig.json")))
         .Deserialize<GamepadConfig>(
@@ -75,7 +75,7 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
 
     public static async Task<GamepadConfig?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_gamepad_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/gamepad_config.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -118,7 +118,7 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_gamepad_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/gamepad_config.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("input_scheme_index", InputSchemeIndex);
         cmd.Parameters.AddWithValue("gamepad_glyph_index", GamepadGlyphIndex);
@@ -268,5 +268,75 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
         packet.CustomDeadZoneLookAmount = CustomDeadZoneLookAmount;
         packet.WalkRunDeflectionThreshold = WalkRunDeflectionThreshold;
         return packet;
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/gamepad_config.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("input_scheme_index", InputSchemeIndex);
+        cmd.Parameters.AddWithValue("gamepad_glyph_index", GamepadGlyphIndex);
+        cmd.Parameters.AddWithValue("look_preset_index", LookPresetIndex);
+        cmd.Parameters.AddWithValue("custom_look_config", CustomLookConfig);
+        cmd.Parameters.AddWithValue("custom_response_curve", CustomResponseCurve);
+        cmd.Parameters.AddWithValue("invert_look", InvertLook);
+        cmd.Parameters.AddWithValue("controller_feedback_value", ControllerFeedbackValue);
+        cmd.Parameters.AddWithValue("turn_accel", TurnAccel);
+        cmd.Parameters.AddWithValue("aim_assist", AimAssist);
+        cmd.Parameters.AddWithValue("response_curve_index", ResponseCurveIndex);
+        cmd.Parameters.AddWithValue("response_curve_arc_deg", ResponseCurveArcDeg);
+        cmd.Parameters.AddWithValue("response_curve_slope", ResponseCurveSlope);
+        cmd.Parameters.AddWithValue("response_curve_linear_blend_pow", ResponseCurveLinearBlendPow);
+        cmd.Parameters.AddWithValue("custom_scale_ads", CustomScaleADS);
+        cmd.Parameters.AddWithValue("toggle_crouch", ToggleCrouch);
+        cmd.Parameters.AddWithValue("toggle_walk", ToggleWalk);
+        cmd.Parameters.AddWithValue("toggle_plant_defuse", TogglePlantDefuse);
+        cmd.Parameters.AddWithValue("toggle_ads", ToggleADS);
+        cmd.Parameters.AddWithValue("end_walk_when_firing_behavior", EndWalkWhenFiringBehavior);
+        cmd.Parameters.AddWithValue("ads_trigger_threshold", ADSTriggerThreshold);
+        cmd.Parameters.AddWithValue("dead_zone_move_amount", DeadZoneMoveAmount);
+        cmd.Parameters.AddWithValue("custom_dead_zone_move_amount", CustomDeadZoneMoveAmount);
+        cmd.Parameters.AddWithValue("dead_zone_look_amount", DeadZoneLookAmount);
+        cmd.Parameters.AddWithValue("custom_dead_zone_look_amount", CustomDeadZoneLookAmount);
+        cmd.Parameters.AddWithValue("walk_run_deflection_threshold", WalkRunDeflectionThreshold);
+        cmd.Parameters.AddWithValue("version", Version);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(InputSchemeIndex);
+        await importer.WriteAsync(GamepadGlyphIndex);
+        await importer.WriteAsync(LookPresetIndex);
+        await importer.WriteAsync(CustomLookConfig);
+        await importer.WriteAsync(CustomResponseCurve);
+        await importer.WriteAsync(InvertLook);
+        await importer.WriteAsync(ControllerFeedbackValue);
+        await importer.WriteAsync(TurnAccel);
+        await importer.WriteAsync(AimAssist);
+        await importer.WriteAsync(ResponseCurveIndex);
+        await importer.WriteAsync(ResponseCurveArcDeg);
+        await importer.WriteAsync(ResponseCurveSlope);
+        await importer.WriteAsync(ResponseCurveLinearBlendPow);
+        await importer.WriteAsync(CustomScaleADS);
+        await importer.WriteAsync(ToggleCrouch);
+        await importer.WriteAsync(ToggleWalk);
+        await importer.WriteAsync(TogglePlantDefuse);
+        await importer.WriteAsync(ToggleADS);
+        await importer.WriteAsync(EndWalkWhenFiringBehavior);
+        await importer.WriteAsync(ADSTriggerThreshold);
+        await importer.WriteAsync(DeadZoneMoveAmount);
+        await importer.WriteAsync(CustomDeadZoneMoveAmount);
+        await importer.WriteAsync(DeadZoneLookAmount);
+        await importer.WriteAsync(CustomDeadZoneLookAmount);
+        await importer.WriteAsync(WalkRunDeflectionThreshold);
+        await importer.WriteAsync(Version);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/gamepad_config.sql");
     }
 }

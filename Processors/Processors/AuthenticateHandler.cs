@@ -19,6 +19,11 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
     private static readonly HttpClient SteamHttpClient = new() { Timeout = TimeSpan.FromSeconds(5) };
     private static readonly RSA PragmaSigningKey = RSA.Create(2048);
     private static readonly object PragmaSigningKeyLock = new();
+    private static readonly ClientMessage cyberlordKnifeMessageDefault = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "staticdata", "CyberlordMessage.json"))).Deserialize<ClientMessage>(new JsonSerializerOptions()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new UnixDateTimeOffsetConverter() }
+    });
 
     [SetsRequiredMembers]
     public AuthenticateHandler(HttpMethod method, string route) : base(method, route)
@@ -395,72 +400,81 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
 
     private static async Task<Model.ProfileData> CreateNewPlayerFromSteamId(string steamId)
     {
+        NpgsqlBatch batch = PostgresDatabase.CreateBatch();
         Guid playerId = PlayerIdFromSteamId(steamId);
+        using var stackableBulkWriter = Model.StackableItem.CreateBulkWriter();
         foreach (Model.StackableItem stackableItem in DefaultInventory.Get().StackableItems)
         {
             stackableItem.InstanceId = Guid.NewGuid();
             stackableItem.OwningPlayerId = playerId;
-            await stackableItem.SyncToDatabase();
+            await stackableItem.WriteToBulkWriter(stackableBulkWriter);
         }
+        await stackableBulkWriter.CompleteAsync();
+        using var instancedItemWriter = Model.CustomizedInstancedItem.CreateBulkWriter();
         foreach (CustomizedInstancedItem customizedInstancedItem in DefaultInventory.Get().CustomizedInstancedItems)
         {
             customizedInstancedItem.InstanceId = Guid.NewGuid();
             customizedInstancedItem.OwningPlayerId = playerId;
-            await customizedInstancedItem.SyncToDatabase();
+            await customizedInstancedItem.WriteToBulkWriter(instancedItemWriter);
         }
+        await instancedItemWriter.CompleteAsync();
+        using var progressionItemWriter = Model.ProgressionTrackingItem.CreateBulkWriter();
         foreach (ProgressionTrackingItem progressionTrackerItem in DefaultInventory.Get().ProgresionTrackingItems)
         {
             progressionTrackerItem.InstanceId = Guid.NewGuid();
             progressionTrackerItem.OwningPlayerId = playerId;
-            await progressionTrackerItem.SyncToDatabase();
+            await progressionTrackerItem.WriteToBulkWriter(progressionItemWriter);
         }
+        await progressionItemWriter.CompleteAsync();
+        using var sponsorUnlockItemWriter = Model.SponsorUnlockTrackerItem.CreateBulkWriter();
         foreach (SponsorUnlockTrackerItem sponsorTrackerItem in DefaultInventory.Get().SponsorUnlockItems)
         {
             sponsorTrackerItem.InstanceId = Guid.NewGuid();
             sponsorTrackerItem.OwningPlayerId = playerId;
-            await sponsorTrackerItem.SyncToDatabase();
+            await sponsorTrackerItem.WriteToBulkWriter(sponsorUnlockItemWriter);
         }
+        await sponsorUnlockItemWriter.CompleteAsync();
         Model.BattlepassData bpData = Model.BattlepassData.CreateDefault(playerId);
-        await bpData.SyncToDatabase();
+        batch.BatchCommands.Add(bpData.CreateBatchSyncCommand());
         Model.ColorVisionConfig colorVisionConfig = Model.ColorVisionConfig.CreateDefault(playerId);
-        await colorVisionConfig.SyncToDatabase();
+        batch.BatchCommands.Add(colorVisionConfig.CreateBatchSyncCommand());
         Model.CrosshairConfig crosshairCfg = Model.CrosshairConfig.CreateDefault(playerId);
-        await crosshairCfg.SyncToDatabase();
+        batch.BatchCommands.Add(crosshairCfg.CreateBatchSyncCommand());
         IndividualTrackedProgression individualProg = IndividualTrackedProgression.CreateDefault(playerId);
-        await individualProg.SyncToDatabase();
+        batch.BatchCommands.Add(individualProg.CreateBatchSyncCommand());
         TeamTrackedProgression teamProg = TeamTrackedProgression.CreateDefault(playerId);
-        await teamProg.SyncToDatabase();
+        batch.BatchCommands.Add(teamProg.CreateBatchSyncCommand());
         Model.PlayerMatchmakingData mmData = Model.PlayerMatchmakingData.CreateDefault(playerId);
-        await mmData.SyncToDatabase();
+        batch.BatchCommands.Add(mmData.CreateBatchSyncCommand());
         Model.LegacySeasonData lgSeason = Model.LegacySeasonData.CreateDefault(playerId);
-        await lgSeason.SyncToDatabase();
+        batch.BatchCommands.Add(lgSeason.CreateBatchSyncCommand());
         for (LegacyStatsType type = 0; type < LegacyStatsType.Team + 1; type++)
         {
             Model.LegacyStatsData statsData = Model.LegacyStatsData.CreateDefault(new LegacyStatsDataKey(playerId, type));
-            await statsData.SyncToDatabase();
+            batch.BatchCommands.Add(statsData.CreateBatchSyncCommand());
         }
         Model.FriendsList friends = Model.FriendsList.CreateDefault(playerId);
-        await friends.SyncToDatabase();
+        batch.BatchCommands.Add(friends.CreateBatchSyncCommand());
         Model.GamepadConfig gamepadCfg = Model.GamepadConfig.CreateDefault(playerId);
-        await gamepadCfg.SyncToDatabase();
+        batch.BatchCommands.Add(gamepadCfg.CreateBatchSyncCommand());
         Model.OutfitLoadout attackerOutfitLoadout = Model.OutfitLoadout.CreateDefault(playerId);
         FixupOutfitLoadout(attackerOutfitLoadout, playerId);
-        await attackerOutfitLoadout.SyncToDatabase();
+        batch.BatchCommands.Add(attackerOutfitLoadout.CreateBatchSyncCommand());
         Model.OutfitLoadout defenderOutfitLoadout = Model.OutfitLoadout.CreateDefault(playerId);
         FixupOutfitLoadout(defenderOutfitLoadout, playerId);
-        await defenderOutfitLoadout.SyncToDatabase();
+        batch.BatchCommands.Add(defenderOutfitLoadout.CreateBatchSyncCommand());
         Model.WeaponLoadout attackerWeaponLoadout = Model.WeaponLoadout.CreateDefault(playerId);
         FixupWeaponLoadout(attackerWeaponLoadout, playerId);
-        await attackerWeaponLoadout.SyncToDatabase();
+        batch.BatchCommands.Add(attackerWeaponLoadout.CreateBatchSyncCommand());
         Model.WeaponLoadout defenderWeaponLoadout = Model.WeaponLoadout.CreateDefault(playerId);
         FixupWeaponLoadout(defenderWeaponLoadout, playerId);
-        await defenderWeaponLoadout.SyncToDatabase();
+        batch.BatchCommands.Add(defenderWeaponLoadout.CreateBatchSyncCommand());
         Model.SubtitleUserSettings subtitleSettings = Model.SubtitleUserSettings.CreateDefault(playerId);
-        await subtitleSettings.SyncToDatabase();
+        batch.BatchCommands.Add(subtitleSettings.CreateBatchSyncCommand());
         Model.PlayerPresence presence = Model.PlayerPresence.CreateDefault(playerId);
-        await presence.SyncToDatabase();
+        batch.BatchCommands.Add(presence.CreateBatchSyncCommand());
         Model.PlayerConfig playerConfig = Model.PlayerConfig.CreateDefault(playerId);
-        await playerConfig.SyncToDatabase();
+        batch.BatchCommands.Add(playerConfig.CreateBatchSyncCommand());
         Model.ProfileData playerProfile = Model.ProfileData.CreateDefault(playerId);
         playerProfile.DefenderOutfitLoadoutId = defenderOutfitLoadout.LoadoutId;
         playerProfile.AttackerOutfitLoadoutId = attackerOutfitLoadout.LoadoutId;
@@ -473,15 +487,10 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
         playerProfile.MatchSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
         playerProfile.PostSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
         playerProfile.BannerItemId = GetInstanceIdByCatalogId("SpectreBannerItemDef:BannerID_Track_Kit01_District_01", playerId);
-        await playerProfile.SyncToDatabase();
-        ClientMessage cyberlordKnifeMessage = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "staticdata", "CyberlordMessage.json"))).Deserialize<ClientMessage>(new JsonSerializerOptions()
-        {
-            PropertyNameCaseInsensitive = true,
-            Converters = { new UnixDateTimeOffsetConverter() }
-        });
-        cyberlordKnifeMessage.PlayerId = playerId;
-        cyberlordKnifeMessage.MessageId = Guid.NewGuid();
-        await cyberlordKnifeMessage.SyncToDatabase();
+        batch.BatchCommands.Add(playerProfile.CreateBatchSyncCommand());
+        ClientMessage cyberlordKnifeMessage = cyberlordKnifeMessageDefault with { PlayerId = playerId, MessageId = Guid.NewGuid() };
+        batch.BatchCommands.Add(cyberlordKnifeMessage.CreateBatchSyncCommand());
+        await batch.ExecuteNonQueryAsync();
         return playerProfile;
     }
 

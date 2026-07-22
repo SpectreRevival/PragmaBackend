@@ -20,7 +20,7 @@ public abstract record class Item
     public required Guid InstanceId { get; set; }
 }
 
-public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>, IEquatable<StackableItem>, IInterchangeableKeyed<StackableItem, Packets.StackableItem, Guid>
+public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>, IEquatable<StackableItem>, IInterchangeableKeyed<StackableItem, Packets.StackableItem, Guid>, IBulkWriteable
 {
     [SetsRequiredMembers]
     public StackableItem(Guid owningPlayerId, string catalogId, Guid instanceId, long amount) : base(owningPlayerId, catalogId, instanceId)
@@ -32,7 +32,7 @@ public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>
 
     public static async Task<StackableItem?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_stackable_item.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/stackable_item.sql");
         cmd.Parameters.AddWithValue("instance_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -52,7 +52,7 @@ public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_stackable_item.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/stackable_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("amount", Amount);
@@ -92,6 +92,30 @@ public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>
             Amount = Amount.ToString()
         };
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/stackable_item.sql");
+        cmd.Parameters.AddWithValue("instance_id", InstanceId);
+        cmd.Parameters.AddWithValue("catalog_id", CatalogId);
+        cmd.Parameters.AddWithValue("amount", Amount);
+        cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(InstanceId);
+        await importer.WriteAsync(CatalogId);
+        await importer.WriteAsync(Amount);
+        await importer.WriteAsync(OwningPlayerId);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/stackable_item.sql");
+    }
 }
 
 public abstract record class InstancedItem : Item
@@ -105,7 +129,7 @@ public abstract record class InstancedItem : Item
     public required bool Viewed { get; set; }
 }
 
-public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<CustomizedInstancedItem, Guid>, IEquatable<CustomizedInstancedItem>, IInterchangeableKeyed<CustomizedInstancedItem, Packets.InstancedItem, Guid>
+public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<CustomizedInstancedItem, Guid>, IEquatable<CustomizedInstancedItem>, IInterchangeableKeyed<CustomizedInstancedItem, Packets.InstancedItem, Guid>, IBulkWriteable
 {
     [SetsRequiredMembers]
     public CustomizedInstancedItem(Guid owningPlayerId, string catalogId, Guid instanceId, bool viewed, AlterationChannel[] alterationChannels) : base(owningPlayerId, catalogId, instanceId, viewed)
@@ -117,7 +141,7 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
 
     public static async Task<CustomizedInstancedItem?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_customized_instanced_item.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/customized_instanced_item.sql");
         cmd.Parameters.AddWithValue("instance_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -138,7 +162,7 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_customized_instanced_item.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/customized_instanced_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
@@ -192,9 +216,35 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
         packet.Ext = ext;
         return packet;
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/customized_instanced_item.sql");
+        cmd.Parameters.AddWithValue("instance_id", InstanceId);
+        cmd.Parameters.AddWithValue("catalog_id", CatalogId);
+        cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
+        cmd.Parameters.AddWithValue("alteration_channels", AlterationChannels);
+        cmd.Parameters.AddWithValue("viewed", Viewed);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(InstanceId);
+        await importer.WriteAsync(CatalogId);
+        await importer.WriteAsync(OwningPlayerId);
+        await importer.WriteAsync(Viewed);
+        await importer.WriteAsync(AlterationChannels);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/customized_instanced_item.sql");
+    }
 }
 
-public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<ProgressionTrackingItem, Guid>, IEquatable<ProgressionTrackingItem>, IInterchangeableKeyed<ProgressionTrackingItem, Packets.InstancedItem, Guid>
+public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<ProgressionTrackingItem, Guid>, IEquatable<ProgressionTrackingItem>, IInterchangeableKeyed<ProgressionTrackingItem, Packets.InstancedItem, Guid>, IBulkWriteable
 {
     [SetsRequiredMembers]
     public ProgressionTrackingItem(Guid owningPlayerId, string catalogId, Guid instanceId, bool viewed, Dictionary<string, string> progressionByStats, bool areObjectivesCompleted, int currentObjectiveId, int currentObjectiveIndex, bool isPremiumUnlocked, Guid? teamId, ObjectiveContribution? lastContribution, bool isBundlePurchased, int numLevelsPurchased) : base(owningPlayerId, catalogId, instanceId, viewed)
@@ -222,7 +272,7 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
 
     public static async Task<ProgressionTrackingItem?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_progression_tracking_item.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/progression_tracking_item.sql");
         cmd.Parameters.AddWithValue("instance_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -251,7 +301,7 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_progression_tracking_item.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/progression_tracking_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
@@ -352,9 +402,63 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
         packet.Ext = ext;
         return packet;
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/progression_tracking_item.sql");
+        cmd.Parameters.AddWithValue("instance_id", InstanceId);
+        cmd.Parameters.AddWithValue("catalog_id", CatalogId);
+        cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
+        cmd.Parameters.AddWithValue("viewed", Viewed);
+        cmd.Parameters.Add(new NpgsqlParameter("progression_by_stats", NpgsqlTypes.NpgsqlDbType.Hstore) { Value = ProgressionByStats });
+        cmd.Parameters.AddWithValue("are_objectives_completed", AreObjectivesCompleted);
+        cmd.Parameters.AddWithValue("current_objective_id", CurrentObjectiveId);
+        cmd.Parameters.AddWithValue("current_objective_index", CurrentObjectiveIndex);
+        cmd.Parameters.AddWithValue("is_premium_unlocked", IsPremiumUnlocked);
+        cmd.Parameters.AddWithValue("team_id", (object?)TeamId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("last_contribution", (object?)LastContribution ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("is_bundle_purchased", IsBundlePurchased);
+        cmd.Parameters.AddWithValue("num_levels_purchased", NumLevelsPurchased);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(InstanceId);
+        await importer.WriteAsync(CatalogId);
+        await importer.WriteAsync(OwningPlayerId);
+        await importer.WriteAsync(Viewed);
+        await importer.WriteAsync(ProgressionByStats, NpgsqlTypes.NpgsqlDbType.Hstore);
+        await importer.WriteAsync(AreObjectivesCompleted);
+        await importer.WriteAsync(CurrentObjectiveId);
+        await importer.WriteAsync(CurrentObjectiveIndex);
+        await importer.WriteAsync(IsPremiumUnlocked);
+        if(TeamId != null)
+        {
+            await importer.WriteAsync(TeamId);
+        } else
+        {
+            await importer.WriteNullAsync();
+        }
+        if(LastContribution != null)
+        {
+            await importer.WriteAsync(LastContribution);
+        } else
+        {
+            await importer.WriteNullAsync();
+        }
+        await importer.WriteAsync(IsBundlePurchased);
+        await importer.WriteAsync(NumLevelsPurchased);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/progression_tracking_item.sql");
+    }
 }
 
-public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<SponsorUnlockTrackerItem, Guid>, IEquatable<SponsorUnlockTrackerItem>, IInterchangeableKeyed<SponsorUnlockTrackerItem, Packets.InstancedItem, Guid>
+public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<SponsorUnlockTrackerItem, Guid>, IEquatable<SponsorUnlockTrackerItem>, IInterchangeableKeyed<SponsorUnlockTrackerItem, Packets.InstancedItem, Guid>, IBulkWriteable
 {
     [SetsRequiredMembers]
     public SponsorUnlockTrackerItem(Guid owningPlayerId, string catalogId, Guid instanceId, bool viewed, string sponsorName) : base(owningPlayerId, catalogId, instanceId, viewed)
@@ -366,7 +470,7 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
 
     public static async Task<SponsorUnlockTrackerItem?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_sponsor_unlock_tracker_item.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/sponsor_unlock_tracker_item.sql");
         cmd.Parameters.AddWithValue("instance_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -387,7 +491,7 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_sponsor_unlock_tracker_item.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/sponsor_unlock_tracker_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
@@ -441,5 +545,31 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
         ext.SponsorUnlockData = sponsorData;
         packet.Ext = ext;
         return packet;
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/sponsor_unlock_tracker_item.sql");
+        cmd.Parameters.AddWithValue("instance_id", InstanceId);
+        cmd.Parameters.AddWithValue("catalog_id", CatalogId);
+        cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
+        cmd.Parameters.AddWithValue("viewed", Viewed);
+        cmd.Parameters.AddWithValue("sponsor_name", SponsorName);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(InstanceId);
+        await importer.WriteAsync(CatalogId);
+        await importer.WriteAsync(OwningPlayerId);
+        await importer.WriteAsync(Viewed);
+        await importer.WriteAsync(SponsorName);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/sponsor_unlock_tracker_item.sql");
     }
 }

@@ -12,9 +12,18 @@ public class TestEnvironment
         .SetBasePath(AppContext.BaseDirectory)
         .AddJsonFile(Path.Combine("resources", "test.env.json"), optional: false, reloadOnChange: true)
         .Build();
-    public static bool BuildImage(string workingDirectory, string imageName, string dockerfilePath, string contextDir)
+    public static bool BuildImage(string workingDirectory, string imageName, string dockerfilePath, string contextDir, string[]? buildArguments = null)
     {
-        string arguments = $"build -t {imageName}:latest -f \"{dockerfilePath}\" \"{contextDir}\"";
+        string arguments = $"build -t {imageName}:latest -f \"{dockerfilePath}\"";
+        if(buildArguments != null && buildArguments.Length != 0)
+        {
+            arguments += " ";
+            foreach(var arg in buildArguments)
+            {
+                arguments += $"--build-arg {arg}";
+            }
+        }
+        arguments += $" \"{contextDir}\"";
         (int ExitCode, _, _) = RunDockerCommand(arguments, workingDirectory);
         return ExitCode == 0;
     }
@@ -27,7 +36,7 @@ public class TestEnvironment
         string backendDockerFile = Path.Combine(slnDir, "Backend.dockerfile");
         string pgDockerFile = Path.Combine(slnDir, "Postgres.dockerfile");
         Console.WriteLine("Building pragmabackend docker image");
-        bool backendBuilt = BuildImage(slnDir, "pragmabackend", backendDockerFile, ".");
+        bool backendBuilt = BuildImage(slnDir, "pragmabackend", backendDockerFile, ".", ["BUILD_TYPE=Debug"]);
         if (!backendBuilt)
         {
             throw new Exception("Failed to build pragmabackend image");

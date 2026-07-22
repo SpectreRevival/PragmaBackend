@@ -7,7 +7,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<PlayerConfig, Guid>, IEquatable<PlayerConfig>
+public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<PlayerConfig, Guid>, IEquatable<PlayerConfig>, IBulkWriteable
 {
     private static readonly PlayerConfig defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "PlayerConfig.json")))
         .Deserialize<PlayerConfig>(new JsonSerializerOptions()
@@ -201,7 +201,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
 
     public static async Task<PlayerConfig?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_player_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/player_config.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -307,7 +307,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_player_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/player_config.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("unlock_all_play_modes", UnlockAllPlayModes);
         cmd.Parameters.AddWithValue("unlock_all_menu_tabs", UnlockAllMenuTabs);
@@ -728,5 +728,199 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
         packet.GamepadConfig = (await Model.GamepadConfig.RetrieveFromDatabase(playerId)).ToPacket();
         packet.ColorVisionConfig = (await Model.ColorVisionConfig.RetrieveFromDatabase(playerId)).ToPacket();
         return packet;
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/player_config.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("unlock_all_play_modes", UnlockAllPlayModes);
+        cmd.Parameters.AddWithValue("unlock_all_menu_tabs", UnlockAllMenuTabs);
+        cmd.Parameters.AddWithValue("unlock_all_sponsors", UnlockAllSponsors);
+        cmd.Parameters.AddWithValue("bypass_unlock_all_sponsors_override", BypassUnlockAllSponsorsOverride);
+        cmd.Parameters.AddWithValue("bypass_progression_overrides", BypassProgressionOverrides);
+        cmd.Parameters.AddWithValue("bypass_team_size_overrides", BypassTeamSizeOverrides);
+        cmd.Parameters.AddWithValue("bypass_region_select_override", BypassRegionSelectOverride);
+        cmd.Parameters.AddWithValue("bypass_currency_purchasing_override", BypassCurrencyPurchasingOverride);
+        cmd.Parameters.AddWithValue("disable_dev_map_selector", DisableDevMapSelector);
+        cmd.Parameters.AddWithValue("show_debug_info_panel", ShowDebugInfoPanel);
+        cmd.Parameters.AddWithValue("show_platform_info_panel", ShowPlatformInfoPanel);
+        cmd.Parameters.AddWithValue("show_matchmaking_counters", ShowMatchmakingCounters);
+        cmd.Parameters.AddWithValue("force_chat_enabled", ForceChatEnabled);
+        cmd.Parameters.AddWithValue("most_recent_lobby_mode", MostRecentLobbyMode);
+        cmd.Parameters.AddWithValue("most_recent_party_id", MostRecentPartyId);
+        cmd.Parameters.AddWithValue("eula_accepted_version", EndUserLicenseAcceptedVersion);
+        cmd.Parameters.AddWithValue("eula_accepted_version_playstation", EndUserLicenseAcceptedVersionPlayStation);
+        cmd.Parameters.AddWithValue("eula_accepted_version_xbox", EndUserLicenseAcceptedVersionXbox);
+        cmd.Parameters.AddWithValue("tos_accepted_version", TermsOfServiceAcceptedVersion);
+        cmd.Parameters.AddWithValue("tos_accepted_version_playstation", TermsOfServiceAcceptedVersionPlayStation);
+        cmd.Parameters.AddWithValue("tos_accepted_version_xbox", TermsOfServiceAcceptedVersionXbox);
+        cmd.Parameters.AddWithValue("nda_accepted_version", NonDisclosureAgreementAcceptedVersion);
+        cmd.Parameters.AddWithValue("nda_accepted_version_playstation", NonDisclosureAgreementAcceptedVersionPlayStation);
+        cmd.Parameters.AddWithValue("nda_accepted_version_xbox", NonDisclosureAgreementAcceptedVersionXbox);
+        cmd.Parameters.AddWithValue("seizure_warning_ack_version", SeizureWarningAcknowledgedVersion);
+        cmd.Parameters.AddWithValue("seizure_warning_ack_version_playstation", SeizureWarningAcknowledgedVersionPlayStation);
+        cmd.Parameters.AddWithValue("seizure_warning_ack_version_xbox", SeizureWarningAcknowledgedVersionXbox);
+        cmd.Parameters.AddWithValue("battlepass_season_logged_on", BattlepassSeasonLoggedOn);
+        cmd.Parameters.AddWithValue("battlepass_purchase_popup_last_time", BattlepassPurchasePopupLastTime);
+        cmd.Parameters.AddWithValue("nda_signature", NonDisclosureAgreementUserSignature);
+        cmd.Parameters.AddWithValue("nda_signature_playstation", NonDisclosureAgreementUserSignaturePlayStation);
+        cmd.Parameters.AddWithValue("nda_signature_xbox", NonDisclosureAgreementUserSignatureXbox);
+        cmd.Parameters.AddWithValue("nda_email", NonDisclosureAgreementUserEmail);
+        cmd.Parameters.AddWithValue("nda_email_playstation", NonDisclosureAgreementUserEmailPlayStation);
+        cmd.Parameters.AddWithValue("nda_email_xbox", NonDisclosureAgreementUserEmailXbox);
+        cmd.Parameters.AddWithValue("last_version_shown_in_drivers_warning", LastVersionShownInDriversWarningDialog);
+        cmd.Parameters.AddWithValue("min_spec_warning_times_displayed", MinSpecWarningDialogTimesDisplayed);
+        cmd.Parameters.AddWithValue("ping_warning_dialog_times_displayed", PingWarningDialogTimesDisplayed);
+        cmd.Parameters.AddWithValue("completed_launch_settings_flow", HasCompletedLaunchSettingsFlow);
+        cmd.Parameters.AddWithValue("using_manual_matchmaking_region_selection", IsUsingManualMatchmakingRegionSelection);
+        cmd.Parameters.AddWithValue("manual_matchmaking_region_selections", ManualMatchmakingRegionSelections);
+        cmd.Parameters.AddWithValue("rotating_news_viewed_messages", RotatingNewsViewedMessages);
+        cmd.Parameters.AddWithValue("ink_quality", InkQuality);
+        cmd.Parameters.AddWithValue("mouse_sensitivity_ads_scale", MouseSensitivityADSScale);
+        cmd.Parameters.AddWithValue("minimap_scale", MinimapScale);
+        cmd.Parameters.AddWithValue("minimap_size", MinimapSize);
+        cmd.Parameters.AddWithValue("minimap_mask_opacity", MinimapMaskOpacity);
+        cmd.Parameters.AddWithValue("inverted_y_axis", InvertedYAxis);
+        cmd.Parameters.AddWithValue("toggle_crouch", ToggleCrouch);
+        cmd.Parameters.AddWithValue("toggle_walk", ToggleWalk);
+        cmd.Parameters.AddWithValue("toggle_ads", ToggleADS);
+        cmd.Parameters.AddWithValue("recoil_behavior", RecoilBehavior);
+        cmd.Parameters.AddWithValue("left_handed_enabled", LeftHandedEnabled);
+        cmd.Parameters.AddWithValue("recoil_pitch_correction_enabled", RecoilPitchCorrectionEnabled);
+        cmd.Parameters.AddWithValue("is_team_laser_enabled", IsTeamLaserEnabled);
+        cmd.Parameters.AddWithValue("is_hud_minimap_rotation_enabled", IsHudMinimapRotationEnabled);
+        cmd.Parameters.AddWithValue("is_hud_minimap_centered_on_player", IsHudMinimapCenteredOnPlayer);
+        cmd.Parameters.AddWithValue("is_hud_minimap_circle", IsHudMinimapCircle);
+        cmd.Parameters.AddWithValue("is_hud_minimap_mask_high_contrast_enabled", IsHudMinimapMaskHighContrastEnabled);
+        cmd.Parameters.AddWithValue("is_hud_snap_minimap_with_scoreboard_enabled", IsHudSnapMinimapWithScoreboardEnabled);
+        cmd.Parameters.AddWithValue("is_damage_camera_effect_enabled", IsDamageCameraEffectEnabled);
+        cmd.Parameters.AddWithValue("streamer_mode_enabled", StreamerModeEnabled);
+        cmd.Parameters.AddWithValue("hide_lobby_code", HideLobbyCode);
+        cmd.Parameters.AddWithValue("ads_tracer_ratio", ADSTracerRatio);
+        cmd.Parameters.AddWithValue("ads_tracer_intensity", ADSTracerIntensity);
+        cmd.Parameters.AddWithValue("optic_hit_confirm_intensity", OpticHitConfirmIntensity);
+        cmd.Parameters.AddWithValue("anonymous_mode", AnonymousMode);
+        cmd.Parameters.AddWithValue("anonymize_player_names", AnonymizePlayerNames);
+        cmd.Parameters.AddWithValue("streamer_mode_disable_incoming_voice_chat", StreamerModeDisableIncomingVoiceChat);
+        cmd.Parameters.AddWithValue("streamer_mode_disable_incoming_text_chat", StreamerModeDisableIncomingTextChat);
+        cmd.Parameters.AddWithValue("is_text_chat_sound_effects_enabled", IsTextChatSoundEffectsEnabled);
+        cmd.Parameters.AddWithValue("subtitles_enabled", SubtitlesEnabled);
+        cmd.Parameters.AddWithValue("verbose_vo_level", VerboseVoLevel);
+        cmd.Parameters.AddWithValue("is_blood_fx_enabled", IsBloodFXEnabled);
+        cmd.Parameters.AddWithValue("override_keymaps", OverrideKeymaps);
+        cmd.Parameters.AddWithValue("voice_chat_input_audio_device", VoiceChatInputAudioDevice);
+        cmd.Parameters.AddWithValue("voice_chat_output_audio_device", VoiceChatOutputAudioDevice);
+        cmd.Parameters.AddWithValue("voice_chat_team_enabled", VoiceChatTeamEnabled);
+        cmd.Parameters.AddWithValue("voice_chat_console_mode", VoiceChatConsoleMode);
+        cmd.Parameters.AddWithValue("voice_chat_party_enabled", VoiceChatPartyEnabled);
+        cmd.Parameters.AddWithValue("voice_chat_party_enabled_in_game", VoiceChatPartyEnabledInGames);
+        cmd.Parameters.AddWithValue("voice_chat_team_push_to_talk", VoiceChatTeamPushToTalk);
+        cmd.Parameters.AddWithValue("voice_chat_party_push_to_talk", VoiceChatPartyPushToTalk);
+        cmd.Parameters.AddWithValue("enabled_text_stats", EnabledTextStats);
+        cmd.Parameters.AddWithValue("enabled_graph_stats", EnabledGraphStats);
+        cmd.Parameters.AddWithValue("muted_chat_contexts", MutedChatContexts);
+        cmd.Parameters.AddWithValue("input_bindings_version", InputBindingsVersion);
+        cmd.Parameters.AddWithValue("player_config_version", Version);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(UnlockAllPlayModes);
+        await importer.WriteAsync(UnlockAllMenuTabs);
+        await importer.WriteAsync(UnlockAllSponsors);
+        await importer.WriteAsync(BypassUnlockAllSponsorsOverride);
+        await importer.WriteAsync(BypassProgressionOverrides);
+        await importer.WriteAsync(BypassTeamSizeOverrides);
+        await importer.WriteAsync(BypassRegionSelectOverride);
+        await importer.WriteAsync(BypassCurrencyPurchasingOverride);
+        await importer.WriteAsync(DisableDevMapSelector);
+        await importer.WriteAsync(ShowDebugInfoPanel);
+        await importer.WriteAsync(ShowPlatformInfoPanel);
+        await importer.WriteAsync(ShowMatchmakingCounters);
+        await importer.WriteAsync(ForceChatEnabled);
+        await importer.WriteAsync(MostRecentLobbyMode);
+        await importer.WriteAsync(MostRecentPartyId);
+        await importer.WriteAsync(EndUserLicenseAcceptedVersion);
+        await importer.WriteAsync(EndUserLicenseAcceptedVersionPlayStation);
+        await importer.WriteAsync(EndUserLicenseAcceptedVersionXbox);
+        await importer.WriteAsync(TermsOfServiceAcceptedVersion);
+        await importer.WriteAsync(TermsOfServiceAcceptedVersionPlayStation);
+        await importer.WriteAsync(TermsOfServiceAcceptedVersionXbox);
+        await importer.WriteAsync(NonDisclosureAgreementAcceptedVersion);
+        await importer.WriteAsync(NonDisclosureAgreementAcceptedVersionPlayStation);
+        await importer.WriteAsync(NonDisclosureAgreementAcceptedVersionXbox);
+        await importer.WriteAsync(SeizureWarningAcknowledgedVersion);
+        await importer.WriteAsync(SeizureWarningAcknowledgedVersionPlayStation);
+        await importer.WriteAsync(SeizureWarningAcknowledgedVersionXbox);
+        await importer.WriteAsync(BattlepassSeasonLoggedOn);
+        await importer.WriteAsync(BattlepassPurchasePopupLastTime);
+        await importer.WriteAsync(NonDisclosureAgreementUserSignature);
+        await importer.WriteAsync(NonDisclosureAgreementUserSignaturePlayStation);
+        await importer.WriteAsync(NonDisclosureAgreementUserSignatureXbox);
+        await importer.WriteAsync(NonDisclosureAgreementUserEmail);
+        await importer.WriteAsync(NonDisclosureAgreementUserEmailPlayStation);
+        await importer.WriteAsync(NonDisclosureAgreementUserEmailXbox);
+        await importer.WriteAsync(LastVersionShownInDriversWarningDialog);
+        await importer.WriteAsync(MinSpecWarningDialogTimesDisplayed);
+        await importer.WriteAsync(PingWarningDialogTimesDisplayed);
+        await importer.WriteAsync(HasCompletedLaunchSettingsFlow);
+        await importer.WriteAsync(IsUsingManualMatchmakingRegionSelection);
+        await importer.WriteAsync(ManualMatchmakingRegionSelections);
+        await importer.WriteAsync(RotatingNewsViewedMessages);
+        await importer.WriteAsync(InkQuality);
+        await importer.WriteAsync(MouseSensitivityADSScale);
+        await importer.WriteAsync(MinimapScale);
+        await importer.WriteAsync(MinimapSize);
+        await importer.WriteAsync(MinimapMaskOpacity);
+        await importer.WriteAsync(InvertedYAxis);
+        await importer.WriteAsync(ToggleCrouch);
+        await importer.WriteAsync(ToggleWalk);
+        await importer.WriteAsync(ToggleADS);
+        await importer.WriteAsync(RecoilBehavior);
+        await importer.WriteAsync(LeftHandedEnabled);
+        await importer.WriteAsync(RecoilPitchCorrectionEnabled);
+        await importer.WriteAsync(IsTeamLaserEnabled);
+        await importer.WriteAsync(IsHudMinimapRotationEnabled);
+        await importer.WriteAsync(IsHudMinimapCenteredOnPlayer);
+        await importer.WriteAsync(IsHudMinimapCircle);
+        await importer.WriteAsync(IsHudMinimapMaskHighContrastEnabled);
+        await importer.WriteAsync(IsHudSnapMinimapWithScoreboardEnabled);
+        await importer.WriteAsync(IsDamageCameraEffectEnabled);
+        await importer.WriteAsync(StreamerModeEnabled);
+        await importer.WriteAsync(HideLobbyCode);
+        await importer.WriteAsync(ADSTracerRatio);
+        await importer.WriteAsync(ADSTracerIntensity);
+        await importer.WriteAsync(OpticHitConfirmIntensity);
+        await importer.WriteAsync(AnonymousMode);
+        await importer.WriteAsync(AnonymizePlayerNames);
+        await importer.WriteAsync(StreamerModeDisableIncomingVoiceChat);
+        await importer.WriteAsync(StreamerModeDisableIncomingTextChat);
+        await importer.WriteAsync(IsTextChatSoundEffectsEnabled);
+        await importer.WriteAsync(SubtitlesEnabled);
+        await importer.WriteAsync(VerboseVoLevel);
+        await importer.WriteAsync(IsBloodFXEnabled);
+        await importer.WriteAsync(OverrideKeymaps);
+        await importer.WriteAsync(VoiceChatInputAudioDevice);
+        await importer.WriteAsync(VoiceChatOutputAudioDevice);
+        await importer.WriteAsync(VoiceChatTeamEnabled);
+        await importer.WriteAsync(VoiceChatConsoleMode);
+        await importer.WriteAsync(VoiceChatPartyEnabled);
+        await importer.WriteAsync(VoiceChatPartyEnabledInGames);
+        await importer.WriteAsync(VoiceChatTeamPushToTalk);
+        await importer.WriteAsync(VoiceChatPartyPushToTalk);
+        await importer.WriteAsync(EnabledTextStats);
+        await importer.WriteAsync(EnabledGraphStats);
+        await importer.WriteAsync(MutedChatContexts);
+        await importer.WriteAsync(InputBindingsVersion);
+        await importer.WriteAsync(Version);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/player_config.sql");
     }
 }

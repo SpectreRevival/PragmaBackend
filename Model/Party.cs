@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEquatable<Party>
+public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEquatable<Party>, IBulkWriteable
 {
     [SetsRequiredMembers]
     public Party(Guid partyId, PartyMember[] members, string inviteCode, string queuePool, string lobbyMode, string chatId, bool useTeamMMR, long version, string partyExtVersion = "173322", string region = "", string tag = "", string profile = "", bool hasAcceptableRegion = true, string[]? preferredGameServerZones = null, Dictionary<string, string>? standard = null, string customJson = "", string crossplayPlatform = "CROSS_PLAY_PLATFORM_PC") : base(version)
@@ -46,7 +46,7 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
 
     public static async Task<Party?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_party.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/party.sql");
         cmd.Parameters.AddWithValue("party_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -109,7 +109,7 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_party.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/party.sql");
         cmd.Parameters.AddWithValue("party_id", PartyId);
         cmd.Parameters.AddWithValue("members", Members);
         cmd.Parameters.AddWithValue("invite_code", InviteCode);
@@ -173,5 +173,55 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
         hash.Add(CrossplayPlatform);
         hash.Add(Version);
         return hash.ToHashCode();
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/party.sql");
+        cmd.Parameters.AddWithValue("party_id", PartyId);
+        cmd.Parameters.AddWithValue("members", Members);
+        cmd.Parameters.AddWithValue("invite_code", InviteCode);
+        cmd.Parameters.AddWithValue("queue_pool", QueuePool);
+        cmd.Parameters.AddWithValue("lobby_mode", LobbyMode);
+        cmd.Parameters.AddWithValue("chat_id", ChatId);
+        cmd.Parameters.AddWithValue("use_team_mmr", UseTeamMMR);
+        cmd.Parameters.AddWithValue("version", Version);
+        cmd.Parameters.AddWithValue("party_ext_version", PartyExtVersion);
+        cmd.Parameters.AddWithValue("region", Region);
+        cmd.Parameters.AddWithValue("tag", Tag);
+        cmd.Parameters.AddWithValue("profile", Profile);
+        cmd.Parameters.AddWithValue("has_acceptable_region", HasAcceptableRegion);
+        cmd.Parameters.AddWithValue("preferred_game_server_zones", PreferredGameServerZones);
+        cmd.Parameters.Add(new NpgsqlParameter("standard", NpgsqlTypes.NpgsqlDbType.Hstore) { Value = Standard });
+        cmd.Parameters.AddWithValue("custom_json", CustomJson);
+        cmd.Parameters.AddWithValue("crossplay_platform", CrossplayPlatform);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PartyId);
+        await importer.WriteAsync(Members);
+        await importer.WriteAsync(InviteCode);
+        await importer.WriteAsync(QueuePool);
+        await importer.WriteAsync(LobbyMode);
+        await importer.WriteAsync(ChatId);
+        await importer.WriteAsync(UseTeamMMR);
+        await importer.WriteAsync(Version);
+        await importer.WriteAsync(PartyExtVersion);
+        await importer.WriteAsync(Region);
+        await importer.WriteAsync(Tag);
+        await importer.WriteAsync(Profile);
+        await importer.WriteAsync(HasAcceptableRegion);
+        await importer.WriteAsync(PreferredGameServerZones);
+        await importer.WriteAsync(Standard, NpgsqlTypes.NpgsqlDbType.Hstore);
+        await importer.WriteAsync(CustomJson);
+        await importer.WriteAsync(CrossplayPlatform);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/party.sql");
     }
 }

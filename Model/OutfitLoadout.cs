@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid>, IEquatable<OutfitLoadout>, IInterchangeable<OutfitLoadout, Packets.OutfitLoadout>
+public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid>, IEquatable<OutfitLoadout>, IInterchangeable<OutfitLoadout, Packets.OutfitLoadout>, IBulkWriteable
 {
     private static readonly OutfitLoadout defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "OutfitLoadout.json")))
         .Deserialize<OutfitLoadout>(new JsonSerializerOptions()
@@ -36,7 +36,7 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
 
     public static async Task<OutfitLoadout?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_outfit_loadout.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/outfit_loadout.sql");
         cmd.Parameters.AddWithValue("loadout_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -59,7 +59,7 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_outfit_loadout.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/outfit_loadout.sql");
         cmd.Parameters.AddWithValue("loadout_id", LoadoutId);
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("head", Head);
@@ -116,5 +116,35 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
             FaceStyleData = FaceStyle.ToPacket(),
             OutfitData = Outfit.ToPacket()
         };
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/outfit_loadout.sql");
+        cmd.Parameters.AddWithValue("loadout_id", LoadoutId);
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("head", Head);
+        cmd.Parameters.AddWithValue("hair", Hair);
+        cmd.Parameters.AddWithValue("face_style", FaceStyle);
+        cmd.Parameters.AddWithValue("face_accessory", FaceAccessory);
+        cmd.Parameters.AddWithValue("outfit", Outfit);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(LoadoutId);
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(Head);
+        await importer.WriteAsync(Hair);
+        await importer.WriteAsync(FaceStyle);
+        await importer.WriteAsync(FaceAccessory);
+        await importer.WriteAsync(Outfit);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/outfit_loadout.sql");
     }
 }

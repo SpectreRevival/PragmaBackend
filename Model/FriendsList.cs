@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class FriendsList : VersionedData, IDatabaseSyncableDefault<FriendsList, Guid>, IEquatable<FriendsList>, IInterchangeableKeyed<FriendsList, Packets.FriendsList, Guid>
+public record class FriendsList : VersionedData, IDatabaseSyncableDefault<FriendsList, Guid>, IEquatable<FriendsList>, IInterchangeableKeyed<FriendsList, Packets.FriendsList, Guid>, IBulkWriteable
 {
     private static readonly FriendsList defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "FriendsList.json"))).Deserialize<FriendsList>(new JsonSerializerOptions()
     {
@@ -33,7 +33,7 @@ public record class FriendsList : VersionedData, IDatabaseSyncableDefault<Friend
 
     public static async Task<FriendsList?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_friends_list.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/friends_list.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -56,7 +56,7 @@ public record class FriendsList : VersionedData, IDatabaseSyncableDefault<Friend
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_friends_list.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/friends_list.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("accepting_friend_invites", AcceptingFriendInvites);
         cmd.Parameters.AddWithValue("friends", Friends);
@@ -98,9 +98,7 @@ public record class FriendsList : VersionedData, IDatabaseSyncableDefault<Friend
 
     public static FriendsList FromPacket(Packets.FriendsList inst, Guid id)
     {
-        return id == null
-            ? throw new ArgumentNullException(nameof(id))
-            : new FriendsList(id, inst.AcceptNewFriendInvites, inst.Friends.Select(id => Guid.Parse(id)).ToArray(), inst.Blocked.Select(id => Guid.Parse(id)).ToArray(), inst.SentInvites.Select(id => Guid.Parse(id)).ToArray(), inst.ReceivedInvites.Select(id => Guid.Parse(id)).ToArray(), long.Parse(inst.Version));
+        return new FriendsList(id, inst.AcceptNewFriendInvites, inst.Friends.Select(id => Guid.Parse(id)).ToArray(), inst.Blocked.Select(id => Guid.Parse(id)).ToArray(), inst.SentInvites.Select(id => Guid.Parse(id)).ToArray(), inst.ReceivedInvites.Select(id => Guid.Parse(id)).ToArray(), long.Parse(inst.Version));
     }
 
     public Packets.FriendsList ToPacket()
@@ -128,5 +126,35 @@ public record class FriendsList : VersionedData, IDatabaseSyncableDefault<Friend
             packet.ReceivedInvites.Add(recv.ToString());
         }
         return packet;
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/friends_list.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("accepting_friend_invites", AcceptingFriendInvites);
+        cmd.Parameters.AddWithValue("friends", Friends);
+        cmd.Parameters.AddWithValue("blocked", Blocked);
+        cmd.Parameters.AddWithValue("sent_friend_invites", SentFriendInvites);
+        cmd.Parameters.AddWithValue("received_friend_invites", ReceivedFriendInvites);
+        cmd.Parameters.AddWithValue("version", Version);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(AcceptingFriendInvites);
+        await importer.WriteAsync(Friends);
+        await importer.WriteAsync(Blocked);
+        await importer.WriteAsync(SentFriendInvites);
+        await importer.WriteAsync(ReceivedFriendInvites);
+        await importer.WriteAsync(Version);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/friends_list.sql");
     }
 }

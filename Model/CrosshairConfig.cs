@@ -7,7 +7,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<CrosshairConfig, Guid>, IEquatable<CrosshairConfig>, IInterchangeableKeyed<CrosshairConfig, Packets.CrosshairConfig, Guid>
+public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<CrosshairConfig, Guid>, IEquatable<CrosshairConfig>, IInterchangeableKeyed<CrosshairConfig, Packets.CrosshairConfig, Guid>, IBulkWriteable
 {
     private static readonly CrosshairConfig defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "CrosshairConfig.json")))
         .Deserialize<CrosshairConfig>(new JsonSerializerOptions()
@@ -54,7 +54,7 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
 
     public static async Task<CrosshairConfig?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_crosshair_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/crosshair_config.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -87,7 +87,7 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_crosshair_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/crosshair_config.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("color_index", ColorIndex);
         cmd.Parameters.AddWithValue("advanced_crosshair_settings", AdvancedCrosshairSettings);
@@ -192,5 +192,55 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
             Inner = InnerPip.ToPacket()
         };
         return packet;
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/crosshair_config.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("color_index", ColorIndex);
+        cmd.Parameters.AddWithValue("advanced_crosshair_settings", AdvancedCrosshairSettings);
+        cmd.Parameters.AddWithValue("custom_color", CustomColor);
+        cmd.Parameters.AddWithValue("fire_accuracy_fade", FireAccuracyFade);
+        cmd.Parameters.AddWithValue("follow_recoil", FollowRecoil);
+        cmd.Parameters.AddWithValue("show_outlines", ShowOutlines);
+        cmd.Parameters.AddWithValue("outline_thickness", OutlineThickness);
+        cmd.Parameters.AddWithValue("outline_opacity", OutlineOpacity);
+        cmd.Parameters.AddWithValue("show_center_dot", ShowCenterDot);
+        cmd.Parameters.AddWithValue("use_ads_settings", UseADSSettings);
+        cmd.Parameters.AddWithValue("center_dot", CenterDot);
+        cmd.Parameters.AddWithValue("center_dot_ads", CenterDotADS);
+        cmd.Parameters.AddWithValue("sniper_dot", SniperDot);
+        cmd.Parameters.AddWithValue("inner_pip", InnerPip);
+        cmd.Parameters.AddWithValue("outer_pip", OuterPip);
+        cmd.Parameters.AddWithValue("version", Version);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(ColorIndex);
+        await importer.WriteAsync(AdvancedCrosshairSettings);
+        await importer.WriteAsync(CustomColor);
+        await importer.WriteAsync(FireAccuracyFade);
+        await importer.WriteAsync(FollowRecoil);
+        await importer.WriteAsync(ShowOutlines);
+        await importer.WriteAsync(OutlineThickness);
+        await importer.WriteAsync(OutlineOpacity);
+        await importer.WriteAsync(ShowCenterDot);
+        await importer.WriteAsync(UseADSSettings);
+        await importer.WriteAsync(CenterDot);
+        await importer.WriteAsync(CenterDotADS);
+        await importer.WriteAsync(SniperDot);
+        await importer.WriteAsync(InnerPip);
+        await importer.WriteAsync(OuterPip);
+        await importer.WriteAsync(Version);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/crosshair_config.sql");
     }
 }

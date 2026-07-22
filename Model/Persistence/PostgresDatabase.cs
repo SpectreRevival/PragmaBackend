@@ -13,6 +13,7 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
     private static PostgresDatabase? inst;
     private static readonly ConcurrentDictionary<string, string> CommandTextCache = new();
     private readonly IConfiguration config;
+    private readonly NpgsqlConnection _connection;
 
     public PostgresDatabase(IConfiguration config)
     {
@@ -33,11 +34,11 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
             Pooling = true,
             IncludeErrorDetail = config["SENSITIVE_LOGGING"] == "true"
         };
+        int connectTimeout = int.Parse(config.GetRequiredSection("DB_CONNECT_TIMEOUT_S").Value);
 
         // We have to do the type initialization before so when NpgsqlDataSourceBuilder is created the types are correct (it fetches them into a local cache on creation)
         using (NpgsqlConnection conn = new(ConnStr.ConnectionString))
         {
-            int connectTimeout = int.Parse(config.GetRequiredSection("DB_CONNECT_TIMEOUT_S").Value);
             if (connectTimeout == 0)
             {
                 conn.Open();
@@ -90,19 +91,15 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         builder.MapComposite<ObjectiveContribution>("objectivecontribution");
         builder.MapComposite<ClientMessageSender>("clientmessagesender");
         _dataSource = builder.Build();
-        while (true)
+        if (connectTimeout == 0)
         {
-            try
-            {
-                Log.Information("Attempting to connect to database");
-                using NpgsqlConnection connection = _dataSource.OpenConnection();
-                break;
-            }
-            catch (Exception ex) when (ex is SocketException or PostgresException or NpgsqlException)
-            {
-                Log.Warning("Database not ready yet... trying again in 5s");
-                Thread.Sleep(TimeSpan.FromSeconds(5));
-            }
+            _connection = _dataSource.OpenConnection();
+        }
+        else
+        {
+            CancellationTokenSource src = new(TimeSpan.FromSeconds(connectTimeout));
+            ValueTask<NpgsqlConnection> openConnectionTask = _dataSource.OpenConnectionAsync(src.Token);
+            _connection = openConnectionTask.ConfigureAwait(true).GetAwaiter().GetResult();
         }
     }
 
@@ -116,6 +113,11 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         return inst;
     }
 
+    public static NpgsqlBatch CreateBatch()
+    {
+        return Get().GetRaw().CreateBatch();
+    }
+
     public static void InstantiateDatabase(IConfiguration config)
     {
         inst = new(config);
@@ -126,10 +128,16 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         return inst != null;
     }
 
+    public static NpgsqlConnection GetActiveConnection()
+    {
+        return Get()._connection;
+    }
+
     /** 
      * @brief Loads a SQL command from a path relative to the commands base directory
      */
-    public static NpgsqlCommand LoadCommandFromFile(string relPath)
+
+    public static string LoadCommandAsString(string relPath)
     {
         string normalizedPath = NormalizeCommandPath(relPath);
         if (!CommandTextCache.TryGetValue(normalizedPath, out string? sqlCommandText))
@@ -138,8 +146,27 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
             sqlCommandText = File.ReadAllText(fullPath);
             CacheCommandText(normalizedPath, sqlCommandText);
         }
+        return sqlCommandText;
+    }
 
-        return Get().GetRaw().CreateCommand(sqlCommandText);
+    public static NpgsqlBinaryImporter LoadBinaryImporter(string relPath)
+    {
+        return Get().GetRaw().OpenConnection().BeginBinaryImport(LoadCommandAsString(relPath));
+    }
+
+    public static NpgsqlBinaryExporter LoadBinaryExporter(string relPath)
+    {
+        return Get().GetRaw().OpenConnection().BeginBinaryExport(LoadCommandAsString(relPath));
+    }
+
+    public static NpgsqlCommand LoadCommandFromFile(string relPath)
+    {
+        return Get().GetRaw().CreateCommand(LoadCommandAsString(relPath));
+    }
+
+    public static NpgsqlBatchCommand LoadBatchCommandFromFile(string relPath)
+    {
+        return new NpgsqlBatchCommand(LoadCommandAsString(relPath));
     }
 
     private static void PreloadCommandTextCache()

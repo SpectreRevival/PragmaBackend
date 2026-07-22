@@ -26,7 +26,7 @@ public abstract record class TrackedProgression
     public required DateTimeOffset LastRolloverTimestamp { get; set; }
 }
 
-public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<TeamTrackedProgression, Guid>, IEquatable<TeamTrackedProgression>, IInterchangeableKeyed<TeamTrackedProgression, Packets.TrackedProgression, Guid>
+public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<TeamTrackedProgression, Guid>, IEquatable<TeamTrackedProgression>, IInterchangeableKeyed<TeamTrackedProgression, Packets.TrackedProgression, Guid>, IBulkWriteable
 {
     private static readonly TeamTrackedProgression defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "TeamTrackedProgression.json")))
         .Deserialize<TeamTrackedProgression>(new JsonSerializerOptions()
@@ -44,7 +44,7 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
     public static async Task<TeamTrackedProgression?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_team_progression.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/team_progression.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -66,7 +66,7 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_team_progression.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/team_progression.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("team_id", TeamId);
         cmd.Parameters.AddWithValue("active_daily_quests", ActiveDailyQuests);
@@ -132,9 +132,37 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
         packet.Ext = ext;
         return packet;
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/team_progression.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("team_id", TeamId);
+        cmd.Parameters.AddWithValue("active_daily_quests", ActiveDailyQuests);
+        cmd.Parameters.AddWithValue("active_weekly_quests", ActiveWeeklyQuests);
+        cmd.Parameters.AddWithValue("active_event_quests", ActiveEventQuests);
+        cmd.Parameters.AddWithValue("last_rollover", LastRolloverTimestamp);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(TeamId);
+        await importer.WriteAsync(ActiveDailyQuests);
+        await importer.WriteAsync(ActiveWeeklyQuests);
+        await importer.WriteAsync(ActiveEventQuests);
+        await importer.WriteAsync(LastRolloverTimestamp);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/team_progression.sql");
+    }
 }
 
-public record class IndividualTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<IndividualTrackedProgression, Guid>, IEquatable<IndividualTrackedProgression>
+public record class IndividualTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<IndividualTrackedProgression, Guid>, IEquatable<IndividualTrackedProgression>, IBulkWriteable
 {
     private static readonly IndividualTrackedProgression defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "IndividualTrackedProgression.json")))
         .Deserialize<IndividualTrackedProgression>(new JsonSerializerOptions()
@@ -152,7 +180,7 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
 
     public static async Task<IndividualTrackedProgression?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_individual_progression.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/individual_progression.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -174,7 +202,7 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_individual_progression.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/individual_progression.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("active_daily_quests", ActiveDailyQuests);
         cmd.Parameters.AddWithValue("active_weekly_quests", ActiveWeeklyQuests);
@@ -239,5 +267,33 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
         };
         packet.Ext = ext;
         return packet;
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/individual_progression.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("active_daily_quests", ActiveDailyQuests);
+        cmd.Parameters.AddWithValue("active_weekly_quests", ActiveWeeklyQuests);
+        cmd.Parameters.AddWithValue("active_event_quests", ActiveEventQuests);
+        cmd.Parameters.AddWithValue("active_endorsement", ActiveEndorsement);
+        cmd.Parameters.AddWithValue("last_rollover", LastRolloverTimestamp);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(ActiveDailyQuests);
+        await importer.WriteAsync(ActiveWeeklyQuests);
+        await importer.WriteAsync(ActiveEventQuests);
+        await importer.WriteAsync(ActiveEndorsement);
+        await importer.WriteAsync(LastRolloverTimestamp);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/individual_progression.sql");
     }
 }
