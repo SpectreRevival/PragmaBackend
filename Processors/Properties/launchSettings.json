@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Processors": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DO_TICKET_BYPASS": "true",
+        "DO_RPC_TRACER": "true"
+      }
+    }
+  }
+}

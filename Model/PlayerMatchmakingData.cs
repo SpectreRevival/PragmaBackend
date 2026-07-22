@@ -8,7 +8,7 @@ namespace Model;
 
 // Ohm - Intentionally removed country, subdivision, primary/secondary geographic region and address fields from this struct since we aren't going to store those for privacy reasons.
 
-public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatchmakingData, Guid>, IEquatable<PlayerMatchmakingData>, IInterchangeable<PlayerMatchmakingData, Packets.PlayerMatchmakingData>
+public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatchmakingData, Guid>, IEquatable<PlayerMatchmakingData>, IInterchangeable<PlayerMatchmakingData, Packets.PlayerMatchmakingData>, IBulkWriteable
 {
     private static readonly PlayerMatchmakingData defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "PlayerMatchmakingData.json")))
         .Deserialize<PlayerMatchmakingData>(new JsonSerializerOptions()
@@ -57,7 +57,7 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
 
     public static async Task<PlayerMatchmakingData?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_player_matchmaking_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/player_matchmaking_data.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -89,7 +89,7 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_player_matchmaking_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/player_matchmaking_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("casual_mmr", CasualMMR);
         cmd.Parameters.AddWithValue("ranked_mmr", RankedMMR);
@@ -193,5 +193,53 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
         packet.SecondaryGeographicRegion = "uscentral-2";
         packet.Subdivision = "CO";
         return packet;
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/player_matchmaking_data.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("casual_mmr", CasualMMR);
+        cmd.Parameters.AddWithValue("ranked_mmr", RankedMMR);
+        cmd.Parameters.AddWithValue("solo_rank_points", SoloRankPoints);
+        cmd.Parameters.AddWithValue("casual_matches_played", CasualMatchesPlayed);
+        cmd.Parameters.AddWithValue("ranked_matches_played", RankedMatchesPlayed);
+        cmd.Parameters.AddWithValue("casual_matches_played_seasonal", CasualMatchesPlayedSeasonal);
+        cmd.Parameters.AddWithValue("ranked_matches_played_seasonal", RankedMatchesPlayedSeasonal);
+        cmd.Parameters.AddWithValue("ranked_placement_matches", RankedPlacementMatches);
+        cmd.Parameters.AddWithValue("current_solo_rank", CurrentSoloRank);
+        cmd.Parameters.AddWithValue("highest_team_rank", HighestTeamRank);
+        cmd.Parameters.AddWithValue("casual_matches_won", CasualMatchesWon);
+        cmd.Parameters.AddWithValue("ranked_matches_won", RankedMatchesWon);
+        cmd.Parameters.AddWithValue("priority_matchmaking_until", PriorityMatchmakingUntil);
+        cmd.Parameters.AddWithValue("restrict_matchmaking_until", RestrictMatchmakingUntil);
+        cmd.Parameters.AddWithValue("map_history", MapHistory);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(CasualMMR);
+        await importer.WriteAsync(RankedMMR);
+        await importer.WriteAsync(SoloRankPoints);
+        await importer.WriteAsync(CasualMatchesPlayed);
+        await importer.WriteAsync(RankedMatchesPlayed);
+        await importer.WriteAsync(CasualMatchesPlayedSeasonal);
+        await importer.WriteAsync(RankedMatchesPlayedSeasonal);
+        await importer.WriteAsync(RankedPlacementMatches);
+        await importer.WriteAsync(CurrentSoloRank);
+        await importer.WriteAsync(HighestTeamRank);
+        await importer.WriteAsync(CasualMatchesWon);
+        await importer.WriteAsync(RankedMatchesWon);
+        await importer.WriteAsync(PriorityMatchmakingUntil);
+        await importer.WriteAsync(RestrictMatchmakingUntil);
+        await importer.WriteAsync(MapHistory);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/player_matchmaking_data.sql");
     }
 }

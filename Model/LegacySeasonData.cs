@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData, Guid>, IEquatable<LegacySeasonData>, IInterchangeableKeyed<LegacySeasonData, Packets.LegacySeasonData, Guid>
+public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData, Guid>, IEquatable<LegacySeasonData>, IInterchangeableKeyed<LegacySeasonData, Packets.LegacySeasonData, Guid>, IBulkWriteable
 {
     private static readonly LegacySeasonData defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "LegacySeasonData.json")))
         .Deserialize<LegacySeasonData>(new JsonSerializerOptions()
@@ -28,7 +28,7 @@ public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData
 
     public static async Task<LegacySeasonData?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_legacy_season_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/legacy_season_data.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -47,7 +47,7 @@ public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_legacy_season_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/legacy_season_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("solo_ranked_points", SoloRankedPoints);
         cmd.Parameters.AddWithValue("current_solo_rank", CurrentSoloRank);
@@ -85,5 +85,27 @@ public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData
             SoloRankPoints = SoloRankedPoints,
             CurrentSoloRank = CurrentSoloRank
         };
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/legacy_season_data.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("solo_ranked_points", SoloRankedPoints);
+        cmd.Parameters.AddWithValue("current_solo_rank", CurrentSoloRank);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(SoloRankedPoints);
+        await importer.WriteAsync(CurrentSoloRank);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/legacy_season_data.sql");
     }
 }

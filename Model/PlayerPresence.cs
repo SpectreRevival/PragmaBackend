@@ -7,7 +7,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Guid>, IEquatable<PlayerPresence>
+public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Guid>, IEquatable<PlayerPresence>, IBulkWriteable
 {
     private static readonly PlayerPresence defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "PlayerPresence.json")))
         .Deserialize<PlayerPresence>(new JsonSerializerOptions()
@@ -34,7 +34,7 @@ public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Gu
 
     public static async Task<PlayerPresence?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_player_presence.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/player_presence.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -55,7 +55,7 @@ public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Gu
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_player_presence.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/player_presence.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("basic_status", BasicStatus);
         cmd.Parameters.AddWithValue("last_updated_time", LastUpdatedTime);
@@ -87,6 +87,32 @@ public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Gu
     public static PlayerPresence CreateDefault(Guid playerId)
     {
         return defaultData with { PlayerId = playerId };
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/player_presence.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("basic_status", BasicStatus);
+        cmd.Parameters.AddWithValue("last_updated_time", LastUpdatedTime);
+        cmd.Parameters.AddWithValue("advanced_presence_type", AdvancedPresenceType);
+        cmd.Parameters.AddWithValue("advanced_presence_context", AdvancedPresenceContext);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(BasicStatus);
+        await importer.WriteAsync(AdvancedPresenceType);
+        await importer.WriteAsync(AdvancedPresenceContext);
+        await importer.WriteAsync(LastUpdatedTime);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/player_presence.sql");
     }
 }
 

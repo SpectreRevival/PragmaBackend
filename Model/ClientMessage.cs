@@ -48,7 +48,7 @@ public record class ClientMessageSender : IEquatable<ClientMessageSender>, IInte
     }
 }
 
-public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEquatable<ClientMessage>, IInterchangeable<ClientMessage, Packets.ClientMessage>
+public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEquatable<ClientMessage>, IInterchangeable<ClientMessage, Packets.ClientMessage>, IBulkWriteable
 {
     [SetsRequiredMembers]
     public ClientMessage(Guid messageId, Guid playerId, string messageType, ClientMessageSender[] senders, string campaignId, string messageTitle, string messageBody, string? itemAttachmentCatalogId, DateTimeOffset sentTime, DateTimeOffset readTime, DateTimeOffset expirationTime)
@@ -80,7 +80,7 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
 
     public static async Task<ClientMessage?> RetrieveFromDatabase(Guid messageId)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_client_message.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/client_message.sql");
         cmd.Parameters.AddWithValue("message_id", messageId);
         using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
         return !await reader.ReadAsync()
@@ -107,7 +107,7 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_client_message.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/client_message.sql");
         cmd.Parameters.AddWithValue("message_id", MessageId);
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("message_type", MessageType);
@@ -190,5 +190,43 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
         }
         packet.MessageData = msgData;
         return packet;
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/client_message.sql");
+        cmd.Parameters.AddWithValue("message_id", MessageId);
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("message_type", MessageType);
+        cmd.Parameters.AddWithValue("senders", Senders);
+        cmd.Parameters.AddWithValue("campaign_id", CampaignId);
+        cmd.Parameters.AddWithValue("message_title", MessageTitle);
+        cmd.Parameters.AddWithValue("message_body", MessageBody);
+        cmd.Parameters.AddWithValue("item_attachment_catalog_id", ItemAttachmentCatalogId);
+        cmd.Parameters.AddWithValue("sent_time", SentTime);
+        cmd.Parameters.AddWithValue("read_time", ReadTime);
+        cmd.Parameters.AddWithValue("expiration_time", ExpirationTime);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(MessageId);
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(MessageType);
+        await importer.WriteAsync(Senders);
+        await importer.WriteAsync(CampaignId);
+        await importer.WriteAsync(MessageTitle);
+        await importer.WriteAsync(MessageBody);
+        await importer.WriteAsync(ItemAttachmentCatalogId);
+        await importer.WriteAsync(SentTime);
+        await importer.WriteAsync(ReadTime);
+        await importer.WriteAsync(ExpirationTime);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/client_messages.sql");
     }
 }

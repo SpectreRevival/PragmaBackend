@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Guid>
+public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Guid>, IBulkWriteable
 {
     private static readonly BattlepassData defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "BattlepassData.json"))).Deserialize<BattlepassData>();
     [SetsRequiredMembers]
@@ -27,7 +27,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
 
     public static async Task<BattlepassData?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_battlepass_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/battlepass_data.sql");
         cmd.Parameters.AddWithValue("playerid", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -48,7 +48,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_battlepass_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/battlepass_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("active_battle_passes", ActiveBattlePasses);
         cmd.Parameters.AddWithValue("battlepass_quests", BattlepassQuests);
@@ -90,5 +90,32 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
         packet.DebugSeasonOffsetMillis = "0";
         packet.SeasonEntry = SeasonEntry.GetActive().ToPacket();
         return packet;
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/battlepass_data.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("active_battle_passes", ActiveBattlePasses);
+        cmd.Parameters.AddWithValue("battlepass_quests", BattlepassQuests);
+        cmd.Parameters.AddWithValue("active_battlepass_quests", ActiveBattlepassQuests);
+        cmd.Parameters.AddWithValue("battlepass_level", BattlepassLevel);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(ActiveBattlePasses);
+        await importer.WriteAsync(BattlepassQuests);
+        await importer.WriteAsync(ActiveBattlepassQuests);
+        await importer.WriteAsync(BattlepassLevel);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.GetActiveConnection().BeginBinaryImport(
+            PostgresDatabase.LoadCommandAsString("binarywriter/battlepass_data.sql"));
     }
 }

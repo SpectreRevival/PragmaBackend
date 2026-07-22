@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, IEquatable<ProfileData>
+public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, IEquatable<ProfileData>, IBulkWriteable
 {
     private static readonly ProfileData defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "ProfileData.json")))
         .Deserialize<ProfileData>(new JsonSerializerOptions()
@@ -72,7 +72,7 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
 
     public static async Task<ProfileData?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_profile_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/profile_data.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -113,7 +113,7 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_profile_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/profile_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("display_name", DisplayName);
         cmd.Parameters.AddWithValue("banner_item_id", BannerItemId);
@@ -205,5 +205,71 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
     public static ProfileData CreateDefault(Guid playerId)
     {
         return defaultData with { PlayerId = playerId };
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/profile_data.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("display_name", DisplayName);
+        cmd.Parameters.AddWithValue("banner_item_id", BannerItemId);
+        cmd.Parameters.AddWithValue("pre_spray_item_id", PreSprayItemId);
+        cmd.Parameters.AddWithValue("match_spray_item_id", MatchSprayItemId);
+        cmd.Parameters.AddWithValue("post_spray_item_id", PostSprayItemId);
+        cmd.Parameters.AddWithValue("attacker_outfit_loadout_id", AttackerOutfitLoadoutId);
+        cmd.Parameters.AddWithValue("defender_outfit_loadout_id", DefenderOutfitLoadoutId);
+        cmd.Parameters.AddWithValue("attacker_weapon_loadout_id", AttackerWeaponLoadoutId);
+        cmd.Parameters.AddWithValue("defender_weapon_loadout_id", DefenderWeaponLoadoutId);
+        cmd.Parameters.AddWithValue("last_updated", LastUpdated);
+        cmd.Parameters.AddWithValue("next_new_day_rollover", NextNewDayRollover);
+        cmd.Parameters.AddWithValue("last_login", LastLogin);
+        cmd.Parameters.AddWithValue("player_flags", PlayerFlags);
+        cmd.Parameters.AddWithValue("crew_score", CrewScore);
+        cmd.Parameters.AddWithValue("current_solo_rank", CurrentSoloRank);
+        cmd.Parameters.AddWithValue("highest_team_rank", HighestTeamRank);
+        cmd.Parameters.AddWithValue("division_type", DivisionType);
+        cmd.Parameters.AddWithValue("inventory_version", InventoryVersion);
+        cmd.Parameters.AddWithValue("crew_id", CrewId);
+        cmd.Parameters.AddWithValue("account_id_provider", AccountIdProvider);
+        cmd.Parameters.AddWithValue("platform_name", PlatformName);
+        cmd.Parameters.AddWithValue("provider_account_id", ProviderAccountId);
+        cmd.Parameters.AddWithValue("crossplay_platform_kind", CrossplayPlatformKind);
+        cmd.Parameters.AddWithValue("games_remaining_until_crew_join", GamesRemainingUntilCrewJoin);
+        return cmd;
+    }
+
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(DisplayName);
+        await importer.WriteAsync(BannerItemId);
+        await importer.WriteAsync(PreSprayItemId);
+        await importer.WriteAsync(MatchSprayItemId);
+        await importer.WriteAsync(PostSprayItemId);
+        await importer.WriteAsync(AttackerOutfitLoadoutId);
+        await importer.WriteAsync(DefenderOutfitLoadoutId);
+        await importer.WriteAsync(AttackerWeaponLoadoutId);
+        await importer.WriteAsync(DefenderWeaponLoadoutId);
+        await importer.WriteAsync(LastUpdated);
+        await importer.WriteAsync(NextNewDayRollover);
+        await importer.WriteAsync(LastLogin);
+        await importer.WriteAsync(PlayerFlags);
+        await importer.WriteAsync(CrewScore);
+        await importer.WriteAsync(CurrentSoloRank);
+        await importer.WriteAsync(HighestTeamRank);
+        await importer.WriteAsync(DivisionType);
+        await importer.WriteAsync(InventoryVersion);
+        await importer.WriteAsync(CrewId);
+        await importer.WriteAsync(AccountIdProvider);
+        await importer.WriteAsync(PlatformName);
+        await importer.WriteAsync(ProviderAccountId);
+        await importer.WriteAsync(CrossplayPlatformKind);
+        await importer.WriteAsync(GamesRemainingUntilCrewJoin);
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/profile_data.sql");
     }
 }
