@@ -234,4 +234,39 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
         }
         return ret;
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile($"save_legacy_stats_data_{StatsType.ToString().ToLower()}.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("kill_count", KillCount);
+        cmd.Parameters.AddWithValue("death_count", DeathCount);
+        cmd.Parameters.AddWithValue("ace_count", AceCount);
+        cmd.Parameters.AddWithValue("duality_kill_count", DualityKillCount);
+        cmd.Parameters.AddWithValue("first_kill_count", FirstKillCount);
+        cmd.Parameters.AddWithValue("first_death_count", FirstDeathCount);
+        cmd.Parameters.AddWithValue("kast", KAST);
+        cmd.Parameters.AddWithValue("duality_rating", DualityRating);
+        cmd.Parameters.AddWithValue("impact_count", ImpactCount);
+        cmd.Parameters.AddWithValue("total_matches_played", TotalMatchesPlayedCount);
+        cmd.Parameters.AddWithValue("fan_count", FanCount);
+        cmd.Parameters.AddWithValue("win_count", WinCount);
+        cmd.Parameters.AddWithValue("total_rounds_played", TotalRoundsPlayedCount);
+        cmd.Parameters.AddWithValue("headshots_count", HeadshotsCount);
+        cmd.Parameters.AddWithValue("total_damaging_shots_count", TotalDamagingShotsCount);
+        cmd.Parameters.AddWithValue("total_damage", TotalDamageCount);
+        cmd.Parameters.AddWithValue("top_sponsors", TopSponsors);
+        cmd.Parameters.AddWithValue("top_weapons", TopWeapons);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }

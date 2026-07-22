@@ -129,4 +129,27 @@ public record class FriendsList : VersionedData, IDatabaseSyncableDefault<Friend
         }
         return packet;
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_friends_list.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("accepting_friend_invites", AcceptingFriendInvites);
+        cmd.Parameters.AddWithValue("friends", Friends);
+        cmd.Parameters.AddWithValue("blocked", Blocked);
+        cmd.Parameters.AddWithValue("sent_friend_invites", SentFriendInvites);
+        cmd.Parameters.AddWithValue("received_friend_invites", ReceivedFriendInvites);
+        cmd.Parameters.AddWithValue("version", Version);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }

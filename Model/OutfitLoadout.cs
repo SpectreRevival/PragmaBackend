@@ -117,4 +117,27 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
             OutfitData = Outfit.ToPacket()
         };
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_outfit_loadout.sql");
+        cmd.Parameters.AddWithValue("loadout_id", LoadoutId);
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("head", Head);
+        cmd.Parameters.AddWithValue("hair", Hair);
+        cmd.Parameters.AddWithValue("face_style", FaceStyle);
+        cmd.Parameters.AddWithValue("face_accessory", FaceAccessory);
+        cmd.Parameters.AddWithValue("outfit", Outfit);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }

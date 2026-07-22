@@ -220,4 +220,42 @@ public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid
             MeleeData = Melee.ToPacket(),
         };
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_weapon_loadout.sql");
+        cmd.Parameters.AddWithValue("loadout_id", LoadoutId);
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("semi_auto_pistol", SemiAutoPistol);
+        cmd.Parameters.AddWithValue("suppressed_pistol", SuppressedPistol);
+        cmd.Parameters.AddWithValue("auto_pistol", AutoPistol);
+        cmd.Parameters.AddWithValue("highcal_pistol", HighcalPistol);
+        cmd.Parameters.AddWithValue("heavy_shotgun", HeavyShotgun);
+        cmd.Parameters.AddWithValue("auto_shotgun", AutoShotgun);
+        cmd.Parameters.AddWithValue("tactical_smg", TacticalSMG);
+        cmd.Parameters.AddWithValue("rapidfire_smg", RapidfireSMG);
+        cmd.Parameters.AddWithValue("suppressed_smg", SuppressedSMG);
+        cmd.Parameters.AddWithValue("standard_ar", StandardAR);
+        cmd.Parameters.AddWithValue("semi_auto_ar", SemiAutoAR);
+        cmd.Parameters.AddWithValue("burst_ar", BurstAR);
+        cmd.Parameters.AddWithValue("tactical_ar", TacticalAR);
+        cmd.Parameters.AddWithValue("suppressed_ar", SuppressedAR);
+        cmd.Parameters.AddWithValue("heavy_ar", HeavyAR);
+        cmd.Parameters.AddWithValue("highcal_mg", HighcalMG);
+        cmd.Parameters.AddWithValue("rapidfire_mg", RapidfireMG);
+        cmd.Parameters.AddWithValue("semi_auto_sniper", SemiAutoSniper);
+        cmd.Parameters.AddWithValue("bolt_action_sniper", BoltActionSniper);
+        cmd.Parameters.AddWithValue("melee", Melee);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }
