@@ -14,7 +14,9 @@ COPY ./Model/ ./Model
 COPY ./Packets ./Packets
 COPY ./Tests ./Tests
 COPY ./Processors ./Processors 
-RUN dotnet publish ./BackendServer/BackendServer.csproj -c Release -o out
+
+ARG BUILD_TYPE=Release
+RUN dotnet publish ./BackendServer/BackendServer.csproj -c ${BUILD_TYPE} -o out
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app

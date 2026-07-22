@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid>, IEquatable<WeaponLoadout>, IInterchangeable<WeaponLoadout, Packets.WeaponLoadout>
+public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid>, IEquatable<WeaponLoadout>, IInterchangeable<WeaponLoadout, Packets.WeaponLoadout>, IBulkWriteable
 {
     private static readonly WeaponLoadout defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "WeaponLoadout.json")))
         .Deserialize<WeaponLoadout>(new JsonSerializerOptions()
@@ -66,7 +66,7 @@ public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid
 
     public static async Task<WeaponLoadout?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_weapon_loadout.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/weapon_loadout.sql");
         cmd.Parameters.AddWithValue("loadout_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -249,13 +249,35 @@ public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(LoadoutId);
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(SemiAutoPistol);
+        await importer.WriteAsync(SuppressedPistol);
+        await importer.WriteAsync(AutoPistol);
+        await importer.WriteAsync(HighcalPistol);
+        await importer.WriteAsync(HeavyShotgun);
+        await importer.WriteAsync(AutoShotgun);
+        await importer.WriteAsync(TacticalSMG);
+        await importer.WriteAsync(RapidfireSMG);
+        await importer.WriteAsync(SuppressedSMG);
+        await importer.WriteAsync(StandardAR);
+        await importer.WriteAsync(SemiAutoAR);
+        await importer.WriteAsync(BurstAR);
+        await importer.WriteAsync(TacticalAR);
+        await importer.WriteAsync(SuppressedAR);
+        await importer.WriteAsync(HeavyAR);
+        await importer.WriteAsync(HighcalMG);
+        await importer.WriteAsync(RapidfireMG);
+        await importer.WriteAsync(SemiAutoSniper);
+        await importer.WriteAsync(BoltActionSniper);
+        await importer.WriteAsync(Melee);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/weapon_loadout.sql");
     }
 }

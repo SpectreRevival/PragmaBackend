@@ -7,15 +7,15 @@ using System.Reflection;
 namespace Tests;
 
 [TestClass]
-public class DatabaseSyncTest()
+public class BulkWriteableTest()
 {
     public static IEnumerable<object[]> GetClassesToTest()
     {
-        Type interfaceType = typeof(IDatabaseSyncable<,>);
+        Type interfaceType = typeof(IBulkWriteable);
         List<Type> implementingTypes = interfaceType.Assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract)
             .Where(t => t.GetInterfaces()
-            .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType))
+            .Any(i => i.Equals(interfaceType)))
             .ToList();
         foreach (Type implementingType in implementingTypes)
         {
@@ -161,45 +161,23 @@ public class DatabaseSyncTest()
     [TestMethod]
     [Retry(3)]
     [DynamicData(nameof(GetClassesToTest), DynamicDataDisplayName = nameof(GetCustomTestName))]
-    public async Task TestDatabaseSyncClass(string syncableClassName)
+    public async Task TestDatabaseBinaryWriterClass(string syncableClassName)
     {
         Type syncableClass = Type.GetType(syncableClassName);
         object obj1 = CreateFromConstructor(syncableClass);
         object obj2 = CreateFromConstructor(syncableClass);
         object obj3 = CreateFromConstructor(syncableClass);
-        MethodInfo? syncMethod = obj1.GetType().GetMethod("SyncToDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        Task? syncTask = (Task)syncMethod.Invoke(obj1, new object[] { });
-        Task? syncTask2 = (Task)syncMethod.Invoke(obj2, new object[] { });
-        Task? syncTask3 = (Task)syncMethod.Invoke(obj3, new object[] { });
-        await syncTask;
-        await syncTask2;
-        await syncTask3;
-        MethodInfo? keyMethod = obj1.GetType().GetMethod("GetKey", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        object? key = keyMethod.Invoke(obj1, new object[] { });
-        MethodInfo? fetchMethod = obj1.GetType().GetMethod("RetrieveFromDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+        MethodInfo? createWriterMethod = obj1.GetType().GetMethod("CreateBulkWriter", BindingFlags.Public | BindingFlags.Static);
+        using NpgsqlBinaryImporter writer = (NpgsqlBinaryImporter)createWriterMethod.Invoke(null, []);
+        MethodInfo? writeToWriterMethod = obj1.GetType().GetMethod("WriteToBulkWriter", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        Task writeTask1 = (Task)writeToWriterMethod.Invoke(obj1, new object[] { writer });
+        await writeTask1;
+        Task writeTask2 = (Task)writeToWriterMethod.Invoke(obj2, new object[] { writer });
+        await writeTask2;
+        Task writeTask3 = (Task)writeToWriterMethod.Invoke(obj3, new object[] { writer });
+        await writeTask3;
+        await writer.CompleteAsync();
 
-        dynamic task = fetchMethod.Invoke(null, new object[] { key });
-        dynamic fetched = await task;
-        Assert.AreEqual(fetched, obj1);
-        Assert.AreNotEqual(fetched, obj2);
-        Assert.AreNotEqual(fetched, obj3);
-    }
-
-    [TestMethod]
-    [Retry(3)]
-    [DynamicData(nameof(GetClassesToTest), DynamicDataDisplayName = nameof(GetCustomTestName))]
-    public async Task TestDatabaseBatchSyncClass(string syncableClassName)
-    {
-        Type syncableClass = Type.GetType(syncableClassName);
-        object obj1 = CreateFromConstructor(syncableClass);
-        object obj2 = CreateFromConstructor(syncableClass);
-        object obj3 = CreateFromConstructor(syncableClass);
-        NpgsqlBatch batch = PostgresDatabase.CreateBatch();
-        MethodInfo? createBatchCmdMethod = obj1.GetType().GetMethod("CreateBatchSyncCommand", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        batch.BatchCommands.Add((NpgsqlBatchCommand)createBatchCmdMethod.Invoke(obj1, []));
-        batch.BatchCommands.Add((NpgsqlBatchCommand)createBatchCmdMethod.Invoke(obj2, []));
-        batch.BatchCommands.Add((NpgsqlBatchCommand)createBatchCmdMethod.Invoke(obj3, []));
-        await batch.ExecuteNonQueryAsync();
         MethodInfo? keyMethod = obj1.GetType().GetMethod("GetKey", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         object? key = keyMethod.Invoke(obj1, new object[] { });
         MethodInfo? fetchMethod = obj1.GetType().GetMethod("RetrieveFromDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);

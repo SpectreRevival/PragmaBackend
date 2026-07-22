@@ -48,7 +48,7 @@ public record class ClientMessageSender : IEquatable<ClientMessageSender>, IInte
     }
 }
 
-public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEquatable<ClientMessage>, IInterchangeable<ClientMessage, Packets.ClientMessage>
+public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEquatable<ClientMessage>, IInterchangeable<ClientMessage, Packets.ClientMessage>, IBulkWriteable
 {
     [SetsRequiredMembers]
     public ClientMessage(Guid messageId, Guid playerId, string messageType, ClientMessageSender[] senders, string campaignId, string messageTitle, string messageBody, string? itemAttachmentCatalogId, DateTimeOffset sentTime, DateTimeOffset readTime, DateTimeOffset expirationTime)
@@ -80,7 +80,7 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
 
     public static async Task<ClientMessage?> RetrieveFromDatabase(Guid messageId)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_client_message.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/client_message.sql");
         cmd.Parameters.AddWithValue("message_id", messageId);
         using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
         return !await reader.ReadAsync()
@@ -209,13 +209,24 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(MessageId);
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(MessageType);
+        await importer.WriteAsync(Senders);
+        await importer.WriteAsync(CampaignId);
+        await importer.WriteAsync(MessageTitle);
+        await importer.WriteAsync(MessageBody);
+        await importer.WriteAsync(ItemAttachmentCatalogId);
+        await importer.WriteAsync(SentTime);
+        await importer.WriteAsync(ReadTime);
+        await importer.WriteAsync(ExpirationTime);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/client_messages.sql");
     }
 }

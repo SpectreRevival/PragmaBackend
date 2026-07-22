@@ -8,7 +8,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<PlayerConfig, Guid>, IEquatable<PlayerConfig>
+public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<PlayerConfig, Guid>, IEquatable<PlayerConfig>, IBulkWriteable
 {
     private static readonly PlayerConfig defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "PlayerConfig.json")))
         .Deserialize<PlayerConfig>(new JsonSerializerOptions()
@@ -202,7 +202,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
 
     public static async Task<PlayerConfig?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_player_config.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/player_config.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -844,13 +844,102 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(UnlockAllPlayModes);
+        await importer.WriteAsync(UnlockAllMenuTabs);
+        await importer.WriteAsync(UnlockAllSponsors);
+        await importer.WriteAsync(BypassUnlockAllSponsorsOverride);
+        await importer.WriteAsync(BypassProgressionOverrides);
+        await importer.WriteAsync(BypassTeamSizeOverrides);
+        await importer.WriteAsync(BypassRegionSelectOverride);
+        await importer.WriteAsync(BypassCurrencyPurchasingOverride);
+        await importer.WriteAsync(DisableDevMapSelector);
+        await importer.WriteAsync(ShowDebugInfoPanel);
+        await importer.WriteAsync(ShowPlatformInfoPanel);
+        await importer.WriteAsync(ShowMatchmakingCounters);
+        await importer.WriteAsync(ForceChatEnabled);
+        await importer.WriteAsync(MostRecentLobbyMode);
+        await importer.WriteAsync(MostRecentPartyId);
+        await importer.WriteAsync(EndUserLicenseAcceptedVersion);
+        await importer.WriteAsync(EndUserLicenseAcceptedVersionPlayStation);
+        await importer.WriteAsync(EndUserLicenseAcceptedVersionXbox);
+        await importer.WriteAsync(TermsOfServiceAcceptedVersion);
+        await importer.WriteAsync(TermsOfServiceAcceptedVersionPlayStation);
+        await importer.WriteAsync(TermsOfServiceAcceptedVersionXbox);
+        await importer.WriteAsync(NonDisclosureAgreementAcceptedVersion);
+        await importer.WriteAsync(NonDisclosureAgreementAcceptedVersionPlayStation);
+        await importer.WriteAsync(NonDisclosureAgreementAcceptedVersionXbox);
+        await importer.WriteAsync(SeizureWarningAcknowledgedVersion);
+        await importer.WriteAsync(SeizureWarningAcknowledgedVersionPlayStation);
+        await importer.WriteAsync(SeizureWarningAcknowledgedVersionXbox);
+        await importer.WriteAsync(BattlepassSeasonLoggedOn);
+        await importer.WriteAsync(BattlepassPurchasePopupLastTime);
+        await importer.WriteAsync(NonDisclosureAgreementUserSignature);
+        await importer.WriteAsync(NonDisclosureAgreementUserSignaturePlayStation);
+        await importer.WriteAsync(NonDisclosureAgreementUserSignatureXbox);
+        await importer.WriteAsync(NonDisclosureAgreementUserEmail);
+        await importer.WriteAsync(NonDisclosureAgreementUserEmailPlayStation);
+        await importer.WriteAsync(NonDisclosureAgreementUserEmailXbox);
+        await importer.WriteAsync(LastVersionShownInDriversWarningDialog);
+        await importer.WriteAsync(MinSpecWarningDialogTimesDisplayed);
+        await importer.WriteAsync(PingWarningDialogTimesDisplayed);
+        await importer.WriteAsync(HasCompletedLaunchSettingsFlow);
+        await importer.WriteAsync(IsUsingManualMatchmakingRegionSelection);
+        await importer.WriteAsync(ManualMatchmakingRegionSelections);
+        await importer.WriteAsync(RotatingNewsViewedMessages);
+        await importer.WriteAsync(InkQuality);
+        await importer.WriteAsync(MouseSensitivityADSScale);
+        await importer.WriteAsync(MinimapScale);
+        await importer.WriteAsync(MinimapSize);
+        await importer.WriteAsync(MinimapMaskOpacity);
+        await importer.WriteAsync(InvertedYAxis);
+        await importer.WriteAsync(ToggleCrouch);
+        await importer.WriteAsync(ToggleWalk);
+        await importer.WriteAsync(ToggleADS);
+        await importer.WriteAsync(RecoilBehavior);
+        await importer.WriteAsync(LeftHandedEnabled);
+        await importer.WriteAsync(RecoilPitchCorrectionEnabled);
+        await importer.WriteAsync(IsTeamLaserEnabled);
+        await importer.WriteAsync(IsHudMinimapRotationEnabled);
+        await importer.WriteAsync(IsHudMinimapCenteredOnPlayer);
+        await importer.WriteAsync(IsHudMinimapCircle);
+        await importer.WriteAsync(IsHudMinimapMaskHighContrastEnabled);
+        await importer.WriteAsync(IsHudSnapMinimapWithScoreboardEnabled);
+        await importer.WriteAsync(IsDamageCameraEffectEnabled);
+        await importer.WriteAsync(StreamerModeEnabled);
+        await importer.WriteAsync(HideLobbyCode);
+        await importer.WriteAsync(ADSTracerRatio);
+        await importer.WriteAsync(ADSTracerIntensity);
+        await importer.WriteAsync(OpticHitConfirmIntensity);
+        await importer.WriteAsync(AnonymousMode);
+        await importer.WriteAsync(AnonymizePlayerNames);
+        await importer.WriteAsync(StreamerModeDisableIncomingVoiceChat);
+        await importer.WriteAsync(StreamerModeDisableIncomingTextChat);
+        await importer.WriteAsync(IsTextChatSoundEffectsEnabled);
+        await importer.WriteAsync(SubtitlesEnabled);
+        await importer.WriteAsync(VerboseVoLevel);
+        await importer.WriteAsync(IsBloodFXEnabled);
+        await importer.WriteAsync(OverrideKeymaps);
+        await importer.WriteAsync(VoiceChatInputAudioDevice);
+        await importer.WriteAsync(VoiceChatOutputAudioDevice);
+        await importer.WriteAsync(VoiceChatTeamEnabled);
+        await importer.WriteAsync(VoiceChatConsoleMode);
+        await importer.WriteAsync(VoiceChatPartyEnabled);
+        await importer.WriteAsync(VoiceChatPartyEnabledInGames);
+        await importer.WriteAsync(VoiceChatTeamPushToTalk);
+        await importer.WriteAsync(VoiceChatPartyPushToTalk);
+        await importer.WriteAsync(EnabledTextStats);
+        await importer.WriteAsync(EnabledGraphStats);
+        await importer.WriteAsync(MutedChatContexts);
+        await importer.WriteAsync(InputBindingsVersion);
+        await importer.WriteAsync(Version);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/player_config.sql");
     }
 }

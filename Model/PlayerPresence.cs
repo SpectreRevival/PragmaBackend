@@ -7,7 +7,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Guid>, IEquatable<PlayerPresence>
+public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Guid>, IEquatable<PlayerPresence>, IBulkWriteable
 {
     private static readonly PlayerPresence defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "PlayerPresence.json")))
         .Deserialize<PlayerPresence>(new JsonSerializerOptions()
@@ -34,7 +34,7 @@ public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Gu
 
     public static async Task<PlayerPresence?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_player_presence.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/player_presence.sql");
         cmd.Parameters.AddWithValue("player_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -100,14 +100,19 @@ public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Gu
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(BasicStatus);
+        await importer.WriteAsync(AdvancedPresenceType);
+        await importer.WriteAsync(AdvancedPresenceContext);
+        await importer.WriteAsync(LastUpdatedTime);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/player_presence.sql");
     }
 }
 

@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Guid>
+public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Guid>, IBulkWriteable
 {
     private static readonly BattlepassData defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "BattlepassData.json"))).Deserialize<BattlepassData>();
     [SetsRequiredMembers]
@@ -27,7 +27,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
 
     public static async Task<BattlepassData?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_battlepass_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/battlepass_data.sql");
         cmd.Parameters.AddWithValue("playerid", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -103,13 +103,19 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(ActiveBattlePasses);
+        await importer.WriteAsync(BattlepassQuests);
+        await importer.WriteAsync(ActiveBattlepassQuests);
+        await importer.WriteAsync(BattlepassLevel);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.GetActiveConnection().BeginBinaryImport(
+            PostgresDatabase.LoadCommandAsString("binarywriter/battlepass_data.sql"));
     }
 }

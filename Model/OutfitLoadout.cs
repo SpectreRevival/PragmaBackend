@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Model;
 
-public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid>, IEquatable<OutfitLoadout>, IInterchangeable<OutfitLoadout, Packets.OutfitLoadout>
+public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid>, IEquatable<OutfitLoadout>, IInterchangeable<OutfitLoadout, Packets.OutfitLoadout>, IBulkWriteable
 {
     private static readonly OutfitLoadout defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "OutfitLoadout.json")))
         .Deserialize<OutfitLoadout>(new JsonSerializerOptions()
@@ -36,7 +36,7 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
 
     public static async Task<OutfitLoadout?> RetrieveFromDatabase(Guid key)
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query_outfit_loadout.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/outfit_loadout.sql");
         cmd.Parameters.AddWithValue("loadout_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
         return !await reader.ReadAsync()
@@ -131,13 +131,20 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
         return cmd;
     }
 
-    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
     {
-        throw new NotImplementedException();
+        await importer.StartRowAsync();
+        await importer.WriteAsync(LoadoutId);
+        await importer.WriteAsync(PlayerId);
+        await importer.WriteAsync(Head);
+        await importer.WriteAsync(Hair);
+        await importer.WriteAsync(FaceStyle);
+        await importer.WriteAsync(FaceAccessory);
+        await importer.WriteAsync(Outfit);
     }
 
     public static NpgsqlBinaryImporter CreateBulkWriter()
     {
-        throw new NotImplementedException();
+        return PostgresDatabase.LoadBinaryImporter("binarywriter/outfit_loadout.sql");
     }
 }
