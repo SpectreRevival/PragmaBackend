@@ -28,9 +28,12 @@ public record class SpectreWebsocketRequest
         RequestId = requestId;
     }
 
+    // the client sends fields our protos do not model; a strict parser throws on those and
+    // takes the whole request with it
+    private static readonly JsonParser TolerantParser = new(JsonParser.Settings.Default.WithIgnoreUnknownFields(true));
+
     public T GetPayloadAsMessage<T>() where T : class, IMessage<T>, new()
     {
-        JsonParser parser = new(JsonParser.Settings.Default);
-        return parser.Parse<T>(RequestPayload.ToJsonString());
+        return TolerantParser.Parse<T>(RequestPayload.ToJsonString());
     }
 }

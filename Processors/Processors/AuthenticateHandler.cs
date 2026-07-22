@@ -318,6 +318,12 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
 
     private static void FixupOutfitData(Model.OutfitData data, Guid playerId)
     {
+        if (string.IsNullOrEmpty(data.ItemCatalogId))
+        {
+            // an empty slot is legitimate (the default defender wears no face style)
+            data.ItemInstanceId = Guid.Empty;
+            return;
+        }
         NpgsqlCommand cmd = PostgresDatabase.CreateCommand("SELECT instance_id FROM customized_instanced_items WHERE owning_player_id=@player_id AND catalog_id=@catalog_id");
         cmd.Parameters.AddWithValue("player_id", playerId);
         cmd.Parameters.AddWithValue("catalog_id", data.ItemCatalogId);
@@ -359,7 +365,7 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
             {
                 throw new InvalidDataException($"The player with id {playerId} doesn't own an item with catalog id {data.Attachment.AttachmentItemCatalogId}");
             }
-            data.Attachment.AttachmentItemInstanceId = reader.GetGuid(0);
+            data.Attachment.AttachmentItemInstanceId = attachmentReader.GetGuid(0);
         }
     }
 
@@ -460,7 +466,7 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
         Model.OutfitLoadout attackerOutfitLoadout = Model.OutfitLoadout.CreateDefault(playerId);
         FixupOutfitLoadout(attackerOutfitLoadout, playerId);
         batch.BatchCommands.Add(attackerOutfitLoadout.CreateBatchSyncCommand());
-        Model.OutfitLoadout defenderOutfitLoadout = Model.OutfitLoadout.CreateDefault(playerId);
+        Model.OutfitLoadout defenderOutfitLoadout = Model.OutfitLoadout.CreateDefaultDefender(playerId);
         FixupOutfitLoadout(defenderOutfitLoadout, playerId);
         batch.BatchCommands.Add(defenderOutfitLoadout.CreateBatchSyncCommand());
         Model.WeaponLoadout attackerWeaponLoadout = Model.WeaponLoadout.CreateDefault(playerId);
@@ -486,7 +492,7 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
         playerProfile.PreSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
         playerProfile.MatchSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
         playerProfile.PostSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
-        playerProfile.BannerItemId = GetInstanceIdByCatalogId("SpectreBannerItemDef:BannerID_Track_Kit01_District_01", playerId);
+        playerProfile.BannerItemId = GetInstanceIdByCatalogId("SpectreBannerItemDef:BannerID_Default", playerId);
         batch.BatchCommands.Add(playerProfile.CreateBatchSyncCommand());
         ClientMessage cyberlordKnifeMessage = cyberlordKnifeMessageDefault with { PlayerId = playerId, MessageId = Guid.NewGuid() };
         batch.BatchCommands.Add(cyberlordKnifeMessage.CreateBatchSyncCommand());

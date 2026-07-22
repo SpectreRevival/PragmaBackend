@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS player_config (
     subtitles_enabled BOOL NOT NULL,
     verbose_vo_level TEXT NOT NULL,
     is_blood_fx_enabled BOOL NOT NULL,
-    override_keymaps TEXT [] NOT NULL,
+    override_keymaps OverrideInput [] NOT NULL,
     voice_chat_input_audio_device TEXT NOT NULL,
     voice_chat_output_audio_device TEXT NOT NULL,
     voice_chat_team_enabled BOOL NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS player_config (
     voice_chat_party_push_to_talk BOOL NOT NULL,
     enabled_text_stats TEXT [] NOT NULL,
     enabled_graph_stats TEXT [] NOT NULL,
-    muted_chat_contexts TEXT [] NOT NULL,
+    muted_chat_contexts INTEGER [] NOT NULL,
     input_bindings_version INT NOT NULL,
     player_config_version BIGINT NOT NULL
 );
