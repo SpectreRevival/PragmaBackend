@@ -142,6 +142,18 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         return Get().GetRaw().CreateCommand(sqlCommandText);
     }
 
+    public static NpgsqlBatchCommand LoadBatchCommandFromFile(string relPath)
+    {
+        string normalizedPath = NormalizeCommandPath(relPath);
+        if (!CommandTextCache.TryGetValue(normalizedPath, out string? sqlCommandText))
+        {
+            string fullPath = Path.Combine(AppContext.BaseDirectory, "commands", normalizedPath);
+            sqlCommandText = File.ReadAllText(fullPath);
+            CacheCommandText(normalizedPath, sqlCommandText);
+        }
+        return new NpgsqlBatchCommand(sqlCommandText);
+    }
+
     private static void PreloadCommandTextCache()
     {
         string commandsPath = Path.Combine(AppContext.BaseDirectory, "commands");

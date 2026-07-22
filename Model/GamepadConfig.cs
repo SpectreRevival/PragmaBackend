@@ -269,4 +269,47 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
         packet.WalkRunDeflectionThreshold = WalkRunDeflectionThreshold;
         return packet;
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_gamepad_config.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("input_scheme_index", InputSchemeIndex);
+        cmd.Parameters.AddWithValue("gamepad_glyph_index", GamepadGlyphIndex);
+        cmd.Parameters.AddWithValue("look_preset_index", LookPresetIndex);
+        cmd.Parameters.AddWithValue("custom_look_config", CustomLookConfig);
+        cmd.Parameters.AddWithValue("custom_response_curve", CustomResponseCurve);
+        cmd.Parameters.AddWithValue("invert_look", InvertLook);
+        cmd.Parameters.AddWithValue("controller_feedback_value", ControllerFeedbackValue);
+        cmd.Parameters.AddWithValue("turn_accel", TurnAccel);
+        cmd.Parameters.AddWithValue("aim_assist", AimAssist);
+        cmd.Parameters.AddWithValue("response_curve_index", ResponseCurveIndex);
+        cmd.Parameters.AddWithValue("response_curve_arc_deg", ResponseCurveArcDeg);
+        cmd.Parameters.AddWithValue("response_curve_slope", ResponseCurveSlope);
+        cmd.Parameters.AddWithValue("response_curve_linear_blend_pow", ResponseCurveLinearBlendPow);
+        cmd.Parameters.AddWithValue("custom_scale_ads", CustomScaleADS);
+        cmd.Parameters.AddWithValue("toggle_crouch", ToggleCrouch);
+        cmd.Parameters.AddWithValue("toggle_walk", ToggleWalk);
+        cmd.Parameters.AddWithValue("toggle_plant_defuse", TogglePlantDefuse);
+        cmd.Parameters.AddWithValue("toggle_ads", ToggleADS);
+        cmd.Parameters.AddWithValue("end_walk_when_firing_behavior", EndWalkWhenFiringBehavior);
+        cmd.Parameters.AddWithValue("ads_trigger_threshold", ADSTriggerThreshold);
+        cmd.Parameters.AddWithValue("dead_zone_move_amount", DeadZoneMoveAmount);
+        cmd.Parameters.AddWithValue("custom_dead_zone_move_amount", CustomDeadZoneMoveAmount);
+        cmd.Parameters.AddWithValue("dead_zone_look_amount", DeadZoneLookAmount);
+        cmd.Parameters.AddWithValue("custom_dead_zone_look_amount", CustomDeadZoneLookAmount);
+        cmd.Parameters.AddWithValue("walk_run_deflection_threshold", WalkRunDeflectionThreshold);
+        cmd.Parameters.AddWithValue("version", Version);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }

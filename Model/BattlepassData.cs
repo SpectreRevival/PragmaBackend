@@ -91,4 +91,25 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
         packet.SeasonEntry = SeasonEntry.GetActive().ToPacket();
         return packet;
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_battlepass_data.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("active_battle_passes", ActiveBattlePasses);
+        cmd.Parameters.AddWithValue("battlepass_quests", BattlepassQuests);
+        cmd.Parameters.AddWithValue("active_battlepass_quests", ActiveBattlepassQuests);
+        cmd.Parameters.AddWithValue("battlepass_level", BattlepassLevel);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }

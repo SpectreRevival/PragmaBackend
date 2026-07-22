@@ -164,4 +164,32 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
         packet.Version = (int)Version;
         return packet;
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_color_vision_config.sql");
+        cmd.Parameters.AddWithValue("playerid", PlayerId);
+        cmd.Parameters.AddWithValue("colorvisiontype", ColorVisionType);
+        cmd.Parameters.AddWithValue("severity", Severity);
+        cmd.Parameters.AddWithValue("correctdeficiency", CorrectDeficiency);
+        cmd.Parameters.AddWithValue("showcorrectdeficiency", ShowCorrectDeficiency);
+        cmd.Parameters.AddWithValue("comfortswapeffect", UseComfortSwapEffect);
+        cmd.Parameters.AddWithValue("customoutlinecolor", UseCustomOutlineColor);
+        cmd.Parameters.AddWithValue("outlinecolor", OutlineColor);
+        cmd.Parameters.AddWithValue("outlinecolorlower", OutlineColorLower);
+        cmd.Parameters.AddWithValue("outlineThicknessScale", OutlineThicknessScale);
+        cmd.Parameters.AddWithValue("outlineBrightnessScale", OutlineBrightnessScale);
+        cmd.Parameters.AddWithValue("version", Version);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }

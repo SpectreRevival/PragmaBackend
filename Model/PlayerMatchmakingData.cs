@@ -194,4 +194,36 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
         packet.Subdivision = "CO";
         return packet;
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_player_matchmaking_data.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("casual_mmr", CasualMMR);
+        cmd.Parameters.AddWithValue("ranked_mmr", RankedMMR);
+        cmd.Parameters.AddWithValue("solo_rank_points", SoloRankPoints);
+        cmd.Parameters.AddWithValue("casual_matches_played", CasualMatchesPlayed);
+        cmd.Parameters.AddWithValue("ranked_matches_played", RankedMatchesPlayed);
+        cmd.Parameters.AddWithValue("casual_matches_played_seasonal", CasualMatchesPlayedSeasonal);
+        cmd.Parameters.AddWithValue("ranked_matches_played_seasonal", RankedMatchesPlayedSeasonal);
+        cmd.Parameters.AddWithValue("ranked_placement_matches", RankedPlacementMatches);
+        cmd.Parameters.AddWithValue("current_solo_rank", CurrentSoloRank);
+        cmd.Parameters.AddWithValue("highest_team_rank", HighestTeamRank);
+        cmd.Parameters.AddWithValue("casual_matches_won", CasualMatchesWon);
+        cmd.Parameters.AddWithValue("ranked_matches_won", RankedMatchesWon);
+        cmd.Parameters.AddWithValue("priority_matchmaking_until", PriorityMatchmakingUntil);
+        cmd.Parameters.AddWithValue("restrict_matchmaking_until", RestrictMatchmakingUntil);
+        cmd.Parameters.AddWithValue("map_history", MapHistory);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }

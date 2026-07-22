@@ -206,4 +206,45 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
     {
         return defaultData with { PlayerId = playerId };
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_profile_data.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("display_name", DisplayName);
+        cmd.Parameters.AddWithValue("banner_item_id", BannerItemId);
+        cmd.Parameters.AddWithValue("pre_spray_item_id", PreSprayItemId);
+        cmd.Parameters.AddWithValue("match_spray_item_id", MatchSprayItemId);
+        cmd.Parameters.AddWithValue("post_spray_item_id", PostSprayItemId);
+        cmd.Parameters.AddWithValue("attacker_outfit_loadout_id", AttackerOutfitLoadoutId);
+        cmd.Parameters.AddWithValue("defender_outfit_loadout_id", DefenderOutfitLoadoutId);
+        cmd.Parameters.AddWithValue("attacker_weapon_loadout_id", AttackerWeaponLoadoutId);
+        cmd.Parameters.AddWithValue("defender_weapon_loadout_id", DefenderWeaponLoadoutId);
+        cmd.Parameters.AddWithValue("last_updated", LastUpdated);
+        cmd.Parameters.AddWithValue("next_new_day_rollover", NextNewDayRollover);
+        cmd.Parameters.AddWithValue("last_login", LastLogin);
+        cmd.Parameters.AddWithValue("player_flags", PlayerFlags);
+        cmd.Parameters.AddWithValue("crew_score", CrewScore);
+        cmd.Parameters.AddWithValue("current_solo_rank", CurrentSoloRank);
+        cmd.Parameters.AddWithValue("highest_team_rank", HighestTeamRank);
+        cmd.Parameters.AddWithValue("division_type", DivisionType);
+        cmd.Parameters.AddWithValue("inventory_version", InventoryVersion);
+        cmd.Parameters.AddWithValue("crew_id", CrewId);
+        cmd.Parameters.AddWithValue("account_id_provider", AccountIdProvider);
+        cmd.Parameters.AddWithValue("platform_name", PlatformName);
+        cmd.Parameters.AddWithValue("provider_account_id", ProviderAccountId);
+        cmd.Parameters.AddWithValue("crossplay_platform_kind", CrossplayPlatformKind);
+        cmd.Parameters.AddWithValue("games_remaining_until_crew_join", GamesRemainingUntilCrewJoin);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -132,6 +132,28 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
         packet.Ext = ext;
         return packet;
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_team_progression.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("team_id", TeamId);
+        cmd.Parameters.AddWithValue("active_daily_quests", ActiveDailyQuests);
+        cmd.Parameters.AddWithValue("active_weekly_quests", ActiveWeeklyQuests);
+        cmd.Parameters.AddWithValue("active_event_quests", ActiveEventQuests);
+        cmd.Parameters.AddWithValue("last_rollover", LastRolloverTimestamp);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public record class IndividualTrackedProgression : TrackedProgression, IDatabaseSyncableDefault<IndividualTrackedProgression, Guid>, IEquatable<IndividualTrackedProgression>
@@ -239,5 +261,27 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
         };
         packet.Ext = ext;
         return packet;
+    }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_individual_progression.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("active_daily_quests", ActiveDailyQuests);
+        cmd.Parameters.AddWithValue("active_weekly_quests", ActiveWeeklyQuests);
+        cmd.Parameters.AddWithValue("active_event_quests", ActiveEventQuests);
+        cmd.Parameters.AddWithValue("active_endorsement", ActiveEndorsement);
+        cmd.Parameters.AddWithValue("last_rollover", LastRolloverTimestamp);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
     }
 }
