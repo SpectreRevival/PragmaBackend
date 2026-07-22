@@ -1,4 +1,3 @@
-using Google.Protobuf;
 using Serilog;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Nodes;
@@ -7,8 +6,6 @@ namespace Processors.Processors;
 
 public class SaveOutfitLoadout : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
-    private static readonly JsonParser TolerantParser = new(JsonParser.Settings.Default.WithIgnoreUnknownFields(true));
-
     [SetsRequiredMembers]
     public SaveOutfitLoadout(SpectreRpcType rpcType) : base(rpcType)
     {
@@ -19,32 +16,40 @@ public class SaveOutfitLoadout : WebsocketPacketProcessor, IWebsocketPacketProce
         return new SpectreRpcType("MtnLoadoutServiceRpc.SaveOutfitLoadoutV1Request");
     }
 
-    private static void NormalizeSlot(Packets.OutfitData? slot, Action<Packets.OutfitData> assign)
+    // an unset slot arrives with an empty instance id, which Model.OutfitData cannot parse
+    private static Packets.OutfitData NormalizeSlot(Packets.OutfitData? slot)
     {
         slot ??= new Packets.OutfitData();
         if (string.IsNullOrEmpty(slot.ItemInstanceId))
         {
             slot.ItemInstanceId = Guid.Empty.ToString();
         }
-        assign(slot);
+        return slot;
     }
 
-    private static async Task EnsureItemExists(Packets.OutfitData slot, Guid playerId)
+    // the client saves slots by instance id and never sends a catalog id, which left every
+    // stored slot with an empty catalog; resolve it from the owned item instead
+    private static async Task<bool> ResolveSlot(Packets.OutfitData slot, Guid playerId)
     {
-        if (string.IsNullOrEmpty(slot.ItemCatalogId) || !Guid.TryParse(slot.ItemInstanceId, out Guid instanceId) || instanceId == Guid.Empty)
+        if (!Guid.TryParse(slot.ItemInstanceId, out Guid instanceId) || instanceId == Guid.Empty)
         {
-            return;
+            return true;
         }
-        if (await Model.CustomizedInstancedItem.RetrieveFromDatabase(instanceId) != null)
+
+        Model.CustomizedInstancedItem? item = await Model.CustomizedInstancedItem.RetrieveFromDatabase(instanceId);
+        if (item is null || item.OwningPlayerId != playerId)
         {
-            return;
+            Log.Warning("SaveOutfitLoadout: player {PlayerId} tried to equip instance {InstanceId} they do not own", playerId, instanceId);
+            return false;
         }
-        await new Model.CustomizedInstancedItem(playerId, slot.ItemCatalogId, instanceId, true, []).SyncToDatabase();
+
+        slot.ItemCatalogId = item.CatalogId;
+        return true;
     }
 
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
-        Packets.OutfitLoadout req = TolerantParser.Parse<Packets.OutfitLoadout>(Packet.RequestPayload.ToJsonString());
+        Packets.OutfitLoadout req = Packet.GetPayloadAsMessage<Packets.OutfitLoadout>();
         if (string.IsNullOrEmpty(req.PlayerId))
         {
             req.PlayerId = ConnectionHandler.PlayerId.ToString();
@@ -53,16 +58,19 @@ public class SaveOutfitLoadout : WebsocketPacketProcessor, IWebsocketPacketProce
         {
             req.LoadoutId = Guid.NewGuid().ToString();
         }
-        NormalizeSlot(req.HeadData, slot => req.HeadData = slot);
-        NormalizeSlot(req.HairData, slot => req.HairData = slot);
-        NormalizeSlot(req.FaceStyleData, slot => req.FaceStyleData = slot);
-        NormalizeSlot(req.FaceAccessoryData, slot => req.FaceAccessoryData = slot);
-        NormalizeSlot(req.OutfitData, slot => req.OutfitData = slot);
+        req.HeadData = NormalizeSlot(req.HeadData);
+        req.HairData = NormalizeSlot(req.HairData);
+        req.FaceStyleData = NormalizeSlot(req.FaceStyleData);
+        req.FaceAccessoryData = NormalizeSlot(req.FaceAccessoryData);
+        req.OutfitData = NormalizeSlot(req.OutfitData);
 
         Guid playerId = Guid.Parse(req.PlayerId);
         foreach (Packets.OutfitData slot in new[] { req.HeadData, req.HairData, req.FaceStyleData, req.FaceAccessoryData, req.OutfitData })
         {
-            await EnsureItemExists(slot, playerId);
+            if (!await ResolveSlot(slot, playerId))
+            {
+                return SpectreWebsocketMessage.From("{\"success\":false}");
+            }
         }
 
         Model.OutfitLoadout saved = Model.OutfitLoadout.FromPacket(req);

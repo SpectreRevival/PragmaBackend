@@ -1,4 +1,5 @@
 ﻿using Packets;
+using Serilog;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Processors.Processors;
@@ -43,9 +44,16 @@ public class GetBulkProfileDataProcessor : WebsocketPacketProcessor, IWebsocketP
             Model.CustomizedInstancedItem? bannerFullItem = await Model.CustomizedInstancedItem.RetrieveFromDatabase(profileData.BannerItemId);
             if (bannerFullItem == null)
             {
-                throw new InvalidDataException($"Couldn't find CustomizedInstancedItem associated with bannerItemId in profile data {profileData.BannerItemId}");
+                // one unresolvable banner used to throw and take the whole bulk response with it,
+                // blanking every profile in the request
+                Log.Warning("GetBulkProfileData: banner instance {InstanceId} for player {PlayerId} not found, sending empty banner",
+                    profileData.BannerItemId, playerId);
+                bannerItem.ItemInstanceId = "";
             }
-            bannerItem.ItemCatalogId = bannerFullItem.CatalogId;
+            else
+            {
+                bannerItem.ItemCatalogId = bannerFullItem.CatalogId;
+            }
             packet.Banner = bannerItem;
             res.BulkProfileData.Add(packet);
         }

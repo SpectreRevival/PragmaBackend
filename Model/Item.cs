@@ -144,15 +144,33 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
         NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/customized_instanced_item.sql");
         cmd.Parameters.AddWithValue("instance_id", key);
         await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.SingleRow);
-        return !await reader.ReadAsync()
-            ? null
-            : new CustomizedInstancedItem(
+        return !await reader.ReadAsync() ? null : await FromReader(reader);
+    }
+
+    // shared so bulk reads do not restate the column order; keep in step with
+    // query/customized_instanced_item.sql
+    public static async Task<CustomizedInstancedItem> FromReader(NpgsqlDataReader reader)
+    {
+        return new CustomizedInstancedItem(
             await reader.GetFieldValueAsync<Guid>(2),
             await reader.GetFieldValueAsync<string>(1),
             await reader.GetFieldValueAsync<Guid>(0),
             await reader.GetFieldValueAsync<bool>(3),
             await reader.GetFieldValueAsync<AlterationChannel[]>(4)
         );
+    }
+
+    public static async Task<List<CustomizedInstancedItem>> RetrieveAllForPlayer(Guid playerId)
+    {
+        await using NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("query/customized_instanced_items_for_player.sql");
+        cmd.Parameters.AddWithValue("player_id", playerId);
+        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+        List<CustomizedInstancedItem> items = [];
+        while (await reader.ReadAsync())
+        {
+            items.Add(await FromReader(reader));
+        }
+        return items;
     }
 
     public Guid GetKey()

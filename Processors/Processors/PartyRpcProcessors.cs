@@ -663,22 +663,7 @@ public abstract partial class PartyRpcProcessorBase : WebsocketPacketProcessor
         List<InstancedItem> items = [];
         // one query per member; the previous per-item lookups made every lobby update crawl
         // once real parties with full inventories showed up
-        await using NpgsqlCommand cmd = PostgresDatabase.CreateCommand(
-            "SELECT instance_id, catalog_id, owning_player_id, viewed, alteration_channels FROM customized_instanced_items WHERE owning_player_id = @player_id AND alteration_channels IS NOT NULL");
-        cmd.Parameters.AddWithValue("player_id", playerId);
-        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
-        List<Model.CustomizedInstancedItem> models = [];
-        while (await reader.ReadAsync())
-        {
-            models.Add(new Model.CustomizedInstancedItem(
-                await reader.GetFieldValueAsync<Guid>(2),
-                await reader.GetFieldValueAsync<string>(1),
-                await reader.GetFieldValueAsync<Guid>(0),
-                await reader.GetFieldValueAsync<bool>(3),
-                await reader.GetFieldValueAsync<Model.AlterationChannel[]>(4)));
-        }
-
-        foreach (Model.CustomizedInstancedItem item in models)
+        foreach (Model.CustomizedInstancedItem item in await Model.CustomizedInstancedItem.RetrieveAllForPlayer(playerId))
         {
             InstancedItem packet = new()
             {

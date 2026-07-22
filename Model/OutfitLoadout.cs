@@ -8,11 +8,18 @@ namespace Model;
 
 public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid>, IEquatable<OutfitLoadout>, IInterchangeable<OutfitLoadout, Packets.OutfitLoadout>, IBulkWriteable
 {
-    private static readonly OutfitLoadout defaultData = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", "OutfitLoadout.json")))
-        .Deserialize<OutfitLoadout>(new JsonSerializerOptions()
-        {
-            PropertyNameCaseInsensitive = true
-        });
+    // attacker and defender start as different characters, so each side has its own template
+    private static readonly OutfitLoadout defaultData = LoadTemplate("OutfitLoadout.json");
+    private static readonly OutfitLoadout defaultDefenderData = LoadTemplate("OutfitLoadout.Defender.json");
+
+    private static OutfitLoadout LoadTemplate(string fileName)
+    {
+        return JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "defaults", fileName)))
+            .Deserialize<OutfitLoadout>(new JsonSerializerOptions()
+            {
+                PropertyNameCaseInsensitive = true
+            });
+    }
 
     [SetsRequiredMembers]
     public OutfitLoadout(Guid playerId, Guid loadoutId, OutfitData head, OutfitData hair, OutfitData faceStyle, OutfitData faceAccessory, OutfitData outfit)
@@ -96,7 +103,28 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
 
     public static OutfitLoadout CreateDefault(Guid playerId)
     {
-        return defaultData with { PlayerId = playerId, LoadoutId = Guid.NewGuid() };
+        return CopyTemplateFor(defaultData, playerId);
+    }
+
+    public static OutfitLoadout CreateDefaultDefender(Guid playerId)
+    {
+        return CopyTemplateFor(defaultDefenderData, playerId);
+    }
+
+    // the slots are reference types shared with the static template and account creation rewrites
+    // their instance ids in place, so each copy needs its own or concurrent logins stomp each other
+    private static OutfitLoadout CopyTemplateFor(OutfitLoadout template, Guid playerId)
+    {
+        return template with
+        {
+            PlayerId = playerId,
+            LoadoutId = Guid.NewGuid(),
+            Head = template.Head with { },
+            Hair = template.Hair with { },
+            FaceStyle = template.FaceStyle with { },
+            FaceAccessory = template.FaceAccessory with { },
+            Outfit = template.Outfit with { }
+        };
     }
 
     public static OutfitLoadout FromPacket(Packets.OutfitLoadout inst)
