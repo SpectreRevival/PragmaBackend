@@ -60,7 +60,7 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_subtitle_user_settings.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/subtitle_user_settings.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("font_size", FontSize);
         cmd.Parameters.AddWithValue("background_opacity", BackgroundOpacity);
@@ -125,7 +125,7 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_subtitle_user_settings.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/subtitle_user_settings.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("font_size", FontSize);
         cmd.Parameters.AddWithValue("background_opacity", BackgroundOpacity);

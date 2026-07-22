@@ -59,7 +59,7 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_outfit_loadout.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/outfit_loadout.sql");
         cmd.Parameters.AddWithValue("loadout_id", LoadoutId);
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("head", Head);
@@ -120,7 +120,7 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_outfit_loadout.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/outfit_loadout.sql");
         cmd.Parameters.AddWithValue("loadout_id", LoadoutId);
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("head", Head);

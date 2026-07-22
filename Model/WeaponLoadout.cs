@@ -104,7 +104,7 @@ public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_weapon_loadout.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/weapon_loadout.sql");
         cmd.Parameters.AddWithValue("loadout_id", LoadoutId);
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("semi_auto_pistol", SemiAutoPistol);
@@ -223,7 +223,7 @@ public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_weapon_loadout.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/weapon_loadout.sql");
         cmd.Parameters.AddWithValue("loadout_id", LoadoutId);
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("semi_auto_pistol", SemiAutoPistol);

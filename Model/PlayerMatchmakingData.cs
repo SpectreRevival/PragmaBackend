@@ -89,7 +89,7 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_player_matchmaking_data.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/player_matchmaking_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("casual_mmr", CasualMMR);
         cmd.Parameters.AddWithValue("ranked_mmr", RankedMMR);
@@ -197,7 +197,7 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_player_matchmaking_data.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/player_matchmaking_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("casual_mmr", CasualMMR);
         cmd.Parameters.AddWithValue("ranked_mmr", RankedMMR);

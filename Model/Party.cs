@@ -109,7 +109,7 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_party.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/party.sql");
         cmd.Parameters.AddWithValue("party_id", PartyId);
         cmd.Parameters.AddWithValue("members", Members);
         cmd.Parameters.AddWithValue("invite_code", InviteCode);
@@ -177,7 +177,7 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_party.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/party.sql");
         cmd.Parameters.AddWithValue("party_id", PartyId);
         cmd.Parameters.AddWithValue("members", Members);
         cmd.Parameters.AddWithValue("invite_code", InviteCode);

@@ -66,7 +66,7 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_team_progression.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/team_progression.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("team_id", TeamId);
         cmd.Parameters.AddWithValue("active_daily_quests", ActiveDailyQuests);
@@ -135,7 +135,7 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_team_progression.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/team_progression.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("team_id", TeamId);
         cmd.Parameters.AddWithValue("active_daily_quests", ActiveDailyQuests);
@@ -196,7 +196,7 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
 
     public async Task SyncToDatabase()
     {
-        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save_individual_progression.sql");
+        NpgsqlCommand cmd = PostgresDatabase.LoadCommandFromFile("save/individual_progression.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("active_daily_quests", ActiveDailyQuests);
         cmd.Parameters.AddWithValue("active_weekly_quests", ActiveWeeklyQuests);
@@ -265,7 +265,7 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
 
     public NpgsqlBatchCommand CreateBatchSyncCommand()
     {
-        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_individual_progression.sql");
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/individual_progression.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("active_daily_quests", ActiveDailyQuests);
         cmd.Parameters.AddWithValue("active_weekly_quests", ActiveWeeklyQuests);
