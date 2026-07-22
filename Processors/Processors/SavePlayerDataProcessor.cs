@@ -1,13 +1,17 @@
 ﻿using Google.Protobuf;
 using Model;
 using Packets;
+using Serilog;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Processors.Processors;
 
 public class SavePlayerDataProcessor : WebsocketPacketProcessor, IWebsocketPacketProcessorSingleton
 {
+    private static readonly JsonParser TolerantParser = new(JsonParser.Settings.Default.WithIgnoreUnknownFields(true));
+
     [SetsRequiredMembers]
     public SavePlayerDataProcessor(SpectreRpcType rpcType) : base(rpcType)
     {
@@ -20,22 +24,35 @@ public class SavePlayerDataProcessor : WebsocketPacketProcessor, IWebsocketPacke
 
     private static async Task ConvertAndSaveItem(FlatInstancedItem item, Guid playerId)
     {
-        CustomizedInstancedItem newItem = new(playerId, item.ItemCatalogId, Guid.Parse(item.ItemInstanceId), true, []);
+        Guid instanceId = Guid.Parse(item.ItemInstanceId);
+        // only insert missing instances; overwriting existing rows would wipe their alteration channels
+        if (await CustomizedInstancedItem.RetrieveFromDatabase(instanceId) != null)
+        {
+            return;
+        }
+        CustomizedInstancedItem newItem = new(playerId, item.ItemCatalogId, instanceId, true, []);
         await newItem.SyncToDatabase();
     }
 
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
-        string innerJson = Packet.RequestPayload["data"].ToString();
-        innerJson = innerJson.Replace("\\\"", "\"");
-        innerJson = innerJson.Replace("\\r", "");
-        innerJson = innerJson.Replace("\\n", "");
-        innerJson = innerJson.Replace("\\t", "");
-        innerJson = innerJson.Replace("\\u0022", "\"");
-        innerJson = innerJson.Replace("\\u002B", "+");
+        try
+        {
+            return await ProcessSave(Packet);
+        }
+        catch (Exception)
+        {
+            Log.Warning("SAVEDIAG: SavePlayerData raw={Raw}", Packet.RequestPayload.ToJsonString());
+            throw;
+        }
+    }
+
+    private static async Task<SpectreWebsocketMessage> ProcessSave(SpectreWebsocketRequest Packet)
+    {
+        JsonNode dataNode = Packet.RequestPayload["data"] ?? throw new InvalidDataException("SavePlayerData request had no data field");
+        string innerJson = dataNode.GetValueKind() == JsonValueKind.String ? dataNode.GetValue<string>() : dataNode.ToJsonString();
         Packet.RequestPayload["data"] = JsonNode.Parse(innerJson);
-        JsonParser parser = new(JsonParser.Settings.Default);
-        PlayerData packetData = parser.Parse<PlayerData>(Packet.RequestPayload.ToJsonString());
+        PlayerData packetData = TolerantParser.Parse<PlayerData>(Packet.RequestPayload.ToJsonString());
         Guid playerId = Guid.Parse(packetData.PlayerId);
         Model.ProfileData profile = await Model.ProfileData.RetrieveFromDatabase(playerId);
         if (packetData.Banner.ItemCatalogId != "" && packetData.Banner.ItemInstanceId != "")
@@ -90,6 +107,7 @@ public class SavePlayerDataProcessor : WebsocketPacketProcessor, IWebsocketPacke
 
         await profile.SyncToDatabase();
 
+        Log.Information("SavePlayerData: saved for {PlayerId}", playerId);
         return SpectreWebsocketMessage.From("{\"success\":true}");
     }
 }
