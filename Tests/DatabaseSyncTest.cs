@@ -1,4 +1,6 @@
 ﻿using Model;
+using Model.Persistence;
+using Npgsql;
 using System.Collections;
 using System.Reflection;
 
@@ -172,6 +174,63 @@ public class DatabaseSyncTest()
         await syncTask;
         await syncTask2;
         await syncTask3;
+        MethodInfo? keyMethod = obj1.GetType().GetMethod("GetKey", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        object? key = keyMethod.Invoke(obj1, new object[] { });
+        MethodInfo? fetchMethod = obj1.GetType().GetMethod("RetrieveFromDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+
+        dynamic task = fetchMethod.Invoke(null, new object[] { key });
+        dynamic fetched = await task;
+        Assert.AreEqual(fetched, obj1);
+        Assert.AreNotEqual(fetched, obj2);
+        Assert.AreNotEqual(fetched, obj3);
+    }
+
+    [TestMethod]
+    [Retry(3)]
+    [DynamicData(nameof(GetClassesToTest), DynamicDataDisplayName = nameof(GetCustomTestName))]
+    public async Task TestDatabaseBatchSyncClass(string syncableClassName)
+    {
+        Type syncableClass = Type.GetType(syncableClassName);
+        object obj1 = CreateFromConstructor(syncableClass);
+        object obj2 = CreateFromConstructor(syncableClass);
+        object obj3 = CreateFromConstructor(syncableClass);
+        NpgsqlBatch batch = PostgresDatabase.CreateBatch();
+        MethodInfo? createBatchCmdMethod = obj1.GetType().GetMethod("CreateBatchSyncCommand", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        batch.BatchCommands.Add((NpgsqlBatchCommand)createBatchCmdMethod.Invoke(obj1, []));
+        batch.BatchCommands.Add((NpgsqlBatchCommand)createBatchCmdMethod.Invoke(obj2, []));
+        batch.BatchCommands.Add((NpgsqlBatchCommand)createBatchCmdMethod.Invoke(obj3, []));
+        await batch.ExecuteNonQueryAsync();
+        MethodInfo? keyMethod = obj1.GetType().GetMethod("GetKey", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        object? key = keyMethod.Invoke(obj1, new object[] { });
+        MethodInfo? fetchMethod = obj1.GetType().GetMethod("RetrieveFromDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+
+        dynamic task = fetchMethod.Invoke(null, new object[] { key });
+        dynamic fetched = await task;
+        Assert.AreEqual(fetched, obj1);
+        Assert.AreNotEqual(fetched, obj2);
+        Assert.AreNotEqual(fetched, obj3);
+    }
+
+    [TestMethod]
+    [Retry(3)]
+    [DynamicData(nameof(GetClassesToTest), DynamicDataDisplayName = nameof(GetCustomTestName))]
+    public async Task TestDatabaseBinaryWriterClass(string syncableClassName)
+    {
+        Type syncableClass = Type.GetType(syncableClassName);
+        object obj1 = CreateFromConstructor(syncableClass);
+        object obj2 = CreateFromConstructor(syncableClass);
+        object obj3 = CreateFromConstructor(syncableClass);
+        MethodInfo? createWriterMethod = obj1.GetType().GetMethod("CreateBulkWriter", BindingFlags.Public | BindingFlags.Static);
+        using NpgsqlBinaryImporter writer = (NpgsqlBinaryImporter)createWriterMethod.Invoke(null, []);
+        MethodInfo? writeToWriterMethod = obj1.GetType().GetMethod("WriteToBulkWriter", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        Task writeTask1 = (Task)writeToWriterMethod.Invoke(obj1, new object[] { writer });
+        Task writeTask2 = (Task)writeToWriterMethod.Invoke(obj2, new object[] { writer });
+        Task writeTask3 = (Task)writeToWriterMethod.Invoke(obj3, new object[] { writer });
+        await writeTask1;
+        await writeTask2;
+        await writeTask3;
+        await writer.CompleteAsync();
+
         MethodInfo? keyMethod = obj1.GetType().GetMethod("GetKey", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         object? key = keyMethod.Invoke(obj1, new object[] { });
         MethodInfo? fetchMethod = obj1.GetType().GetMethod("RetrieveFromDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
