@@ -1,4 +1,5 @@
-﻿using Model.Persistence;
+﻿using Google.Protobuf;
+using Model.Persistence;
 using Npgsql;
 using Packets;
 using System.Diagnostics.CodeAnalysis;
@@ -593,11 +594,15 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
         return defaultData with { PlayerId = playerId };
     }
 
+    private static readonly JsonFormatter KeymapFormatter = new(
+        new JsonFormatter.Settings(true).WithFormatDefaultValues(true).WithIndentation("").WithPreserveProtoFieldNames(true));
+    private static readonly JsonParser KeymapParser = new(JsonParser.Settings.Default.WithIgnoreUnknownFields(true));
+
     public static PlayerConfig FromPacket(Packets.PlayerConfig inst, Guid id)
     {
         return new PlayerConfig(id, inst.UnlockAllPlayModes, inst.UnlockAllMenuTabs, inst.UnlockAllSponsors, inst.BypassUnlockAllSponsorsOverride,
             inst.BypassProgressionOverrides, inst.BypassTeamSizeOverrides, inst.BypassRegionSelectOverride, inst.BypassCurrencyPurchasingOverride, inst.DisableDevMapSelector,
-            inst.ShowDebugInfoPanel, inst.ShowPlatformInfoPanel, inst.ShowMatchmakingCounters, inst.ForceChatEnabled, inst.MostRecentLobbyMode, Guid.Parse(inst.MostRecentPartyId), inst.EndUserLicenseAcceptedVersion,
+            inst.ShowDebugInfoPanel, inst.ShowPlatformInfoPanel, inst.ShowMatchmakingCounters, inst.ForceChatEnabled, inst.MostRecentLobbyMode, Guid.TryParse(inst.MostRecentPartyId, out Guid mostRecentPartyId) ? mostRecentPartyId : Guid.Empty, inst.EndUserLicenseAcceptedVersion,
             inst.EndUserLicenseAcceptedVersionPlayStation, inst.EndUserLicenseAcceptedVersionXbox, inst.TermsOfServiceAcceptedVersion, inst.TermsOfServiceAcceptedVersionPlayStation, inst.TermsOfServiceAcceptedVersionXbox, inst.NonDisclosureAgreementAcceptedVersion, inst.NonDisclosureAgreementAcceptedVersionPlayStation, inst.NonDisclosureAgreementAcceptedVersionXbox,
             inst.SeizureWarningAcknowledgedVersion, inst.SeizureWarningAcknowledgedVersionPlayStation, inst.SeizureWarningAcknowledgedVersionXbox, inst.BattlepassSeasonLoggedOn, inst.BattlepassPurchasePopupLastTime, inst.NonDisclosureAgreementUserSignature, inst.NonDisclosureAgreementUserSignaturePlayStation, inst.NonDisclosureAgreementUserSignatureXbox,
             inst.NonDisclosureAgreementUserEmail, inst.NonDisclosureAgreementUserEmailPlayStation, inst.NonDisclosureAgreementUserEmailXbox, inst.LastVersionShownInDriversWarningDialog, inst.MinSpecWarningDialogTimesDisplayed, inst.PingWarningDialogTimesDisplayed,
@@ -606,8 +611,8 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
             inst.BToggleWalk, inst.BToggleADS, inst.RecoilBehavior, inst.BLeftHandedEnabled, inst.BRecoilPitchCorrectionEnabled, inst.BIsTeamLaserEnabled, inst.BIsHudMinimapRotationEnabled, inst.BIsHudMinimapCenteredOnPlayer, inst.BIsHudMinimapCircle,
             inst.BIsHudMinimapMaskHighContrastEnabled, inst.BIsHudSnapMinimapWithScoreboardEnabled, inst.BIsDamageCameraEffectEnabled, inst.BStreamerModeEnabled,
             inst.BHideLobbyCode, inst.ADSTracerRatio, inst.ADSTracerIntensity, inst.OpticHitConfirmIntensity, inst.BAnonymousMode, inst.BAnonymizePlayerNames, inst.BStreamerModeDisableIncomingVoiceChat,
-            inst.BStreamerModeDisableIncomingTextChat, inst.BIsTextChatSoundEffectsEnabled, inst.BSubtitles, inst.VerboseVoLevel, inst.BIsBloodFXEnabled, inst.OverrideKeymaps.Overrides.ToArray(), inst.VoiceChatInputAudioDevice, inst.VoiceChatOutputAudioDevice,
-            inst.BVoiceChatTeamEnabled, inst.VoiceChatConsoleMode, inst.BVoiceChatPartyEnabled, inst.BVoiceChatPartyEnabledInGames, inst.BVoiceChatTeamPushToTalk, inst.BVoiceChatPartyPushToTalk, inst.EnabledTextStats.ToArray(), inst.EnabledGraphStats.ToArray(), inst.MutedChatContexts.ToArray(), inst.InputBindingsVersion, inst.Version);
+            inst.BStreamerModeDisableIncomingTextChat, inst.BIsTextChatSoundEffectsEnabled, inst.BSubtitles, inst.VerboseVoLevel, inst.BIsBloodFXEnabled, inst.OverrideKeymaps.Overrides.Select(o => KeymapFormatter.Format(o)).ToArray(), inst.VoiceChatInputAudioDevice, inst.VoiceChatOutputAudioDevice,
+            inst.BVoiceChatTeamEnabled, inst.VoiceChatConsoleMode, inst.BVoiceChatPartyEnabled, inst.BVoiceChatPartyEnabledInGames, inst.BVoiceChatTeamPushToTalk, inst.BVoiceChatPartyPushToTalk, inst.EnabledTextStats.ToArray(), inst.EnabledGraphStats.ToArray(), inst.MutedChatContexts.Select(ctx => ctx.ToString()).ToArray(), inst.InputBindingsVersion, inst.Version);
     }
 
     public async Task<Packets.PlayerConfig> ToPacketFull(Guid playerId)
@@ -644,7 +649,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
             BattlepassSeasonLoggedOn = BattlepassSeasonLoggedOn,
             BattlepassPurchasePopupLastTime = BattlepassPurchasePopupLastTime,
             NonDisclosureAgreementUserSignature = NonDisclosureAgreementUserSignature,
-            NonDisclosureAgreementUserSignaturePlayStation = NonDisclosureAgreementUserSignature,
+            NonDisclosureAgreementUserSignaturePlayStation = NonDisclosureAgreementUserSignaturePlayStation,
             NonDisclosureAgreementUserSignatureXbox = NonDisclosureAgreementUserSignatureXbox,
             NonDisclosureAgreementUserEmail = NonDisclosureAgreementUserEmail,
             NonDisclosureAgreementUserEmailPlayStation = NonDisclosureAgreementUserEmailPlayStation,
@@ -700,13 +705,24 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
         OverrideKeymaps keymaps = new();
         foreach (string item in OverrideKeymaps)
         {
-            keymaps.Overrides.Add(item);
+            if (string.IsNullOrWhiteSpace(item) || !item.StartsWith('{'))
+            {
+                continue;
+            }
+            try
+            {
+                keymaps.Overrides.Add(KeymapParser.Parse<OverrideInput>(item));
+            }
+            catch (InvalidProtocolBufferException)
+            {
+            }
         }
         packet.OverrideKeymaps = keymaps;
         packet.VoiceChatInputAudioDevice = VoiceChatInputAudioDevice;
         packet.VoiceChatOutputAudioDevice = VoiceChatOutputAudioDevice;
         packet.BVoiceChatTeamEnabled = VoiceChatTeamEnabled;
         packet.VoiceChatConsoleMode = VoiceChatConsoleMode;
+        packet.BVoiceChatPartyEnabled = VoiceChatPartyEnabled;
         packet.BVoiceChatPartyEnabledInGames = VoiceChatPartyEnabledInGames;
         packet.BVoiceChatTeamPushToTalk = VoiceChatTeamPushToTalk;
         packet.BVoiceChatPartyPushToTalk = VoiceChatPartyPushToTalk;
@@ -720,7 +736,10 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
         }
         foreach (string item in MutedChatContexts)
         {
-            packet.MutedChatContexts.Add(item);
+            if (int.TryParse(item, out int ctx))
+            {
+                packet.MutedChatContexts.Add(ctx);
+            }
         }
         packet.InputBindingsVersion = InputBindingsVersion;
         packet.SubtitleUserSettings = (await Model.SubtitleUserSettings.RetrieveFromDatabase(playerId)).ToPacket();
