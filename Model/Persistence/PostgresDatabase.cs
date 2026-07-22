@@ -116,6 +116,11 @@ public class PostgresDatabase : IAsyncDisposable, IDisposable
         return inst;
     }
 
+    public static NpgsqlBatch CreateBatch()
+    {
+        return Get().GetRaw().CreateBatch();
+    }
+
     public static void InstantiateDatabase(IConfiguration config)
     {
         inst = new(config);
