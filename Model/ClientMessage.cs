@@ -191,4 +191,31 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
         packet.MessageData = msgData;
         return packet;
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_client_message.sql");
+        cmd.Parameters.AddWithValue("message_id", MessageId);
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("message_type", MessageType);
+        cmd.Parameters.AddWithValue("senders", Senders);
+        cmd.Parameters.AddWithValue("campaign_id", CampaignId);
+        cmd.Parameters.AddWithValue("message_title", MessageTitle);
+        cmd.Parameters.AddWithValue("message_body", MessageBody);
+        cmd.Parameters.AddWithValue("item_attachment_catalog_id", ItemAttachmentCatalogId);
+        cmd.Parameters.AddWithValue("sent_time", SentTime);
+        cmd.Parameters.AddWithValue("read_time", ReadTime);
+        cmd.Parameters.AddWithValue("expiration_time", ExpirationTime);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }

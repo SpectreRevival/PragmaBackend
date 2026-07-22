@@ -86,4 +86,23 @@ public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData
             CurrentSoloRank = CurrentSoloRank
         };
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_legacy_season_data.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("solo_ranked_points", SoloRankedPoints);
+        cmd.Parameters.AddWithValue("current_solo_rank", CurrentSoloRank);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }

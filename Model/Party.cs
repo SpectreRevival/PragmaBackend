@@ -174,4 +174,37 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
         hash.Add(Version);
         return hash.ToHashCode();
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_party.sql");
+        cmd.Parameters.AddWithValue("party_id", PartyId);
+        cmd.Parameters.AddWithValue("members", Members);
+        cmd.Parameters.AddWithValue("invite_code", InviteCode);
+        cmd.Parameters.AddWithValue("queue_pool", QueuePool);
+        cmd.Parameters.AddWithValue("lobby_mode", LobbyMode);
+        cmd.Parameters.AddWithValue("chat_id", ChatId);
+        cmd.Parameters.AddWithValue("use_team_mmr", UseTeamMMR);
+        cmd.Parameters.AddWithValue("version", Version);
+        cmd.Parameters.AddWithValue("party_ext_version", PartyExtVersion);
+        cmd.Parameters.AddWithValue("region", Region);
+        cmd.Parameters.AddWithValue("tag", Tag);
+        cmd.Parameters.AddWithValue("profile", Profile);
+        cmd.Parameters.AddWithValue("has_acceptable_region", HasAcceptableRegion);
+        cmd.Parameters.AddWithValue("preferred_game_server_zones", PreferredGameServerZones);
+        cmd.Parameters.Add(new NpgsqlParameter("standard", NpgsqlTypes.NpgsqlDbType.Hstore) { Value = Standard });
+        cmd.Parameters.AddWithValue("custom_json", CustomJson);
+        cmd.Parameters.AddWithValue("crossplay_platform", CrossplayPlatform);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }

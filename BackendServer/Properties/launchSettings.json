@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "BackendServer": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DO_RPC_TRACER": "true",
+        "DO_TICKET_BYPASS": "true"
+      }
+    }
+  }
+}

@@ -193,4 +193,37 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
         };
         return packet;
     }
+
+    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    {
+        NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/save_crosshair_config.sql");
+        cmd.Parameters.AddWithValue("player_id", PlayerId);
+        cmd.Parameters.AddWithValue("color_index", ColorIndex);
+        cmd.Parameters.AddWithValue("advanced_crosshair_settings", AdvancedCrosshairSettings);
+        cmd.Parameters.AddWithValue("custom_color", CustomColor);
+        cmd.Parameters.AddWithValue("fire_accuracy_fade", FireAccuracyFade);
+        cmd.Parameters.AddWithValue("follow_recoil", FollowRecoil);
+        cmd.Parameters.AddWithValue("show_outlines", ShowOutlines);
+        cmd.Parameters.AddWithValue("outline_thickness", OutlineThickness);
+        cmd.Parameters.AddWithValue("outline_opacity", OutlineOpacity);
+        cmd.Parameters.AddWithValue("show_center_dot", ShowCenterDot);
+        cmd.Parameters.AddWithValue("use_ads_settings", UseADSSettings);
+        cmd.Parameters.AddWithValue("center_dot", CenterDot);
+        cmd.Parameters.AddWithValue("center_dot_ads", CenterDotADS);
+        cmd.Parameters.AddWithValue("sniper_dot", SniperDot);
+        cmd.Parameters.AddWithValue("inner_pip", InnerPip);
+        cmd.Parameters.AddWithValue("outer_pip", OuterPip);
+        cmd.Parameters.AddWithValue("version", Version);
+        return cmd;
+    }
+
+    public Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static NpgsqlBinaryImporter CreateBulkWriter()
+    {
+        throw new NotImplementedException();
+    }
 }
