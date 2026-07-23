@@ -1,3 +1,20 @@
+CREATE OR REPLACE FUNCTION all_override_input_nonnull(arr OverrideInput [])
+RETURNS BOOLEAN AS $$
+	SELECT NOT EXISTS (
+		SELECT 1
+		FROM unnest(arr) as unpacked_override
+		WHERE unpacked_override.is_axis IS NULL
+        OR unpacked_override.index_map IS NULL
+        OR unpacked_override.input_name IS NULL
+        OR unpacked_override.axis_scale IS NULL
+        OR unpacked_override.key_name IS NULL
+        OR unpacked_override.shift IS NULL
+        OR unpacked_override.ctrl IS NULL
+        OR unpacked_override.alt IS NULL
+        OR unpacked_override.cmd IS NULL
+	);
+$$ LANGUAGE sql IMMUTABLE;
+
 CREATE TABLE IF NOT EXISTS player_config (
     player_id UUID PRIMARY KEY,
     unlock_all_play_modes BOOL NOT NULL,
@@ -87,5 +104,8 @@ CREATE TABLE IF NOT EXISTS player_config (
     enabled_graph_stats TEXT [] NOT NULL,
     muted_chat_contexts INTEGER [] NOT NULL,
     input_bindings_version INT NOT NULL,
-    player_config_version BIGINT NOT NULL
+    player_config_version BIGINT NOT NULL,
+    CONSTRAINT verify_input_overrides CHECK (
+        all_override_input_nonnull(override_keymaps)
+    )
 );
