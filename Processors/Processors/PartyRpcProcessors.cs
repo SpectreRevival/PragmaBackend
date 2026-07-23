@@ -11,7 +11,7 @@ using System.Text.Json.Nodes;
 
 namespace Processors.Processors;
 
-public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
+public abstract partial class PartyRpcProcessorBase : WebsocketPacketProcessor
 {
     private const string DefaultPartyExtVersion = "173322";
     private const string DefaultLobbyMode = "standard_casual";
@@ -56,7 +56,33 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
     protected static async Task<Model.Party> GetPartyOrThrow(string partyId)
     {
         Model.Party? party = await Model.Party.RetrieveFromDatabase(Guid.Parse(partyId));
-        return party is null ? throw new InvalidDataException($"No party found for id {partyId}") : party;
+        if (party is null)
+        {
+            Log.Warning("PARTYDIAG: GetPartyOrThrow MISS for party {PartyId} (client thinks it is in a party the backend does not have)", partyId);
+            throw new InvalidDataException($"No party found for id {partyId}");
+        }
+        return party;
+    }
+
+    protected static async Task<SpectreWebsocketMessage> CreatePartySyncMessage(Guid playerId)
+    {
+        List<Guid> partyIds = await Model.Party.FindPartyIdsContainingPlayer(playerId);
+        Model.Party? party = partyIds.Count == 0 ? null : await Model.Party.RetrieveFromDatabase(partyIds[0]);
+        Log.Information("PARTYDIAG: party sync/init for {PlayerId}: {Result}", playerId, party is null ? "NOT in party" : $"in party {party.PartyId} v{party.Version} pool={party.QueuePool}");
+        if (party is null)
+        {
+            return SpectreWebsocketMessage.From("{\"isInParty\":false}");
+        }
+
+        JsonObject partyRoot = JsonNode.Parse(await BuildPartyJson(party))!.AsObject();
+        JsonNode? partyNode = partyRoot["party"];
+        partyRoot.Remove("party");
+        JsonObject response = new()
+        {
+            ["isInParty"] = true,
+            ["party"] = partyNode
+        };
+        return SpectreWebsocketMessage.From(response);
     }
 
     protected static async Task<SpectreWebsocketMessage> CreatePartyMessage(Model.Party party, WebsocketNotification[]? notifs = null)
@@ -142,9 +168,11 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
         });
     }
 
-    protected static async Task RemovePlayerFromParties(Guid playerId, Guid? exceptPartyId)
+    // public so websocket disconnect cleanup can evict dead sessions from their parties
+    public static async Task RemovePlayerFromParties(Guid playerId, Guid? exceptPartyId)
     {
         List<Guid> partyIds = await Model.Party.FindPartyIdsContainingPlayer(playerId);
+        Log.Information("PARTYDIAG: RemovePlayerFromParties player {PlayerId}, except {Except}, found {Count} party(ies)", playerId, exceptPartyId, partyIds.Count);
         foreach (Guid partyId in partyIds)
         {
             if (exceptPartyId is Guid keep && partyId == keep)
@@ -164,6 +192,7 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
                 Model.PartyMember[] remaining = party.Members.Where(m => m.PlayerId != playerId).ToArray();
                 if (remaining.Length == 0)
                 {
+                    Log.Information("PARTYDIAG: DELETING party {PartyId} (last member {PlayerId} left)", partyId, playerId);
                     await Model.Party.DeleteFromDatabase(partyId);
                     return true;
                 }
@@ -332,10 +361,15 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
                 continue;
             }
 
+            string requestedTeam = string.IsNullOrEmpty(update.PreferredTeam) ? member.PreferredTeam : update.PreferredTeam;
+            if (requestedTeam != member.PreferredTeam && party.QueuePool == "custom" && IsCustomTeamFull(party, requestedTeam))
+            {
+                requestedTeam = member.PreferredTeam;
+            }
+
             party.Members[i] = member with
             {
-                PreferredTeam =
-                string.IsNullOrEmpty(update.PreferredTeam) ? member.PreferredTeam : update.PreferredTeam,
+                PreferredTeam = requestedTeam,
                 PartyMemberVersion = ParseVersionOrDefault(update.Version, member.PartyMemberVersion),
                 Region = update.Region
             };
@@ -345,8 +379,16 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
                 party.PreferredGameServerZones = update.PreferredRegions.ToArray();
             }
 
+            party.Version++;
             return;
         }
+    }
+
+    // custom lobbies are 3v3 + 2 observers; the client UI trusts the backend to block overfill
+    private static bool IsCustomTeamFull(Model.Party party, string team)
+    {
+        int cap = team == "SPECTATOR" ? 2 : 3;
+        return party.Members.Count(m => m.PreferredTeam == team) >= cap;
     }
 
     protected static void ApplyReadyState(Model.Party party, Guid playerId, bool ready)
@@ -360,12 +402,33 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
             }
 
             party.Members[i] = member with { IsReady = ready };
+            party.Version++;
             return;
         }
     }
 
+    static partial void BeginDeferredMatchmaking(Model.Party party, SpectreWebsocket connection, ref bool deferred);
+
     protected static async Task<WebsocketNotification[]> QueueMatchmakingNotifications(Model.Party party, SpectreWebsocket connection)
     {
+        bool deferred = false;
+        BeginDeferredMatchmaking(party, connection, ref deferred);
+        if (deferred)
+        {
+            WebsocketNotification enteredMatchmaking = new(
+                "{}",
+                new SpectreRpcType("GameInstanceRpc.GameInstanceEnteredMatchmakingV1Notification"));
+            foreach (Model.PartyMember member in party.Members)
+            {
+                if (member.PlayerId == connection.PlayerId)
+                {
+                    continue;
+                }
+                await SpectreWebsocket.SendNotificationToPlayerAsync(member.PlayerId, enteredMatchmaking);
+            }
+            return [enteredMatchmaking];
+        }
+
         GameConnectionDetails details = CreateGameConnectionDetails();
         WebsocketNotification[] leaderNotifications = CreateMatchmakingNotifications(details, true);
         WebsocketNotification[] memberNotifications = CreateMatchmakingNotifications(details, false);
@@ -416,7 +479,9 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
         ];
     }
 
-    private static GameConnectionDetails CreateGameConnectionDetails()
+    static partial void ApplyGameServerOverrides(GameConnectionDetails details);
+
+    protected static GameConnectionDetails CreateGameConnectionDetails()
     {
         GameConnectionDetails details = new()
         {
@@ -429,8 +494,17 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
                 MatchData = GetEnvString("SPECTRE_GAME_MATCH_DATA", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
             }
         };
+        ApplyGameServerOverrides(details);
         return details;
     }
+
+    public static int PreferredTeamToTeamValue(string preferredTeam) => preferredTeam switch
+    {
+        "TEAM0" => 0,
+        "TEAM1" => 1,
+        "SPECTATOR" => -1,
+        _ => 0
+    };
 
     private static async Task<PartyResponse> BuildPartyResponse(Model.Party modelParty)
     {
@@ -461,7 +535,17 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
 
         if (!string.IsNullOrEmpty(modelParty.CustomJson))
         {
-            broadcast.Custom = ProtoParser.Parse<CustomGameInfo>(modelParty.CustomJson);
+            CustomGameInfo custom = ProtoParser.Parse<CustomGameInfo>(modelParty.CustomJson);
+            custom.TeamAssignments.Clear();
+            foreach (Model.PartyMember member in modelParty.Members)
+            {
+                custom.TeamAssignments.Add(new TeamAssignment
+                {
+                    PlayerId = member.PlayerId.ToString(),
+                    Team = PreferredTeamToTeamValue(member.PreferredTeam)
+                });
+            }
+            broadcast.Custom = custom;
         }
         else
         {
@@ -577,24 +661,10 @@ public abstract class PartyRpcProcessorBase : WebsocketPacketProcessor
     private static async Task<InstancedItem[]> CreateLimitedInstancedInventory(Guid playerId)
     {
         List<InstancedItem> items = [];
-        await using NpgsqlCommand cmd = PostgresDatabase.CreateCommand(
-            "SELECT instance_id FROM customized_instanced_items WHERE owning_player_id = @player_id AND alteration_channels IS NOT NULL");
-        cmd.Parameters.AddWithValue("player_id", playerId);
-        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
-        List<Guid> itemIds = [];
-        while (await reader.ReadAsync())
+        // one query per member; the previous per-item lookups made every lobby update crawl
+        // once real parties with full inventories showed up
+        foreach (Model.CustomizedInstancedItem item in await Model.CustomizedInstancedItem.RetrieveAllForPlayer(playerId))
         {
-            itemIds.Add(reader.GetGuid(0));
-        }
-
-        foreach (Guid itemId in itemIds)
-        {
-            Model.CustomizedInstancedItem? item = await Model.CustomizedInstancedItem.RetrieveFromDatabase(itemId);
-            if (item is null)
-            {
-                continue;
-            }
-
             InstancedItem packet = new()
             {
                 CatalogId = item.CatalogId,

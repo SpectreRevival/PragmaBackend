@@ -1,7 +1,8 @@
-﻿using Google.Protobuf;
-using Model;
+﻿using Model;
 using Packets;
+using Serilog;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Processors.Processors;
@@ -18,46 +19,54 @@ public class SavePlayerDataProcessor : WebsocketPacketProcessor, IWebsocketPacke
         return new SpectreRpcType("MtnPlayerDataServiceRpc.SavePlayerDataForClientV1Request");
     }
 
-    private static async Task ConvertAndSaveItem(FlatInstancedItem item, Guid playerId)
+    // the client only ever fills ItemInstanceId on these slots, never ItemCatalogId, so a slot
+    // must be accepted on the instance alone or every banner/spray equip is silently dropped.
+    // returns null to mean "leave the stored value alone" - an empty slot is what the client
+    // sends when it could not resolve the instance locally, not a request to clear the cosmetic.
+    private static async Task<Guid?> ResolveCosmeticSlot(FlatInstancedItem item, Guid playerId, string slotName)
     {
-        CustomizedInstancedItem newItem = new(playerId, item.ItemCatalogId, Guid.Parse(item.ItemInstanceId), true, []);
-        await newItem.SyncToDatabase();
+        if (!Guid.TryParse(item.ItemInstanceId, out Guid instanceId) || instanceId == Guid.Empty)
+        {
+            return null;
+        }
+
+        CustomizedInstancedItem? owned = await CustomizedInstancedItem.RetrieveFromDatabase(instanceId);
+        if (owned is null || owned.OwningPlayerId != playerId)
+        {
+            Log.Warning("SavePlayerData: player {PlayerId} tried to equip {Slot} instance {InstanceId} they do not own, keeping previous value",
+                playerId, slotName, instanceId);
+            return null;
+        }
+        return instanceId;
     }
 
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
-        string innerJson = Packet.RequestPayload["data"].ToString();
-        innerJson = innerJson.Replace("\\\"", "\"");
-        innerJson = innerJson.Replace("\\r", "");
-        innerJson = innerJson.Replace("\\n", "");
-        innerJson = innerJson.Replace("\\t", "");
-        innerJson = innerJson.Replace("\\u0022", "\"");
-        innerJson = innerJson.Replace("\\u002B", "+");
+        try
+        {
+            return await ProcessSave(Packet);
+        }
+        catch (Exception)
+        {
+            Log.Warning("SAVEDIAG: SavePlayerData raw={Raw}", Packet.RequestPayload.ToJsonString());
+            throw;
+        }
+    }
+
+    private static async Task<SpectreWebsocketMessage> ProcessSave(SpectreWebsocketRequest Packet)
+    {
+        JsonNode dataNode = Packet.RequestPayload["data"] ?? throw new InvalidDataException("SavePlayerData request had no data field");
+        string innerJson = dataNode.GetValueKind() == JsonValueKind.String ? dataNode.GetValue<string>() : dataNode.ToJsonString();
         Packet.RequestPayload["data"] = JsonNode.Parse(innerJson);
-        JsonParser parser = new(JsonParser.Settings.Default);
-        PlayerData packetData = parser.Parse<PlayerData>(Packet.RequestPayload.ToJsonString());
+        PlayerData packetData = Packet.GetPayloadAsMessage<PlayerData>();
         Guid playerId = Guid.Parse(packetData.PlayerId);
         Model.ProfileData profile = await Model.ProfileData.RetrieveFromDatabase(playerId);
-        if (packetData.Banner.ItemCatalogId != "" && packetData.Banner.ItemInstanceId != "")
-        {
-            await ConvertAndSaveItem(packetData.Banner, playerId);
-            profile.BannerItemId = Guid.Parse(packetData.Banner.ItemInstanceId);
-        }
-        if (packetData.PreSpray.ItemCatalogId != "" && packetData.PreSpray.ItemInstanceId != "")
-        {
-            await ConvertAndSaveItem(packetData.PreSpray, playerId);
-            profile.PreSprayItemId = Guid.Parse(packetData.PreSpray.ItemInstanceId);
-        }
-        if (packetData.MatchSpray.ItemCatalogId != "" && packetData.MatchSpray.ItemInstanceId != "")
-        {
-            await ConvertAndSaveItem(packetData.MatchSpray, playerId);
-            profile.MatchSprayItemId = Guid.Parse(packetData.MatchSpray.ItemInstanceId);
-        }
-        if (packetData.PostSpray.ItemCatalogId != "" && packetData.PostSpray.ItemInstanceId != "")
-        {
-            await ConvertAndSaveItem(packetData.PostSpray, playerId);
-            profile.PostSprayItemId = Guid.Parse(packetData.PostSpray.ItemInstanceId);
-        }
+        Guid previousBanner = profile.BannerItemId;
+        profile.BannerItemId = await ResolveCosmeticSlot(packetData.Banner, playerId, "Banner") ?? profile.BannerItemId;
+        profile.PreSprayItemId = await ResolveCosmeticSlot(packetData.PreSpray, playerId, "PreSpray") ?? profile.PreSprayItemId;
+        profile.MatchSprayItemId = await ResolveCosmeticSlot(packetData.MatchSpray, playerId, "MatchSpray") ?? profile.MatchSprayItemId;
+        profile.PostSprayItemId = await ResolveCosmeticSlot(packetData.PostSpray, playerId, "PostSpray") ?? profile.PostSprayItemId;
+        bool bannerChanged = profile.BannerItemId != previousBanner;
 
         if (packetData.AttackerOutfitLoadoutId != "")
         {
@@ -90,6 +99,7 @@ public class SavePlayerDataProcessor : WebsocketPacketProcessor, IWebsocketPacke
 
         await profile.SyncToDatabase();
 
+        Log.Information("SavePlayerData: saved for {PlayerId}", playerId);
         return SpectreWebsocketMessage.From("{\"success\":true}");
     }
 }

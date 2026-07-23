@@ -40,6 +40,10 @@
       {
         "featureName": "RegionSelectorEnabled",
         "enabled": true
+      },
+      {
+        "featureName": "BuyMenuV3",
+        "enabled": true
       }
     ],
     "modeConfigs": [

@@ -1,5 +1,5 @@
 {
-  "loadoutId": "53925c2d-5b68-48f8-88de-2d6999f9f3c6",
+  "loadoutId": "6a1f8b74-2c39-4d5e-9a71-8e2d4f6b0c31",
   "Head": {
     "itemInstanceId": "11111111-1111-1111-1111-111111111101",
     "alterationData": [
@@ -34,27 +34,22 @@
         "alterationId": "Option4"
       }
     ],
-    "itemCatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0001"
+    "itemCatalogId": "CharacterCosmeticItemSimple:HairID_Hair_0020"
   },
   "FaceStyle": {
-    "itemInstanceId": "11111111-1111-1111-1111-111111111103",
-    "alterationData": [
-      {
-        "channelId": "Color",
-        "alterationId": "Option1"
-      }
-    ],
-    "itemCatalogId": "CharacterCosmeticItemSimple:HStylingID_DefaultStyling_001"
+    "itemInstanceId": "00000000-0000-0000-0000-000000000000",
+    "alterationData": [],
+    "itemCatalogId": ""
   },
   "FaceAccessory": {
     "itemInstanceId": "11111111-1111-1111-1111-111111111104",
     "alterationData": [
       {
         "channelId": "Color",
-        "alterationId": "Option4"
+        "alterationId": "Option3"
       }
     ],
-    "itemCatalogId": "CharacterCosmeticItemSimple:HAccessoryID_F_BikerGirl"
+    "itemCatalogId": "CharacterCosmeticItemSimple:HAccessoryID_M_Port"
   },
   "Outfit": {
     "itemInstanceId": "11111111-1111-1111-1111-111111111105",
@@ -64,6 +59,6 @@
         "alterationId": "Option1"
       }
     ],
-    "itemCatalogId": "CharacterCosmeticItemOutfit:OutfitID_F_DefaultPS"
+    "itemCatalogId": "CharacterCosmeticItemOutfit:OutfitID_M_DefaultStarterPack"
   }
 }

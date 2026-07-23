@@ -1,4 +1,5 @@
 using Packets;
+using Serilog;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Processors.Processors;
@@ -18,6 +19,7 @@ public class CreatePartyProcessor : PartyRpcProcessorBase, IWebsocketPacketProce
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet,
         SpectreWebsocket ConnectionHandler)
     {
+        Log.Information("PARTYDIAG: CreateV1 from {PlayerId}", ConnectionHandler.PlayerId);
         await RemovePlayerFromParties(ConnectionHandler.PlayerId, null);
         Model.Party party =
             await CreateParty(Packet.GetPayloadAsMessage<CreatePartyRequest>(), ConnectionHandler.PlayerId);

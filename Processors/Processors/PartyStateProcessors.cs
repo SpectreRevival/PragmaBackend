@@ -1,5 +1,7 @@
 using Packets;
+using Serilog;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Nodes;
 
 namespace Processors.Processors;
 
@@ -18,6 +20,7 @@ public class LeavePartyProcessor : PartyRpcProcessorBase, IWebsocketPacketProces
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet,
         SpectreWebsocket ConnectionHandler)
     {
+        Log.Information("PARTYDIAG: LeaveV1 from {PlayerId}", ConnectionHandler.PlayerId);
         await RemovePlayerFromParties(ConnectionHandler.PlayerId, null);
         return SpectreWebsocketMessage.Empty();
     }
@@ -39,9 +42,14 @@ public class UpdatePartyProcessor : PartyRpcProcessorBase, IWebsocketPacketProce
         SpectreWebsocket ConnectionHandler)
     {
         UpdatePartyRequest request = Packet.GetPayloadAsMessage<UpdatePartyRequest>();
-        Model.Party party = await GetPartyOrThrow(request.PartyId);
-        ApplyPartyUpdate(party, request.RequestExt ?? new PartyUpdate());
-        await party.SyncToDatabase();
+        Log.Information("PARTYDIAG: UpdatePartyV1 from {PlayerId} raw={Raw}", ConnectionHandler.PlayerId, Packet.RequestPayload.ToJsonString());
+        Model.Party party = await WithPartyLock(Guid.Parse(request.PartyId), async () =>
+        {
+            Model.Party locked = await GetPartyOrThrow(request.PartyId);
+            ApplyPartyUpdate(locked, request.RequestExt ?? new PartyUpdate());
+            await locked.SyncToDatabase();
+            return locked;
+        });
         return await CreatePartyMessageWithMemberFanout(party, ConnectionHandler.PlayerId);
     }
 }
@@ -62,9 +70,21 @@ public class UpdatePartyPlayerProcessor : PartyRpcProcessorBase, IWebsocketPacke
         SpectreWebsocket ConnectionHandler)
     {
         UpdatePartyPlayerRequest request = Packet.GetPayloadAsMessage<UpdatePartyPlayerRequest>();
-        Model.Party party = await GetPartyOrThrow(request.PartyId);
-        ApplyPartyPlayerUpdate(party, ConnectionHandler.PlayerId, request.RequestExt ?? new PartyPlayerUpdateData());
-        await party.SyncToDatabase();
+        Log.Information("PARTYDIAG: UpdatePartyPlayerV1 from {PlayerId} raw={Raw}", ConnectionHandler.PlayerId, Packet.RequestPayload.ToJsonString());
+        PartyPlayerUpdateData ext = request.RequestExt ?? new PartyPlayerUpdateData();
+        if (ext.RefreshData)
+        {
+            Model.Party current = await GetPartyOrThrow(request.PartyId);
+            return await CreatePartyMessage(current);
+        }
+
+        Model.Party party = await WithPartyLock(Guid.Parse(request.PartyId), async () =>
+        {
+            Model.Party locked = await GetPartyOrThrow(request.PartyId);
+            ApplyPartyPlayerUpdate(locked, ConnectionHandler.PlayerId, ext);
+            await locked.SyncToDatabase();
+            return locked;
+        });
         return await CreatePartyMessageWithMemberFanout(party, ConnectionHandler.PlayerId);
     }
 }
@@ -85,9 +105,13 @@ public class SetReadyProcessor : PartyRpcProcessorBase, IWebsocketPacketProcesso
         SpectreWebsocket ConnectionHandler)
     {
         SetReadyMessage request = Packet.GetPayloadAsMessage<SetReadyMessage>();
-        Model.Party party = await GetPartyOrThrow(request.PartyId);
-        ApplyReadyState(party, ConnectionHandler.PlayerId, request.Ready);
-        await party.SyncToDatabase();
+        Model.Party party = await WithPartyLock(Guid.Parse(request.PartyId), async () =>
+        {
+            Model.Party locked = await GetPartyOrThrow(request.PartyId);
+            ApplyReadyState(locked, ConnectionHandler.PlayerId, request.Ready);
+            await locked.SyncToDatabase();
+            return locked;
+        });
         return await CreatePartyMessageWithMemberFanout(party, ConnectionHandler.PlayerId);
     }
 }
@@ -111,5 +135,55 @@ public class EnterMatchmakingProcessor : PartyRpcProcessorBase, IWebsocketPacket
         Model.Party party = await GetPartyOrThrow(request.PartyId);
         WebsocketNotification[] postNotifs = await QueueMatchmakingNotifications(party, ConnectionHandler);
         return await CreatePartyMessage(party, postNotifs);
+    }
+}
+
+public class KickPartyPlayerProcessor : PartyRpcProcessorBase, IWebsocketPacketProcessorSingleton
+{
+    [SetsRequiredMembers]
+    public KickPartyPlayerProcessor(SpectreRpcType rpcType) : base(rpcType)
+    {
+    }
+
+    public static SpectreRpcType GetRpcType()
+    {
+        return new SpectreRpcType("PartyRpc.KickV1Request");
+    }
+
+    public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet,
+        SpectreWebsocket ConnectionHandler)
+    {
+        string? targetIdString = ReadStringField(Packet.RequestPayload, "playerId", "player_id");
+        string? partyIdString = ReadStringField(Packet.RequestPayload, "partyId", "party_id");
+        if (string.IsNullOrEmpty(targetIdString) || string.IsNullOrEmpty(partyIdString))
+        {
+            throw new InvalidDataException("Kick request missing playerId or partyId");
+        }
+
+        Guid targetId = Guid.Parse(targetIdString);
+        Model.Party party = await GetPartyOrThrow(partyIdString);
+        Model.PartyMember? requester = Array.Find(party.Members, m => m.PlayerId == ConnectionHandler.PlayerId);
+        if (requester is null || !requester.IsLeader)
+        {
+            throw new InvalidDataException($"Kick requested by non-leader {ConnectionHandler.PlayerId}");
+        }
+        if (targetId == ConnectionHandler.PlayerId)
+        {
+            throw new InvalidDataException("Kick target is the leader, use LeaveV1");
+        }
+
+        Log.Information("PARTYDIAG: KickV1 leader {LeaderId} kicking {TargetId} from {PartyId}", ConnectionHandler.PlayerId, targetId, partyIdString);
+        await RemovePlayerFromParties(targetId, null);
+
+        JsonObject removedNotif = new()
+        {
+            ["partyId"] = partyIdString,
+            ["removalReason"] = "KICKED"
+        };
+        await SpectreWebsocket.SendNotificationToPlayerAsync(targetId,
+            new SpectreRpcType("PartyRpc.RemovedV1Notification"), removedNotif.ToJsonString());
+
+        Model.Party updated = await GetPartyOrThrow(partyIdString);
+        return await CreatePartyMessage(updated);
     }
 }

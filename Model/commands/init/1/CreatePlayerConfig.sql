@@ -1,3 +1,20 @@
+CREATE OR REPLACE FUNCTION all_override_input_nonnull(arr OverrideInput [])
+RETURNS BOOLEAN AS $$
+	SELECT NOT EXISTS (
+		SELECT 1
+		FROM unnest(arr) as unpacked_override
+		WHERE unpacked_override.is_axis IS NULL
+        OR unpacked_override.index_map IS NULL
+        OR unpacked_override.input_name IS NULL
+        OR unpacked_override.axis_scale IS NULL
+        OR unpacked_override.key_name IS NULL
+        OR unpacked_override.shift IS NULL
+        OR unpacked_override.ctrl IS NULL
+        OR unpacked_override.alt IS NULL
+        OR unpacked_override.cmd IS NULL
+	);
+$$ LANGUAGE sql IMMUTABLE;
+
 CREATE TABLE IF NOT EXISTS player_config (
     player_id UUID PRIMARY KEY,
     unlock_all_play_modes BOOL NOT NULL,
@@ -74,7 +91,7 @@ CREATE TABLE IF NOT EXISTS player_config (
     subtitles_enabled BOOL NOT NULL,
     verbose_vo_level TEXT NOT NULL,
     is_blood_fx_enabled BOOL NOT NULL,
-    override_keymaps TEXT [] NOT NULL,
+    override_keymaps OverrideInput [] NOT NULL,
     voice_chat_input_audio_device TEXT NOT NULL,
     voice_chat_output_audio_device TEXT NOT NULL,
     voice_chat_team_enabled BOOL NOT NULL,
@@ -85,7 +102,10 @@ CREATE TABLE IF NOT EXISTS player_config (
     voice_chat_party_push_to_talk BOOL NOT NULL,
     enabled_text_stats TEXT [] NOT NULL,
     enabled_graph_stats TEXT [] NOT NULL,
-    muted_chat_contexts TEXT [] NOT NULL,
+    muted_chat_contexts INTEGER [] NOT NULL,
     input_bindings_version INT NOT NULL,
-    player_config_version BIGINT NOT NULL
+    player_config_version BIGINT NOT NULL,
+    CONSTRAINT verify_input_overrides CHECK (
+        all_override_input_nonnull(override_keymaps)
+    )
 );

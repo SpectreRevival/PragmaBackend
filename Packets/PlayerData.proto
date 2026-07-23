@@ -115,7 +115,7 @@ message PlayerConfig {
 	bool bVoiceChatPartyPushToTalk = 89;
 	repeated string enabledTextStats = 90;
 	repeated string enabledGraphStats = 91;
-	repeated string mutedChatContexts = 92;
+  repeated int32 mutedChatContexts = 92;
 	int32 inputBindingsVersion = 93;
 }
 
@@ -239,7 +239,21 @@ message ResponseCurve {
 }
 
 message OverrideKeymaps {
-	repeated string overrides = 1;
+	repeated OverrideInput overrides = 1;
+}
+
+// mirrors rpcs captured from playtest; the client sends keybind overrides as objects,
+// a repeated string here made every settings save fail once a key was rebound
+message OverrideInput {
+	bool bIsAxis = 1;
+	int32 indexMap = 2;
+	string inputName = 3;
+	double axisScale = 4;
+	string keyName = 5;
+	bool bShift = 6;
+	bool bCtrl = 7;
+	bool bAlt = 8;
+	bool bCmd = 9;
 }
 
 message PlayerMatchmakingData {

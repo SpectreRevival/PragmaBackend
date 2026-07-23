@@ -26,9 +26,11 @@ public record class WeaponData : IEquatable<WeaponData>, IInterchangeable<Weapon
     public static WeaponData FromPacket(Packets.WeaponData inst)
     {
         WeaponAttachment? attachment = null;
-        if (inst.AttachmentItemInstanceId != "" && inst.AttachmentItemCatalogId != "")
+        // the client never sends attachmentItemCatalogId (charms are saved by instance only), so
+        // requiring it here dropped every equipped charm. the catalog gets backfilled on save.
+        if (Guid.TryParse(inst.AttachmentItemInstanceId, out Guid attachmentInstanceId) && attachmentInstanceId != Guid.Empty)
         {
-            attachment = new WeaponAttachment(Guid.Parse(inst.AttachmentItemInstanceId), inst.AttachmentItemCatalogId);
+            attachment = new WeaponAttachment(attachmentInstanceId, inst.AttachmentItemCatalogId);
         }
         return new WeaponData(Guid.Parse(inst.ItemInstanceId), inst.AlterationData.Select(altData => ActiveAlterationData.FromPacket(altData)).ToArray(), attachment, inst.ItemCatalogId);
     }
