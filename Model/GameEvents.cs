@@ -9,5 +9,11 @@
 
 public class GameEvents
 {
-    public event EventHandler<EndGameEvent>? GameEnd;
+    public static event EventHandler<EndGameEvent>? GameEnd;
+
+    public static void SendGameEndEvent(EndGameEvent evtData)
+    {
+        ArgumentNullException.ThrowIfNull(evtData);
+        GameEnd?.Invoke(null, evtData);
+    }
 }
