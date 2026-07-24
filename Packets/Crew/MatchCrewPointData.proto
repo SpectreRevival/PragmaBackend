@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package Packets;
+
+message MatchCrewPointData {
+	string playerId = 1;
+	string matchId = 2;
+	double playerPoints = 3;
+	bool isSpotlightHourMatch = 4;
+	double crewMembersOnTeamCount = 5;
+}

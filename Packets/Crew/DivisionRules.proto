@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package Packets;
+
+message DivisionRules {
+	double divisionThreshold = 1;
+	double playerScoresCount = 2;
+	double wildcardScoresCount = 3;
+}
