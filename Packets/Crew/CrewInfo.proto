@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package Packets;
+
+message CrewInfo {
+	string crewId = 1;
+	CrewStatus status = 2;
+	string homeTurf = 3;
+	double spotlightStartHour = 4;
+	string spotlightDurationTimeMinutes = 5;
+	string createdDate = 6;
+	string updatedDate = 7;
+	double competitionCount = 8;
+}

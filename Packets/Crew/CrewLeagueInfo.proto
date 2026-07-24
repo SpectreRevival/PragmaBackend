@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package Packets;
+
+message CrewLeagueInfo {
+	string leagueId = 1;
+	double leagueNameIdx = 2;
+	int32 status = 3; // TODO find names for enum members
+}

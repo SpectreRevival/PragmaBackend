@@ -1,0 +1,17 @@
+syntax = "proto3";
+import "MatchCrewPointData.proto";
+
+package Packets;
+
+message CrewPerformanceData {
+	CrewPerformanceDataWeek currentWeekData = 1;
+	CrewPerformanceDataWeek previousWeekData = 2;
+}
+
+message CrewPerformanceDataWeek {
+	double totalFilledPlayerPointsSlotCount = 1;
+	string totalPlayerPointScore = 2;
+	repeated MatchCrewPointData wildcardPointsData = 3;
+	double totalCrewMatchesPlayedCount = 4;
+	double crewRosterCount = 5;
+}
