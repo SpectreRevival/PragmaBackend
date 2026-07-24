@@ -53,7 +53,7 @@ public class SavePlayerDataProcessor : WebsocketPacketProcessor, IWebsocketPacke
         }
     }
 
-    private static async Task<SpectreWebsocketMessage> ProcessSave(SpectreWebsocketRequest Packet)
+    public static async Task<SpectreWebsocketMessage> ProcessSave(SpectreWebsocketRequest Packet)
     {
         JsonNode dataNode = Packet.RequestPayload["data"] ?? throw new InvalidDataException("SavePlayerData request had no data field");
         string innerJson = dataNode.GetValueKind() == JsonValueKind.String ? dataNode.GetValue<string>() : dataNode.ToJsonString();
