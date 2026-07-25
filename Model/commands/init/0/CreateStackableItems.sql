@@ -5,6 +5,6 @@ CREATE TABLE IF NOT EXISTS stackable_items (
     owning_player_id UUID NOT NULL
 );
 
-CREATE INDEX idx_stackable_items_by_player ON stackable_items (
+CREATE INDEX IF NOT EXISTS idx_stackable_items_by_player ON stackable_items (
     owning_player_id, instance_id
 );
