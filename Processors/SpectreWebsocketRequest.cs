@@ -34,6 +34,11 @@ public record class SpectreWebsocketRequest
 
     public T GetPayloadAsMessage<T>() where T : class, IMessage<T>, new()
     {
-        return TolerantParser.Parse<T>(RequestPayload.ToJsonString());
+        return GetPayloadAsMessage<T>(RequestPayload.ToJsonString());
+    }
+
+    public static T GetPayloadAsMessage<T>(string jsonString) where T : class, IMessage<T>, new()
+    {
+        return TolerantParser.Parse<T>(jsonString);
     }
 }
