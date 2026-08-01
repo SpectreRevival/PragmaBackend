@@ -4,17 +4,17 @@
       "regionName": "uscentral-1",
       "ipv4": "",
       "ipv6": "",
-      "port": 80,
+      "port": 443,
       "type": "hathora",
-      "host": "chicago.ping.hathora.dev"
+      "host": "1.1.1.1"
     },
     {
       "regionName": "eucentral-1",
       "ipv4": "",
       "ipv6": "",
-      "port": 80,
+      "port": 443,
       "type": "hathora",
-      "host": "london.ping.hathora.dev"
+      "host": "8.8.8.8"
     }
   ]
 }
