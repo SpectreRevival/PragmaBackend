@@ -13,3 +13,7 @@ CREATE TABLE IF NOT EXISTS progression_tracking_items (
 	is_bundle_purchased BOOL NOT NULL,
 	num_levels_purchased INT NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_progression_tracking_items_by_player ON progression_tracking_items (
+	owning_player_id, instance_id
+);

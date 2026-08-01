@@ -5,3 +5,7 @@ CREATE TABLE IF NOT EXISTS sponsor_tracker_items (
 	viewed BOOL NOT NULL,
 	sponsor_name TEXT NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_sponsor_tracker_items_by_player ON sponsor_tracker_items (
+	owning_player_id, instance_id
+);
