@@ -1,4 +1,4 @@
-﻿using Packets;
+using Packets;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Processors.Processors;
@@ -18,6 +18,13 @@ public class LoginToChatProcessor : WebsocketPacketProcessor
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
         LoginToChatResponse res = new();
+
+        if (!VivoxTokenGenerator.IsConfigured)
+        {
+            res.Success = false;
+            return SpectreWebsocketMessage.From(res);
+        }
+
         string loginToken = VivoxTokenGenerator.GenerateToken(ConnectionHandler.PlayerId, VivoxTokenAction.LOGIN, "");
         string joinToken = VivoxTokenGenerator.GenerateToken(ConnectionHandler.PlayerId, VivoxTokenAction.JOIN, "global");
         res.Success = true;

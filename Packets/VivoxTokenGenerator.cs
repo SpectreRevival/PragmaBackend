@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,24 +8,31 @@ namespace Packets;
 
 public class VivoxTokenGenerator
 {
-    private static string? secretKey;
+    public static string? secretKey;
     public static string? issuer;
     public static string? domain;
-    private static int _globalVxi = 0;
     public static string? server;
+
+    private static long _globalVxi = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+    public static bool IsConfigured =>
+        !string.IsNullOrEmpty(secretKey) && !string.IsNullOrEmpty(issuer)
+        && !string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(server);
 
     public static string GenerateToken(Guid playerId, VivoxTokenAction action, string channel)
     {
-        long exp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 100;
-        int vxi = Interlocked.Increment(ref _globalVxi);
+
+        long exp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 90;
+        long vxi = Interlocked.Increment(ref _globalVxi);
 
         string from = $"sip:.{issuer}.{playerId}.@{domain}";
 
         Dictionary<string, object> payloadObj = new()
         {
-            { "iss", issuer },
+            { "iss", issuer! },
             { "exp", exp },
-            { "vxa", action },
+
+            { "vxa", action == VivoxTokenAction.JOIN ? "join" : "login" },
             { "vxi", vxi },
             { "f", from }
         };
@@ -41,7 +48,7 @@ public class VivoxTokenGenerator
         string payloadB64 = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(payloadJson));
         string signingInput = $"{header}.{payloadB64}";
 
-        byte[] secretBytes = Encoding.UTF8.GetBytes(secretKey);
+        byte[] secretBytes = Encoding.UTF8.GetBytes(secretKey!);
         byte[] inputBytes = Encoding.UTF8.GetBytes(signingInput);
 
         using HMACSHA256 hmac = new(secretBytes);
@@ -53,11 +60,12 @@ public class VivoxTokenGenerator
 
     public static bool LoadConfiguration(IConfiguration config)
     {
-        secretKey = config.GetSection("Vivox").GetSection("SecretKey").ToString();
-        issuer = config.GetSection("Vivox").GetSection("Issuer").ToString();
-        domain = config.GetSection("Vivox").GetSection("Domain").ToString();
-        server = config.GetSection("Vivox").GetSection("Server").ToString();
-        return secretKey is not null && issuer is not null && domain is not null && server is not null;
+
+        secretKey = config["Vivox:SecretKey"];
+        issuer = config["Vivox:Issuer"];
+        domain = config["Vivox:Domain"];
+        server = config["Vivox:Server"];
+        return IsConfigured;
     }
 }
 
