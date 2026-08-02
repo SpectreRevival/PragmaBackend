@@ -24,7 +24,7 @@ message BroadcastPartyExtraInfo {
 	string region = 7;
 	string tag = 8;
 	string profile = 9;
-	repeated string tokens = 10;
+	repeated LobbyChatToken tokens = 10;
 	bool useTeamMmr = 11;
 	bool hasAcceptableRegion = 12;
 	CrossplayPreferences crossPlayPreference = 13;
@@ -33,4 +33,9 @@ message BroadcastPartyExtraInfo {
 
 message BroadcastPrivatePartyExtraInfo {
 
+}
+
+message LobbyChatToken {
+	string playerId = 1;
+	string chatToken = 2;
 }

@@ -524,7 +524,19 @@ public abstract partial class PartyRpcProcessorBase : WebsocketPacketProcessor
         BroadcastPartyExtraInfo broadcast = packetParty.ExtBroadcastParty;
         broadcast.Pool = modelParty.QueuePool;
         broadcast.LobbyMode = modelParty.LobbyMode;
-        broadcast.ChatId = modelParty.ChatId;
+        string chatChannel = $"party-{modelParty.PartyId:N}";
+        broadcast.ChatId = chatChannel;
+        if (VivoxTokenGenerator.IsConfigured)
+        {
+            foreach (Model.PartyMember chatMember in modelParty.Members)
+            {
+                broadcast.Tokens.Add(new LobbyChatToken
+                {
+                    PlayerId = chatMember.PlayerId.ToString(),
+                    ChatToken = VivoxTokenGenerator.GenerateToken(chatMember.PlayerId, VivoxTokenAction.JOIN, chatChannel)
+                });
+            }
+        }
         broadcast.Version = modelParty.PartyExtVersion;
         broadcast.Region = modelParty.Region;
         broadcast.Tag = modelParty.Tag;
