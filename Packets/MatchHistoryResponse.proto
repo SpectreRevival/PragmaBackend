@@ -1,0 +1,12 @@
+syntax = "proto3";
+import "MatchData.proto";
+
+package Packets;
+
+message MultipleMatchHistoryResponse {
+	repeated MatchData matchData = 1;
+}
+
+message SingleMatchHistoryResponse {
+	MatchData matchData = 1;
+}
