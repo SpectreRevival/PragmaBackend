@@ -183,7 +183,7 @@ public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>
         return data is not null &&
                EqualityComparer<Type>.Default.Equals(EqualityContract, data.EqualityContract) &&
                MatchId.Equals(data.MatchId) &&
-               MatchDate.Equals(data.MatchDate) &&
+               MatchDate.ToUnixTimeMilliseconds() == data.MatchDate.ToUnixTimeMilliseconds() &&
                QueueName == data.QueueName &&
                QueueGameMode == data.QueueGameMode &&
                QueueGameMap == data.QueueGameMap &&
@@ -191,9 +191,9 @@ public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>
                Region == data.Region &&
                IsRanked == data.IsRanked &&
                IsAbandonedMatch == data.IsAbandonedMatch &&
-               EqualityComparer<Guid[]>.Default.Equals(AbandonedPlayerIds, data.AbandonedPlayerIds) &&
+               AbandonedPlayerIds.SequenceEqual(data.AbandonedPlayerIds) &&
                SurrenderedTeam == data.SurrenderedTeam &&
-               EqualityComparer<MatchHistoryTeamData[]>.Default.Equals(TeamData, data.TeamData);
+               TeamData.SequenceEqual(data.TeamData);
     }
 
     public override int GetHashCode()
@@ -201,7 +201,7 @@ public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>
         HashCode hash = new HashCode();
         hash.Add(EqualityContract);
         hash.Add(MatchId);
-        hash.Add(MatchDate);
+        hash.Add(MatchDate.ToUnixTimeMilliseconds());
         hash.Add(QueueName);
         hash.Add(QueueGameMode);
         hash.Add(QueueGameMap);

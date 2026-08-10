@@ -76,6 +76,7 @@ public record class MatchHistoryPlayerData
         cmd.Parameters.AddWithValue("saved_player_name", SavedPlayerName);
         cmd.Parameters.AddWithValue("selected_banner_catalog_id", SelectedBannerCatalogId);
         cmd.Parameters.AddWithValue("saved_sponsor_name", SavedSponsorName);
+        cmd.Parameters.AddWithValue("sponsor_game_id", SponsorGameId);
         cmd.Parameters.AddWithValue("is_anonymous_player", IsAnonymousPlayer);
         cmd.Parameters.AddWithValue("has_crew_score_earned", HasCrewScoreEarned);
         cmd.Parameters.AddWithValue("teammate_index", TeammateIndex);
@@ -195,7 +196,7 @@ public record class MatchHistoryPlayerData
                CrewId.Equals(data.CrewId) &&
                DivisionId.Equals(data.DivisionId) &&
                DivisionType == data.DivisionType &&
-               EqualityComparer<string[]>.Default.Equals(MatchPlacementData, data.MatchPlacementData) &&
+               MatchPlacementData.SequenceEqual(data.MatchPlacementData) &&
                NumRankedMatches == data.NumRankedMatches;
     }
 
