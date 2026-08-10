@@ -1,0 +1,29 @@
+syntax = "proto3";
+import "CrewInfo.proto";
+import "DivisionInfo.proto";
+import "DivisionRules.proto";
+import "CrewRankLeaderboardRow.proto";
+import "MatchCrewPointData.proto";
+import "CrewPerformanceData.proto";
+import "CrewLeagueInfo.proto";
+
+package Packets;
+
+message GetCrewDashboardDataResponse {
+	string nextAutomationDate = 1;
+	CrewDashboardData crewDashboardData = 2;
+}
+
+message CrewDashboardData {
+	string crewId = 1;
+	CrewInfo crewInfo = 2;
+	DivisionInfo divisionInfo = 3;
+	DivisionRules divisionRules = 4;
+	repeated CrewRankLeaderboardRow rankLeaderboardRecords = 5;
+	repeated MatchCrewPointData playerPoints = 6;
+	repeated MatchCrewPointData wildcardPoints = 7;
+	repeated MatchCrewPointData uncontributedPoints = 8;
+	CrewPerformanceData performanceData = 9;
+	bool crewLocked = 10;
+	CrewLeagueInfo leagueInfo = 11;
+}

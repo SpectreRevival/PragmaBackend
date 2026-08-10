@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package Packets;
+
+message DivisionInfo {
+	string divisionId = 1;
+	string divisionName = 2;
+	int32 divisionType = 3; // This is prob an enum todo name values
+}

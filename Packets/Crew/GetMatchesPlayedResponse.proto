@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package Packets;
+
+message GetNoneCrewMatchesPlayedCountResponse {
+	bool success = 1;
+	double noneCrewMatchesPlayedCount = 2;
+	double gamesRequiredToJoinCrewCount = 3;
+}

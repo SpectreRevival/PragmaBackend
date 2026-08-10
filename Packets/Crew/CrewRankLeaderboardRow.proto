@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package Packets;
+
+message CrewRankLeaderboardRow {
+	double rank = 1;
+	string crewId = 2;
+	string weeklyPoints = 3;
+}
