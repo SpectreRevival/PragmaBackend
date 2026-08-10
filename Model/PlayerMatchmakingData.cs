@@ -195,7 +195,7 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/player_matchmaking_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
@@ -214,7 +214,7 @@ public record class PlayerMatchmakingData : IDatabaseSyncableDefault<PlayerMatch
         cmd.Parameters.AddWithValue("priority_matchmaking_until", PriorityMatchmakingUntil);
         cmd.Parameters.AddWithValue("restrict_matchmaking_until", RestrictMatchmakingUntil);
         cmd.Parameters.AddWithValue("map_history", MapHistory);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

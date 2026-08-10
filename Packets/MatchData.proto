@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package Packets;
+
+message MatchData {
+	string matchId = 1;
+	string matchData = 2; // json squared again my favorite <33333 ty mountaintop
+	string matchDate = 3; // unix ms ts
+}

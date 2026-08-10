@@ -123,7 +123,7 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/subtitle_user_settings.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
@@ -134,7 +134,7 @@ public record class SubtitleUserSettings : VersionedData, IDatabaseSyncableDefau
         cmd.Parameters.AddWithValue("post_player_subtitles_to_chat", PostPlayerSubtitlesToChat);
         cmd.Parameters.AddWithValue("names_to_show_mask", NamesToShowMask);
         cmd.Parameters.AddWithValue("version", Version);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

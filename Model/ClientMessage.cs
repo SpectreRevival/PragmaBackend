@@ -192,7 +192,7 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/client_message.sql");
         cmd.Parameters.AddWithValue("message_id", MessageId);
@@ -206,7 +206,7 @@ public record class ClientMessage : IDatabaseSyncable<ClientMessage, Guid>, IEqu
         cmd.Parameters.AddWithValue("sent_time", SentTime);
         cmd.Parameters.AddWithValue("read_time", ReadTime);
         cmd.Parameters.AddWithValue("expiration_time", ExpirationTime);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

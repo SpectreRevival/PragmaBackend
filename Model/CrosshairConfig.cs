@@ -194,7 +194,7 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/crosshair_config.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
@@ -214,7 +214,7 @@ public record class CrosshairConfig : VersionedData, IDatabaseSyncableDefault<Cr
         cmd.Parameters.AddWithValue("inner_pip", InnerPip);
         cmd.Parameters.AddWithValue("outer_pip", OuterPip);
         cmd.Parameters.AddWithValue("version", Version);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

@@ -165,7 +165,7 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/color_vision_config.sql");
         cmd.Parameters.AddWithValue("playerid", PlayerId);
@@ -180,7 +180,7 @@ public record class ColorVisionConfig : VersionedData, IDatabaseSyncableDefault<
         cmd.Parameters.AddWithValue("outlineThicknessScale", OutlineThicknessScale);
         cmd.Parameters.AddWithValue("outlineBrightnessScale", OutlineBrightnessScale);
         cmd.Parameters.AddWithValue("version", Version);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

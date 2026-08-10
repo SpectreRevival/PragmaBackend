@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package Packets;
+
+message MatchHistoryByPlayerIdRequest {
+	string playerId = 1;
+	string startDate = 2;
+	string endDate = 3;
+	int32 limit = 4;
+}
+
+message MatchHistoryByMatchIdRequest {
+	string matchId = 1;
+}
+
+message MatchHistoryByTeamPlayerIdsRequest {
+	string startDate = 1;
+	string endDate = 2;
+	int32 limit = 3;
+	repeated string teamPlayerIds = 4;
+}
+
+message MatchHistoryByTeamIdRequest {
+	string startDate = 1;
+	string endDate = 2;
+	int32 limit = 3;
+	string teamId = 4;
+}

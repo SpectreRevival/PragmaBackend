@@ -441,46 +441,46 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
         }
         await sponsorUnlockItemWriter.CompleteAsync();
         Model.BattlepassData bpData = Model.BattlepassData.CreateDefault(playerId);
-        batch.BatchCommands.Add(bpData.CreateBatchSyncCommand());
+        bpData.AddSyncToBatch(batch);
         Model.ColorVisionConfig colorVisionConfig = Model.ColorVisionConfig.CreateDefault(playerId);
-        batch.BatchCommands.Add(colorVisionConfig.CreateBatchSyncCommand());
+        colorVisionConfig.AddSyncToBatch(batch);
         Model.CrosshairConfig crosshairCfg = Model.CrosshairConfig.CreateDefault(playerId);
-        batch.BatchCommands.Add(crosshairCfg.CreateBatchSyncCommand());
+        crosshairCfg.AddSyncToBatch(batch);
         IndividualTrackedProgression individualProg = IndividualTrackedProgression.CreateDefault(playerId);
-        batch.BatchCommands.Add(individualProg.CreateBatchSyncCommand());
+        individualProg.AddSyncToBatch(batch);
         TeamTrackedProgression teamProg = TeamTrackedProgression.CreateDefault(playerId);
-        batch.BatchCommands.Add(teamProg.CreateBatchSyncCommand());
+        teamProg.AddSyncToBatch(batch);
         Model.PlayerMatchmakingData mmData = Model.PlayerMatchmakingData.CreateDefault(playerId);
-        batch.BatchCommands.Add(mmData.CreateBatchSyncCommand());
+        mmData.AddSyncToBatch(batch);
         Model.LegacySeasonData lgSeason = Model.LegacySeasonData.CreateDefault(playerId);
-        batch.BatchCommands.Add(lgSeason.CreateBatchSyncCommand());
+        lgSeason.AddSyncToBatch(batch);
         for (LegacyStatsType type = 0; type < LegacyStatsType.Team + 1; type++)
         {
             Model.LegacyStatsData statsData = Model.LegacyStatsData.CreateDefault(new LegacyStatsDataKey(playerId, type));
-            batch.BatchCommands.Add(statsData.CreateBatchSyncCommand());
+            statsData.AddSyncToBatch(batch);
         }
         Model.FriendsList friends = Model.FriendsList.CreateDefault(playerId);
-        batch.BatchCommands.Add(friends.CreateBatchSyncCommand());
+        friends.AddSyncToBatch(batch);
         Model.GamepadConfig gamepadCfg = Model.GamepadConfig.CreateDefault(playerId);
-        batch.BatchCommands.Add(gamepadCfg.CreateBatchSyncCommand());
+        gamepadCfg.AddSyncToBatch(batch);
         Model.OutfitLoadout attackerOutfitLoadout = Model.OutfitLoadout.CreateDefault(playerId);
         FixupOutfitLoadout(attackerOutfitLoadout, playerId);
-        batch.BatchCommands.Add(attackerOutfitLoadout.CreateBatchSyncCommand());
+        attackerOutfitLoadout.AddSyncToBatch(batch);
         Model.OutfitLoadout defenderOutfitLoadout = Model.OutfitLoadout.CreateDefaultDefender(playerId);
         FixupOutfitLoadout(defenderOutfitLoadout, playerId);
-        batch.BatchCommands.Add(defenderOutfitLoadout.CreateBatchSyncCommand());
+        defenderOutfitLoadout.AddSyncToBatch(batch);
         Model.WeaponLoadout attackerWeaponLoadout = Model.WeaponLoadout.CreateDefault(playerId);
         FixupWeaponLoadout(attackerWeaponLoadout, playerId);
-        batch.BatchCommands.Add(attackerWeaponLoadout.CreateBatchSyncCommand());
+        attackerWeaponLoadout.AddSyncToBatch(batch);
         Model.WeaponLoadout defenderWeaponLoadout = Model.WeaponLoadout.CreateDefault(playerId);
         FixupWeaponLoadout(defenderWeaponLoadout, playerId);
-        batch.BatchCommands.Add(defenderWeaponLoadout.CreateBatchSyncCommand());
+        defenderWeaponLoadout.AddSyncToBatch(batch);
         Model.SubtitleUserSettings subtitleSettings = Model.SubtitleUserSettings.CreateDefault(playerId);
-        batch.BatchCommands.Add(subtitleSettings.CreateBatchSyncCommand());
+        subtitleSettings.AddSyncToBatch(batch);
         Model.PlayerPresence presence = Model.PlayerPresence.CreateDefault(playerId);
-        batch.BatchCommands.Add(presence.CreateBatchSyncCommand());
+        presence.AddSyncToBatch(batch);
         Model.PlayerConfig playerConfig = Model.PlayerConfig.CreateDefault(playerId);
-        batch.BatchCommands.Add(playerConfig.CreateBatchSyncCommand());
+        playerConfig.AddSyncToBatch(batch);
         Model.ProfileData playerProfile = Model.ProfileData.CreateDefault(playerId);
         playerProfile.DefenderOutfitLoadoutId = defenderOutfitLoadout.LoadoutId;
         playerProfile.AttackerOutfitLoadoutId = attackerOutfitLoadout.LoadoutId;
@@ -493,9 +493,9 @@ public partial class AuthenticateHandler : HTTPPacketHandler, IHTTPPacketHandler
         playerProfile.MatchSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
         playerProfile.PostSprayItemId = GetInstanceIdByCatalogId("SpectreSprayItemDef:SprayID_Default_01", playerId);
         playerProfile.BannerItemId = GetInstanceIdByCatalogId("SpectreBannerItemDef:BannerID_Default", playerId);
-        batch.BatchCommands.Add(playerProfile.CreateBatchSyncCommand());
+        playerProfile.AddSyncToBatch(batch);
         ClientMessage cyberlordKnifeMessage = cyberlordKnifeMessageDefault with { PlayerId = playerId, MessageId = Guid.NewGuid() };
-        batch.BatchCommands.Add(cyberlordKnifeMessage.CreateBatchSyncCommand());
+        cyberlordKnifeMessage.AddSyncToBatch(batch);
         await batch.ExecuteNonQueryAsync();
         return playerProfile;
     }

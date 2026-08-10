@@ -235,7 +235,7 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
         return ret;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile($"save/legacy_stats_data_{StatsType.ToString().ToLower()}.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
@@ -257,6 +257,6 @@ public record class LegacyStatsData : IDatabaseSyncableDefault<LegacyStatsData, 
         cmd.Parameters.AddWithValue("total_damage", TotalDamageCount);
         cmd.Parameters.AddWithValue("top_sponsors", TopSponsors);
         cmd.Parameters.AddWithValue("top_weapons", TopWeapons);
-        return cmd;
+        return new[] { cmd };
     }
 }

@@ -221,7 +221,7 @@ public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid
         };
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/weapon_loadout.sql");
         cmd.Parameters.AddWithValue("loadout_id", LoadoutId);
@@ -246,7 +246,7 @@ public record class WeaponLoadout : IDatabaseSyncableDefault<WeaponLoadout, Guid
         cmd.Parameters.AddWithValue("semi_auto_sniper", SemiAutoSniper);
         cmd.Parameters.AddWithValue("bolt_action_sniper", BoltActionSniper);
         cmd.Parameters.AddWithValue("melee", Melee);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

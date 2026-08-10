@@ -1,0 +1,1 @@
+SELECT * FROM match_history_player_data WHERE match_id=@match_id;

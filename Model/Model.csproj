@@ -21,8 +21,4 @@
 		<None Include="defaults\**\*" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="commands\save\" />
-	</ItemGroup>
-
 </Project>
