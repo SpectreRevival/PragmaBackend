@@ -196,9 +196,9 @@ public class DatabaseSyncTest()
         object obj3 = CreateFromConstructor(syncableClass);
         NpgsqlBatch batch = PostgresDatabase.CreateBatch();
         MethodInfo? createBatchCmdMethod = obj1.GetType().GetMethod("CreateBatchSyncCommand", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        batch.BatchCommands.Add((NpgsqlBatchCommand)createBatchCmdMethod.Invoke(obj1, []));
-        batch.BatchCommands.Add((NpgsqlBatchCommand)createBatchCmdMethod.Invoke(obj2, []));
-        batch.BatchCommands.Add((NpgsqlBatchCommand)createBatchCmdMethod.Invoke(obj3, []));
+        ((IEnumerable<NpgsqlBatchCommand>)createBatchCmdMethod.Invoke(obj1, [])).ForEach(command => batch.BatchCommands.Add(command));
+        ((IEnumerable<NpgsqlBatchCommand>)createBatchCmdMethod.Invoke(obj2, [])).ForEach(command => batch.BatchCommands.Add(command));
+        ((IEnumerable<NpgsqlBatchCommand>)createBatchCmdMethod.Invoke(obj3, [])).ForEach(command => batch.BatchCommands.Add(command));
         await batch.ExecuteNonQueryAsync();
         MethodInfo? keyMethod = obj1.GetType().GetMethod("GetKey", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         object? key = keyMethod.Invoke(obj1, new object[] { });
