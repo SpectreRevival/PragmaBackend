@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
+    <PackageReference Include="FluentAssertions" Version="8.10.0" />
     <PackageReference Include="JsonDiffPatch.Net" Version="2.5.0" />
     <PackageReference Include="JsonPatch.Net" Version="5.0.2" />
     <PackageReference Include="Microsoft.Testing.Extensions.Retry" Version="2.2.3" />

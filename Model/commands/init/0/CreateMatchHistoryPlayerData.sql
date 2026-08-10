@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS match_history_player_data (
 	current_ranked_rating INT NOT NULL,
 	previous_ranked_rating INT NOT NULL,
 	ranked_rating_delta INT NOT NULL,
+	crew_score INT NOT NULL,
 	crew_id UUID NOT NULL,
 	division_id UUID NOT NULL,
 	division_type INT NOT NULL,

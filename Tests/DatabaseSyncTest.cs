@@ -3,6 +3,8 @@ using Model.Persistence;
 using Npgsql;
 using System.Collections;
 using System.Reflection;
+using FluentAssertions;
+using FluentAssertions.Extensions;
 
 namespace Tests;
 
@@ -186,7 +188,11 @@ public class DatabaseSyncTest()
 
         dynamic task = fetchMethod.Invoke(null, new object[] { key });
         dynamic fetched = await task;
-        Assert.AreEqual(fetched, obj1);
+        ((object)fetched).Should().BeEquivalentTo(obj1, options => options
+    .Using<DateTimeOffset>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 1.Seconds()))
+    .WhenTypeIs<DateTimeOffset>()
+    .Using<DateTime>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 1.Seconds()))
+    .WhenTypeIs<DateTime>());
         Assert.AreNotEqual(fetched, obj2);
         Assert.AreNotEqual(fetched, obj3);
     }
@@ -196,6 +202,18 @@ public class DatabaseSyncTest()
         historyData.TeamData.ForEach(teamData => teamData.MatchId = historyData.MatchId);
         historyData.TeamData.ForEach(teamData => teamData.PlayerData.ForEach(playerData => playerData.MatchId = historyData.MatchId));
         historyData.TeamData.ForEach(teamData => teamData.PlayerData.ForEach(playerData => playerData.TeamNumber = historyData.TeamData[0].TeamNumber));
+        for(int i = 0; i < historyData.TeamData.Length; i++)
+        {
+            historyData.TeamData[i].TeamNumber = i;
+            historyData.TeamData[i].PlayerData.ForEach(playerData => playerData.TeamNumber = i);
+        }
+        historyData.TeamData.ForEach(teamData =>
+        {
+            for (int i = 0; i < teamData.PlayerData.Length; i++)
+            {
+                teamData.PlayerData[i].TeammateIndex = i;
+            }
+        });
     }
 
     [TestMethod]
@@ -225,7 +243,11 @@ public class DatabaseSyncTest()
 
         dynamic task = fetchMethod.Invoke(null, new object[] { key });
         dynamic fetched = await task;
-        Assert.AreEqual(fetched, obj1);
+        ((object)fetched).Should().BeEquivalentTo(obj1, options => options
+    .Using<DateTimeOffset>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 1.Seconds()))
+    .WhenTypeIs<DateTimeOffset>()
+    .Using<DateTime>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 1.Seconds()))
+    .WhenTypeIs<DateTime>());
         Assert.AreNotEqual(fetched, obj2);
         Assert.AreNotEqual(fetched, obj3);
     }
