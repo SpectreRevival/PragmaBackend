@@ -13,7 +13,7 @@ public class GetMatchHistoryByTeamId : WebsocketPacketProcessor, IWebsocketPacke
     }
     public static SpectreRpcType GetRpcType()
     {
-        return new SpectreRpcType("GetMatchHistoryByTeamIdClientV1Request");
+        return new SpectreRpcType("MtnMatchHistoryServiceRpc.GetMatchHistoryByTeamClientV1Request");
     }
     public override async Task<SpectreWebsocketMessage> ProcessPacket(SpectreWebsocketRequest Packet, SpectreWebsocket ConnectionHandler)
     {
