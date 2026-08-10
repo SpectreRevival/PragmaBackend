@@ -40,10 +40,36 @@ public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>
     {
         throw new NotImplementedException();
     }
-
-    public static Task<MatchHistoryData?> RetrieveFromDatabase(Guid key)
+    internal static MatchHistoryData GetFromReader(NpgsqlDataReader reader)
     {
-        throw new NotImplementedException();
+        return new MatchHistoryData(
+            matchId: reader.GetGuid(0),
+            matchDate: reader.GetFieldValue<DateTimeOffset>(1),
+            queueName: reader.GetString(2),
+            queueGameMode: reader.GetString(3),
+            queueGameMap: reader.GetString(4),
+            overtimeEnabled: reader.GetBoolean(5),
+            region: reader.GetString(6),
+            isRanked: reader.GetBoolean(7),
+            isAbandonedMatch: reader.GetBoolean(8),
+            abandonedPlayerIds: reader.GetFieldValue<Guid[]>(9),
+            surrenderedTeam: reader.GetInt32(10),
+            teamData: Array.Empty<MatchHistoryTeamData>()
+        );
+    }
+
+    public static async Task<MatchHistoryData?> RetrieveFromDatabase(Guid matchId)
+    {
+        var cmd = PostgresDatabase.LoadCommandFromFile("query/match_history.sql");
+        cmd.Parameters.AddWithValue("match_id", matchId);
+        using var reader = await cmd.ExecuteReaderAsync();
+        if(!await reader.ReadAsync())
+        {
+            return null;
+        }
+        var ret = GetFromReader(reader);
+        ret.TeamData = await MatchHistoryTeamData.RetrieveFromDatabase(matchId);
+        return ret;
     }
 
     public Guid GetKey()
@@ -84,6 +110,13 @@ public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>
         throw new NotImplementedException();
     }
 
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
+    {
+        var commands = new List<NpgsqlBatchCommand>() { CreateBatchSyncBasicCommand() };
+        TeamData.Select((team, i) => team.GetBatchCommands()).ForEach(cmdarr => commands.AddRange(cmdarr));
+        return commands;
+    }
+
     public virtual bool Equals(MatchHistoryData? data)
     {
         return data is not null &&
@@ -119,12 +152,5 @@ public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>
         hash.Add(SurrenderedTeam);
         hash.Add(TeamData);
         return hash.ToHashCode();
-    }
-
-    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
-    {
-        var commands = new List<NpgsqlBatchCommand>() { CreateBatchSyncBasicCommand() };
-        TeamData.Select((team, i) => team.GetBatchCommands(MatchId, i)).ForEach(cmdarr => commands.AddRange(cmdarr));
-        return commands;
     }
 }

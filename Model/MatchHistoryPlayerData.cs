@@ -4,12 +4,14 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public class MatchHistoryPlayerData : IEquatable<MatchHistoryPlayerData?>
+public record class MatchHistoryPlayerData
 {
     [SetsRequiredMembers]
-    public MatchHistoryPlayerData(Guid playerId, string nativePlatformId, string savedPlayerName, string selectedBannerCatalogId, string savedSponsorName, string sponsorGameId, bool isAnonymousPlayer, bool hasCrewScoreEarned, int teammateIndex, int numKills, int numAssists, int numDeaths, int totalDamageDone, int currentRankId, int previousRankId, int currentRankedRating, int previousRankedRating, int rankedRatingDelta, int crewScore, Guid crewId, Guid divisionId, int divisionType, string[] matchPlacementData, int numRankedMatches)
+    public MatchHistoryPlayerData(Guid playerId, Guid matchId, int teamNumber, string nativePlatformId, string savedPlayerName, string selectedBannerCatalogId, string savedSponsorName, string sponsorGameId, bool isAnonymousPlayer, bool hasCrewScoreEarned, int teammateIndex, int numKills, int numAssists, int numDeaths, int totalDamageDone, int currentRankId, int previousRankId, int currentRankedRating, int previousRankedRating, int rankedRatingDelta, int crewScore, Guid crewId, Guid divisionId, int divisionType, string[] matchPlacementData, int numRankedMatches)
     {
         PlayerId = playerId;
+        MatchId = matchId;
+        TeamNumber = teamNumber;
         NativePlatformId = nativePlatformId ?? throw new ArgumentNullException(nameof(nativePlatformId));
         SavedPlayerName = savedPlayerName ?? throw new ArgumentNullException(nameof(savedPlayerName));
         SelectedBannerCatalogId = selectedBannerCatalogId ?? throw new ArgumentNullException(nameof(selectedBannerCatalogId));
@@ -36,6 +38,8 @@ public class MatchHistoryPlayerData : IEquatable<MatchHistoryPlayerData?>
     }
 
     public required Guid PlayerId { get; set; }
+    public required Guid MatchId { get; set; }
+    public required int TeamNumber { get; set; }
     public required string NativePlatformId { get; set; }
     public required string SavedPlayerName { get; set; }
     public required string SelectedBannerCatalogId { get; set; }
@@ -62,75 +66,11 @@ public class MatchHistoryPlayerData : IEquatable<MatchHistoryPlayerData?>
     public required string[] MatchPlacementData { get; set; }
     public required int NumRankedMatches { get; set; }
 
-    public override bool Equals(object? obj)
-    {
-        return Equals(obj as MatchHistoryPlayerData);
-    }
-
-    public bool Equals(MatchHistoryPlayerData? other)
-    {
-        return other is not null &&
-               PlayerId.Equals(other.PlayerId) &&
-               NativePlatformId == other.NativePlatformId &&
-               SavedPlayerName == other.SavedPlayerName &&
-               SelectedBannerCatalogId == other.SelectedBannerCatalogId &&
-               SavedSponsorName == other.SavedSponsorName &&
-               SponsorGameId == other.SponsorGameId &&
-               IsAnonymousPlayer == other.IsAnonymousPlayer &&
-               HasCrewScoreEarned == other.HasCrewScoreEarned &&
-               TeammateIndex == other.TeammateIndex &&
-               NumKills == other.NumKills &&
-               NumAssists == other.NumAssists &&
-               NumDeaths == other.NumDeaths &&
-               TotalDamageDone == other.TotalDamageDone &&
-               CurrentRankId == other.CurrentRankId &&
-               PreviousRankId == other.PreviousRankId &&
-               CurrentRankedRating == other.CurrentRankedRating &&
-               PreviousRankedRating == other.PreviousRankedRating &&
-               RankedRatingDelta == other.RankedRatingDelta &&
-               CrewScore == other.CrewScore &&
-               CrewId.Equals(other.CrewId) &&
-               DivisionId.Equals(other.DivisionId) &&
-               DivisionType == other.DivisionType &&
-               EqualityComparer<string[]>.Default.Equals(MatchPlacementData, other.MatchPlacementData) &&
-               NumRankedMatches == other.NumRankedMatches;
-    }
-
-    public override int GetHashCode()
-    {
-        HashCode hash = new HashCode();
-        hash.Add(PlayerId);
-        hash.Add(NativePlatformId);
-        hash.Add(SavedPlayerName);
-        hash.Add(SelectedBannerCatalogId);
-        hash.Add(SavedSponsorName);
-        hash.Add(SponsorGameId);
-        hash.Add(IsAnonymousPlayer);
-        hash.Add(HasCrewScoreEarned);
-        hash.Add(TeammateIndex);
-        hash.Add(NumKills);
-        hash.Add(NumAssists);
-        hash.Add(NumDeaths);
-        hash.Add(TotalDamageDone);
-        hash.Add(CurrentRankId);
-        hash.Add(PreviousRankId);
-        hash.Add(CurrentRankedRating);
-        hash.Add(PreviousRankedRating);
-        hash.Add(RankedRatingDelta);
-        hash.Add(CrewScore);
-        hash.Add(CrewId);
-        hash.Add(DivisionId);
-        hash.Add(DivisionType);
-        hash.Add(MatchPlacementData);
-        hash.Add(NumRankedMatches);
-        return hash.ToHashCode();
-    }
-
-    internal NpgsqlBatchCommand CreateSyncCommand(int teamNumber, Guid matchId)
+    public NpgsqlBatchCommand CreateSyncCommand()
     {
         var cmd = PostgresDatabase.LoadBatchCommandFromFile("save/player_match_history.sql");
-        cmd.Parameters.AddWithValue("match_id", matchId);
-        cmd.Parameters.AddWithValue("team_number", teamNumber);
+        cmd.Parameters.AddWithValue("match_id", MatchId);
+        cmd.Parameters.AddWithValue("team_number", TeamNumber);
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("native_platform_id", NativePlatformId);
         cmd.Parameters.AddWithValue("saved_player_name", SavedPlayerName);
@@ -156,13 +96,139 @@ public class MatchHistoryPlayerData : IEquatable<MatchHistoryPlayerData?>
         return cmd;
     }
 
-    public static bool operator ==(MatchHistoryPlayerData? left, MatchHistoryPlayerData? right)
+    public static async Task<MatchHistoryPlayerData?> RetrieveFromDatabase(Guid matchId, Guid playerId)
     {
-        return EqualityComparer<MatchHistoryPlayerData>.Default.Equals(left, right);
+        var cmd = PostgresDatabase.LoadCommandFromFile("query/player_match_history.sql");
+        cmd.Parameters.AddWithValue("match_id", matchId);
+        cmd.Parameters.AddWithValue("player_id", playerId);
+        using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync())
+        {
+            return null;
+        }
+        return GetFromReader(reader);
+    }
+    internal static MatchHistoryPlayerData GetFromReader(NpgsqlDataReader reader)
+    {
+        return new MatchHistoryPlayerData(
+            playerId: reader.GetGuid(0),
+            matchId: reader.GetGuid(1),
+            teamNumber: reader.GetInt32(2),
+            nativePlatformId: reader.GetString(3),
+            savedPlayerName: reader.GetString(4),
+            selectedBannerCatalogId: reader.GetString(5),
+            savedSponsorName: reader.GetString(6),
+            sponsorGameId: reader.GetString(7),
+            isAnonymousPlayer: reader.GetBoolean(8),
+            hasCrewScoreEarned: reader.GetBoolean(9),
+            teammateIndex: reader.GetInt32(10),
+            numKills: reader.GetInt32(11),
+            numAssists: reader.GetInt32(12),
+            numDeaths: reader.GetInt32(13),
+            totalDamageDone: reader.GetInt32(14),
+            currentRankId: reader.GetInt32(15),
+            previousRankId: reader.GetInt32(16),
+            currentRankedRating: reader.GetInt32(17),
+            previousRankedRating: reader.GetInt32(18),
+            rankedRatingDelta: reader.GetInt32(19),
+            crewScore: reader.GetInt32(20),
+            crewId: reader.GetGuid(21),
+            divisionId: reader.GetGuid(22),
+            divisionType: reader.GetInt32(23),
+            matchPlacementData: reader.GetFieldValue<string[]>(24),
+            numRankedMatches: reader.GetInt32(25)
+        );
     }
 
-    public static bool operator !=(MatchHistoryPlayerData? left, MatchHistoryPlayerData? right)
+    public static async Task<MatchHistoryPlayerData[]> RetrieveFromDatabase(Guid matchId, int teamNumber)
     {
-        return !(left == right);
+        var cmd = PostgresDatabase.LoadCommandFromFile("query/player_match_history_all_team.sql");
+        cmd.Parameters.AddWithValue("match_id", matchId);
+        cmd.Parameters.AddWithValue("team_number", teamNumber);
+        using var reader = await cmd.ExecuteReaderAsync();
+        var results = new List<MatchHistoryPlayerData>();
+        while (await reader.ReadAsync())
+        {
+            results.Add(GetFromReader(reader));
+        }
+        return results.ToArray();
+    }
+
+    public static async Task<MatchHistoryPlayerData[]> RetrieveFromDatabase(Guid matchId)
+    {
+        var cmd = PostgresDatabase.LoadCommandFromFile("query/player_match_history_all_match.sql");
+        cmd.Parameters.AddWithValue("match_id", matchId);
+        using var reader = await cmd.ExecuteReaderAsync();
+        var results = new List<MatchHistoryPlayerData>();
+        while (await reader.ReadAsync())
+        {
+            results.Add(GetFromReader(reader));
+        }
+        return results.ToArray();
+    }
+
+    public virtual bool Equals(MatchHistoryPlayerData? data)
+    {
+        return data is not null &&
+               EqualityComparer<Type>.Default.Equals(EqualityContract, data.EqualityContract) &&
+               PlayerId.Equals(data.PlayerId) &&
+               MatchId.Equals(data.MatchId) &&
+               TeamNumber == data.TeamNumber &&
+               NativePlatformId == data.NativePlatformId &&
+               SavedPlayerName == data.SavedPlayerName &&
+               SelectedBannerCatalogId == data.SelectedBannerCatalogId &&
+               SavedSponsorName == data.SavedSponsorName &&
+               SponsorGameId == data.SponsorGameId &&
+               IsAnonymousPlayer == data.IsAnonymousPlayer &&
+               HasCrewScoreEarned == data.HasCrewScoreEarned &&
+               TeammateIndex == data.TeammateIndex &&
+               NumKills == data.NumKills &&
+               NumAssists == data.NumAssists &&
+               NumDeaths == data.NumDeaths &&
+               TotalDamageDone == data.TotalDamageDone &&
+               CurrentRankId == data.CurrentRankId &&
+               PreviousRankId == data.PreviousRankId &&
+               CurrentRankedRating == data.CurrentRankedRating &&
+               PreviousRankedRating == data.PreviousRankedRating &&
+               RankedRatingDelta == data.RankedRatingDelta &&
+               CrewScore == data.CrewScore &&
+               CrewId.Equals(data.CrewId) &&
+               DivisionId.Equals(data.DivisionId) &&
+               DivisionType == data.DivisionType &&
+               EqualityComparer<string[]>.Default.Equals(MatchPlacementData, data.MatchPlacementData) &&
+               NumRankedMatches == data.NumRankedMatches;
+    }
+
+    public override int GetHashCode()
+    {
+        HashCode hash = new HashCode();
+        hash.Add(EqualityContract);
+        hash.Add(PlayerId);
+        hash.Add(MatchId);
+        hash.Add(TeamNumber);
+        hash.Add(NativePlatformId);
+        hash.Add(SavedPlayerName);
+        hash.Add(SelectedBannerCatalogId);
+        hash.Add(SavedSponsorName);
+        hash.Add(SponsorGameId);
+        hash.Add(IsAnonymousPlayer);
+        hash.Add(HasCrewScoreEarned);
+        hash.Add(TeammateIndex);
+        hash.Add(NumKills);
+        hash.Add(NumAssists);
+        hash.Add(NumDeaths);
+        hash.Add(TotalDamageDone);
+        hash.Add(CurrentRankId);
+        hash.Add(PreviousRankId);
+        hash.Add(CurrentRankedRating);
+        hash.Add(PreviousRankedRating);
+        hash.Add(RankedRatingDelta);
+        hash.Add(CrewScore);
+        hash.Add(CrewId);
+        hash.Add(DivisionId);
+        hash.Add(DivisionType);
+        hash.Add(MatchPlacementData);
+        hash.Add(NumRankedMatches);
+        return hash.ToHashCode();
     }
 }

@@ -5,11 +5,13 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
-public class MatchHistoryTeamData : IEquatable<MatchHistoryTeamData?>
+public record class MatchHistoryTeamData
 {
     [SetsRequiredMembers]
-    public MatchHistoryTeamData(int roundsPlayed, int roundsWon, int xpPerRound, int xpPerRoundWon, Guid teamId, int currentRankId, int previousRankId, int currentRankedRating, int previousRankedRating, int rankedRatingDelta, string[] matchPlacementData, int numRankedMatches, int fansPerRound, int fansPerRoundWon, MatchHistoryPlayerData[] playerData, bool usedTeamRank, bool isFullTeamInParty)
+    public MatchHistoryTeamData(Guid matchId, int teamNumber, int roundsPlayed, int roundsWon, int xpPerRound, int xpPerRoundWon, Guid teamId, int currentRankId, int previousRankId, int currentRankedRating, int previousRankedRating, int rankedRatingDelta, string[] matchPlacementData, int numRankedMatches, int fansPerRound, int fansPerRoundWon, MatchHistoryPlayerData[] playerData, bool usedTeamRank, bool isFullTeamInParty)
     {
+        MatchId = matchId;
+        TeamNumber = teamNumber;
         RoundsPlayed = roundsPlayed;
         RoundsWon = roundsWon;
         XpPerRound = xpPerRound;
@@ -29,6 +31,8 @@ public class MatchHistoryTeamData : IEquatable<MatchHistoryTeamData?>
         IsFullTeamInParty = isFullTeamInParty;
     }
 
+    public required Guid MatchId { get; set; }
+    public required int TeamNumber { get; set; }
     public required int RoundsPlayed { get; set; }
     public required int RoundsWon { get; set; }
     public required int XpPerRound { get; set; }
@@ -58,11 +62,11 @@ public class MatchHistoryTeamData : IEquatable<MatchHistoryTeamData?>
     public required bool IsFullTeamInParty { get; set; }
 
     /** Does not handle player data */
-    private NpgsqlBatchCommand CreateBatchSync(Guid matchId, int teamNumber)
+    private NpgsqlBatchCommand CreateBatchSync()
     {
         var cmd = PostgresDatabase.LoadBatchCommandFromFile("save/team_match_history.sql");
-        cmd.Parameters.AddWithValue("match_id", matchId);
-        cmd.Parameters.AddWithValue("team_number", teamNumber);
+        cmd.Parameters.AddWithValue("match_id", MatchId);
+        cmd.Parameters.AddWithValue("team_number", TeamNumber);
         cmd.Parameters.AddWithValue("rounds_played", RoundsPlayed);
         cmd.Parameters.AddWithValue("rounds_won", RoundsWon);
         cmd.Parameters.AddWithValue("xp_per_round", XpPerRound);
@@ -84,55 +88,111 @@ public class MatchHistoryTeamData : IEquatable<MatchHistoryTeamData?>
 
     public void AddSyncToBatch(NpgsqlBatch batch, Guid matchId, int teamNumber)
     {
-        foreach(var cmd in GetBatchCommands(matchId, teamNumber))
+        foreach(var cmd in GetBatchCommands())
         {
             batch.BatchCommands.Add(cmd);
         }
     }
 
-    public List<NpgsqlBatchCommand> GetBatchCommands(Guid matchId, int teamNumber)
+    public List<NpgsqlBatchCommand> GetBatchCommands()
     {
         var commands = new List<NpgsqlBatchCommand>();
-        commands.Add(CreateBatchSync(matchId, teamNumber));
+        commands.Add(CreateBatchSync());
         for (int i = 0; i < PlayerData.Length; i++)
         {
-            commands.Add(PlayerData[i].CreateSyncCommand(teamNumber, matchId));
+            commands.Add(PlayerData[i].CreateSyncCommand());
         }
         return commands;
     }
 
-    public override bool Equals(object? obj)
+    internal static MatchHistoryTeamData GetFromReader(NpgsqlDataReader reader, MatchHistoryPlayerData[]? playerData = null)
     {
-        return Equals(obj as MatchHistoryTeamData);
+        return new MatchHistoryTeamData(
+            matchId: reader.GetGuid(0),
+            teamNumber: reader.GetInt32(1),
+            roundsPlayed: reader.GetInt32(2),
+            roundsWon: reader.GetInt32(3),
+            xpPerRound: reader.GetInt32(4),
+            xpPerRoundWon: reader.GetInt32(5),
+            teamId: reader.GetGuid(6),
+            currentRankId: reader.GetInt32(7),
+            previousRankId: reader.GetInt32(8),
+            currentRankedRating: reader.GetInt32(9),
+            previousRankedRating: reader.GetInt32(10),
+            rankedRatingDelta: reader.GetInt32(11),
+            matchPlacementData: reader.GetFieldValue<string[]>(12),
+            numRankedMatches: reader.GetInt32(13),
+            fansPerRound: reader.GetInt32(14),
+            fansPerRoundWon: reader.GetInt32(15),
+            playerData: playerData ?? Array.Empty<MatchHistoryPlayerData>(),
+            usedTeamRank: reader.GetBoolean(16),
+            isFullTeamInParty: reader.GetBoolean(17)
+        );
     }
 
-    public bool Equals(MatchHistoryTeamData? other)
+    public static async Task<MatchHistoryTeamData?> RetrieveFromDatabase(Guid matchId, int teamNumber)
     {
-        return other is not null &&
-               RoundsPlayed == other.RoundsPlayed &&
-               RoundsWon == other.RoundsWon &&
-               XpPerRound == other.XpPerRound &&
-               XpPerRoundWon == other.XpPerRoundWon &&
-               XpGained == other.XpGained &&
-               TeamId.Equals(other.TeamId) &&
-               CurrentRankId == other.CurrentRankId &&
-               PreviousRankId == other.PreviousRankId &&
-               CurrentRankedRating == other.CurrentRankedRating &&
-               PreviousRankedRating == other.PreviousRankedRating &&
-               RankedRatingDelta == other.RankedRatingDelta &&
-               EqualityComparer<string[]>.Default.Equals(MatchPlacementData, other.MatchPlacementData) &&
-               NumRankedMatches == other.NumRankedMatches &&
-               FansPerRound == other.FansPerRound &&
-               FansPerRoundWon == other.FansPerRoundWon &&
-               FansGained == other.FansGained &&
-               EqualityComparer<MatchHistoryPlayerData[]>.Default.Equals(PlayerData, other.PlayerData) &&
-               UsedTeamRank == other.UsedTeamRank &&
-               IsFullTeamInParty == other.IsFullTeamInParty;
+        var cmd = PostgresDatabase.LoadCommandFromFile("query/team_match_history.sql");
+        cmd.Parameters.AddWithValue("match_id", matchId);
+        cmd.Parameters.AddWithValue("team_number", teamNumber);
+        using var reader = await cmd.ExecuteReaderAsync();
+        if(!await reader.ReadAsync())
+        {
+            return null;
+        }
+        var ret = GetFromReader(reader);
+        ret.PlayerData = await MatchHistoryPlayerData.RetrieveFromDatabase(matchId, teamNumber);
+        return ret;
+    }
+
+    public static async Task<MatchHistoryTeamData[]> RetrieveFromDatabase(Guid matchId)
+    {
+        var cmd = PostgresDatabase.LoadCommandFromFile("query/team_match_history_all_match.sql");
+        cmd.Parameters.AddWithValue("match_id", matchId);
+        using var reader = await cmd.ExecuteReaderAsync();
+        var results = new List<MatchHistoryTeamData>();
+        while (await reader.ReadAsync())
+        {
+            var res = GetFromReader(reader);
+            res.PlayerData = await MatchHistoryPlayerData.RetrieveFromDatabase(matchId, res.TeamNumber);
+            results.Add(res);
+        }
+        return results.ToArray();
+    }
+
+    public virtual bool Equals(MatchHistoryTeamData? data)
+    {
+        return data is not null &&
+               EqualityComparer<Type>.Default.Equals(EqualityContract, data.EqualityContract) &&
+               MatchId.Equals(data.MatchId) &&
+               TeamNumber == data.TeamNumber &&
+               RoundsPlayed == data.RoundsPlayed &&
+               RoundsWon == data.RoundsWon &&
+               XpPerRound == data.XpPerRound &&
+               XpPerRoundWon == data.XpPerRoundWon &&
+               XpGained == data.XpGained &&
+               TeamId.Equals(data.TeamId) &&
+               CurrentRankId == data.CurrentRankId &&
+               PreviousRankId == data.PreviousRankId &&
+               CurrentRankedRating == data.CurrentRankedRating &&
+               PreviousRankedRating == data.PreviousRankedRating &&
+               RankedRatingDelta == data.RankedRatingDelta &&
+               EqualityComparer<string[]>.Default.Equals(MatchPlacementData, data.MatchPlacementData) &&
+               NumRankedMatches == data.NumRankedMatches &&
+               FansPerRound == data.FansPerRound &&
+               FansPerRoundWon == data.FansPerRoundWon &&
+               FansGained == data.FansGained &&
+               EqualityComparer<MatchHistoryPlayerData[]>.Default.Equals(PlayerData, data.PlayerData) &&
+               UsedTeamRank == data.UsedTeamRank &&
+               IsFullTeamInParty == data.IsFullTeamInParty;
     }
 
     public override int GetHashCode()
     {
         HashCode hash = new HashCode();
+        hash.Add(EqualityContract);
+        hash.Add(MatchId);
+        hash.Add(TeamNumber);
         hash.Add(RoundsPlayed);
         hash.Add(RoundsWon);
         hash.Add(XpPerRound);
@@ -153,15 +213,5 @@ public class MatchHistoryTeamData : IEquatable<MatchHistoryTeamData?>
         hash.Add(UsedTeamRank);
         hash.Add(IsFullTeamInParty);
         return hash.ToHashCode();
-    }
-
-    public static bool operator ==(MatchHistoryTeamData? left, MatchHistoryTeamData? right)
-    {
-        return EqualityComparer<MatchHistoryTeamData>.Default.Equals(left, right);
-    }
-
-    public static bool operator !=(MatchHistoryTeamData? left, MatchHistoryTeamData? right)
-    {
-        return !(left == right);
     }
 }
