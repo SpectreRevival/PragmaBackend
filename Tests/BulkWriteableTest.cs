@@ -167,7 +167,8 @@ public class BulkWriteableTest()
         object obj1 = CreateFromConstructor(syncableClass);
         object obj2 = CreateFromConstructor(syncableClass);
         object obj3 = CreateFromConstructor(syncableClass);
-        MethodInfo? createWriterMethod = obj1.GetType().GetMethod("CreateBulkWriter", BindingFlags.Public | BindingFlags.Static);
+        MethodInfo? createWriterMethod = obj1.GetType().GetMethod("CreateBulkWriter", BindingFlags.Public | BindingFlags.Static,
+            binder: null, types: Array.Empty<Type>(), modifiers: null );
         using NpgsqlBinaryImporter writer = (NpgsqlBinaryImporter)createWriterMethod.Invoke(null, []);
         MethodInfo? writeToWriterMethod = obj1.GetType().GetMethod("WriteToBulkWriter", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         Task writeTask1 = (Task)writeToWriterMethod.Invoke(obj1, new object[] { writer });

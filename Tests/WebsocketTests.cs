@@ -56,6 +56,10 @@ public class WebsocketTests
         string[] skippedWsTests = File.ReadAllLines(Path.Combine(Path.Combine(AppContext.BaseDirectory, "testrequests"), "wsSkipTests.txt"));
         WebsocketTestData? testData = JsonDocument.Parse(File.ReadAllText(testDataFile)).Deserialize<WebsocketTestData>();
         Assert.IsNotNull(testData);
+        if(testData.responsePayloadFromFile != null)
+        {
+            testData.responsePayload = JsonObject.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, testData.responsePayloadFromFile))).AsObject();
+        }
         string playerId = possiblePID.ToString();
         testData.requestBody.ReplaceToken("$PLAYER_ID", playerId);
         testData.responsePayload.ReplaceToken("$PLAYER_ID", playerId);

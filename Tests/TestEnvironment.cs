@@ -2,6 +2,8 @@
 using Model.Persistence;
 using System.Diagnostics;
 using System.Text;
+using FluentAssertions;
+using FluentAssertions.Extensions;
 
 namespace Tests;
 
@@ -63,6 +65,21 @@ public class TestEnvironment
         Console.WriteLine("got healthy status, initializing connection to test db");
         PostgresDatabase.InstantiateDatabase(config);
         Console.WriteLine("db connection established, running tests");
+        AssertionConfiguration.Current.Equivalency.Modify(options => options
+    .Using<DateTimeOffset?>(ctx =>
+    {
+        if (ctx.Expectation.HasValue)
+        {
+            ctx.Subject.Should().NotBeNull();
+            ctx.Subject!.Value.Should().BeCloseTo(ctx.Expectation.Value, 1.Seconds());
+        }
+        else
+        {
+            ctx.Subject.Should().BeNull();
+        }
+    })
+    .WhenTypeIs<DateTimeOffset?>()
+);
     }
 
     [GlobalTestCleanup]

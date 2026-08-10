@@ -22,6 +22,7 @@
       }
     ]
   },
+  "responsePayloadFromFile": "resources/hathora.json",
   "rpcType": "MtnBeaconServiceRpc.GetBeaconEndpointsV1Request",
   "testAge": 1740507427.3
 }

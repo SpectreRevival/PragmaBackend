@@ -11,4 +11,5 @@ public record class WebsocketTestData
     public required double testAge { get; set; }
     public required JsonObject requestBody { get; set; }
     public required JsonObject responsePayload { get; set; }
+    public string? responsePayloadFromFile { get; set; }
 }

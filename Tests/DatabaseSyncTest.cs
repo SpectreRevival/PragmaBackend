@@ -188,11 +188,7 @@ public class DatabaseSyncTest()
 
         dynamic task = fetchMethod.Invoke(null, new object[] { key });
         dynamic fetched = await task;
-        ((object)fetched).Should().BeEquivalentTo(obj1, options => options
-    .Using<DateTimeOffset>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 1.Seconds()))
-    .WhenTypeIs<DateTimeOffset>()
-    .Using<DateTime>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 1.Seconds()))
-    .WhenTypeIs<DateTime>());
+        ((object)fetched).Should().BeEquivalentTo(obj1);
         Assert.AreNotEqual(fetched, obj2);
         Assert.AreNotEqual(fetched, obj3);
     }
@@ -243,11 +239,7 @@ public class DatabaseSyncTest()
 
         dynamic task = fetchMethod.Invoke(null, new object[] { key });
         dynamic fetched = await task;
-        ((object)fetched).Should().BeEquivalentTo(obj1, options => options
-    .Using<DateTimeOffset>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 1.Seconds()))
-    .WhenTypeIs<DateTimeOffset>()
-    .Using<DateTime>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 1.Seconds()))
-    .WhenTypeIs<DateTime>());
+        ((object)fetched).Should().BeEquivalentTo(obj1);
         Assert.AreNotEqual(fetched, obj2);
         Assert.AreNotEqual(fetched, obj3);
     }
