@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS player_config (
     rotating_news_viewed_messages TEXT [] NOT NULL,
     ink_quality DOUBLE PRECISION NOT NULL,
     mouse_sensitivity_ads_scale DOUBLE PRECISION NOT NULL,
+    mouse_sensitivity DOUBLE PRECISION NOT NULL,
     minimap_scale DOUBLE PRECISION NOT NULL,
     minimap_size DOUBLE PRECISION NOT NULL,
     minimap_mask_opacity DOUBLE PRECISION NOT NULL,

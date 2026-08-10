@@ -76,6 +76,7 @@ public record class MatchHistoryPlayerData
         cmd.Parameters.AddWithValue("saved_player_name", SavedPlayerName);
         cmd.Parameters.AddWithValue("selected_banner_catalog_id", SelectedBannerCatalogId);
         cmd.Parameters.AddWithValue("saved_sponsor_name", SavedSponsorName);
+        cmd.Parameters.AddWithValue("sponsor_game_id", SponsorGameId);
         cmd.Parameters.AddWithValue("is_anonymous_player", IsAnonymousPlayer);
         cmd.Parameters.AddWithValue("has_crew_score_earned", HasCrewScoreEarned);
         cmd.Parameters.AddWithValue("teammate_index", TeammateIndex);
@@ -88,6 +89,7 @@ public record class MatchHistoryPlayerData
         cmd.Parameters.AddWithValue("current_ranked_rating", CurrentRankedRating);
         cmd.Parameters.AddWithValue("previous_ranked_rating", PreviousRankedRating);
         cmd.Parameters.AddWithValue("ranked_rating_delta", RankedRatingDelta);
+        cmd.Parameters.AddWithValue("crew_score", CrewScore);
         cmd.Parameters.AddWithValue("crew_id", CrewId);
         cmd.Parameters.AddWithValue("division_id", DivisionId);
         cmd.Parameters.AddWithValue("division_type", DivisionType);
@@ -111,32 +113,32 @@ public record class MatchHistoryPlayerData
     internal static MatchHistoryPlayerData GetFromReader(NpgsqlDataReader reader)
     {
         return new MatchHistoryPlayerData(
-            playerId: reader.GetGuid(0),
-            matchId: reader.GetGuid(1),
-            teamNumber: reader.GetInt32(2),
-            nativePlatformId: reader.GetString(3),
-            savedPlayerName: reader.GetString(4),
-            selectedBannerCatalogId: reader.GetString(5),
-            savedSponsorName: reader.GetString(6),
-            sponsorGameId: reader.GetString(7),
-            isAnonymousPlayer: reader.GetBoolean(8),
-            hasCrewScoreEarned: reader.GetBoolean(9),
-            teammateIndex: reader.GetInt32(10),
-            numKills: reader.GetInt32(11),
-            numAssists: reader.GetInt32(12),
-            numDeaths: reader.GetInt32(13),
-            totalDamageDone: reader.GetInt32(14),
-            currentRankId: reader.GetInt32(15),
-            previousRankId: reader.GetInt32(16),
-            currentRankedRating: reader.GetInt32(17),
-            previousRankedRating: reader.GetInt32(18),
-            rankedRatingDelta: reader.GetInt32(19),
-            crewScore: reader.GetInt32(20),
-            crewId: reader.GetGuid(21),
-            divisionId: reader.GetGuid(22),
-            divisionType: reader.GetInt32(23),
-            matchPlacementData: reader.GetFieldValue<string[]>(24),
-            numRankedMatches: reader.GetInt32(25)
+            matchId: reader.GetGuid(reader.GetOrdinal("match_id")),
+            teamNumber: reader.GetInt32(reader.GetOrdinal("team_number")),
+            playerId: reader.GetGuid(reader.GetOrdinal("player_id")),
+            nativePlatformId: reader.GetString(reader.GetOrdinal("native_platform_id")),
+            savedPlayerName: reader.GetString(reader.GetOrdinal("saved_player_name")),
+            selectedBannerCatalogId: reader.GetString(reader.GetOrdinal("selected_banner_catalog_id")),
+            savedSponsorName: reader.GetString(reader.GetOrdinal("saved_sponsor_name")),
+            sponsorGameId: reader.GetString(reader.GetOrdinal("sponsor_game_id")),
+            isAnonymousPlayer: reader.GetBoolean(reader.GetOrdinal("is_anonymous_player")),
+            hasCrewScoreEarned: reader.GetBoolean(reader.GetOrdinal("has_crew_score_earned")),
+            teammateIndex: reader.GetInt32(reader.GetOrdinal("teammate_index")),
+            numKills: reader.GetInt32(reader.GetOrdinal("num_kills")),
+            numAssists: reader.GetInt32(reader.GetOrdinal("num_assists")),
+            numDeaths: reader.GetInt32(reader.GetOrdinal("num_deaths")),
+            totalDamageDone: reader.GetInt32(reader.GetOrdinal("total_damage")),
+            currentRankId: reader.GetInt32(reader.GetOrdinal("current_rank_id")),
+            previousRankId: reader.GetInt32(reader.GetOrdinal("previous_rank_id")),
+            currentRankedRating: reader.GetInt32(reader.GetOrdinal("current_ranked_rating")),
+            previousRankedRating: reader.GetInt32(reader.GetOrdinal("previous_ranked_rating")),
+            rankedRatingDelta: reader.GetInt32(reader.GetOrdinal("ranked_rating_delta")),
+            crewScore: reader.GetInt32(reader.GetOrdinal("crew_score")),
+            crewId: reader.GetGuid(reader.GetOrdinal("crew_id")),
+            divisionId: reader.GetGuid(reader.GetOrdinal("division_id")),
+            divisionType: reader.GetInt32(reader.GetOrdinal("division_type")),
+            matchPlacementData: reader.GetFieldValue<string[]>(reader.GetOrdinal("match_placement_data")),
+            numRankedMatches: reader.GetInt32(reader.GetOrdinal("num_ranked_matches"))
         );
     }
 
@@ -195,7 +197,7 @@ public record class MatchHistoryPlayerData
                CrewId.Equals(data.CrewId) &&
                DivisionId.Equals(data.DivisionId) &&
                DivisionType == data.DivisionType &&
-               EqualityComparer<string[]>.Default.Equals(MatchPlacementData, data.MatchPlacementData) &&
+               MatchPlacementData.SequenceEqual(data.MatchPlacementData) &&
                NumRankedMatches == data.NumRankedMatches;
     }
 

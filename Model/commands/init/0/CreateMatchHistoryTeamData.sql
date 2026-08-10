@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS match_history_team_data (
-	match_id UUID NOT NULL REFERENCES match_history(match_id),
+	match_id UUID NOT NULL,
 	team_number INT NOT NULL,
 	rounds_played INT NOT NULL,
 	rounds_won INT NOT NULL,
@@ -16,5 +16,6 @@ CREATE TABLE IF NOT EXISTS match_history_team_data (
 	fans_per_round INT NOT NULL,
 	fans_per_round_won INT NOT NULL,
 	used_team_rank BOOL NOT NULL,
-	is_full_team_in_party BOOL NOT NULL
+	is_full_team_in_party BOOL NOT NULL,
+	PRIMARY KEY (match_id, team_number)
 );

@@ -29,7 +29,7 @@ public class TestEnvironment
     }
 
     [AssemblyInitialize]
-    public static void BuildImages(TestContext _)
+    public static void TestEnvironmentInit(TestContext _)
     {
         // base directory is .../PragmaBackend/Proj/bin/Debug/dotnetver/, just walk all the way back up to PragmaBackend and get the path of that dir
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
@@ -49,13 +49,7 @@ public class TestEnvironment
         }
         Console.WriteLine("Finished building images, tearing down old compose setup");
         RunDockerCommand("compose down -v", slnDir);
-    }
-
-    [GlobalTestInitialize]
-    public static void InitializeEnvironment(TestContext _)
-    {
-        string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
-        Console.WriteLine("Starting up backend compose...");
+        Console.WriteLine("Setting up new compose environment");
         RunDockerCommand("compose up -d", slnDir);
         while (true)
         {
@@ -68,14 +62,12 @@ public class TestEnvironment
         }
         Console.WriteLine("got healthy status, initializing connection to test db");
         PostgresDatabase.InstantiateDatabase(config);
-        Console.WriteLine("db connection established, running test");
+        Console.WriteLine("db connection established, running tests");
     }
 
     [GlobalTestCleanup]
     public static void CleanupEnvironment(TestContext _)
     {
-        Console.WriteLine("Shutting down connection to db");
-        PostgresDatabase.Get().ShutdownConnection();
         string slnDir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName;
         Console.WriteLine("Fetching logs...");
         (int _, string Output, string _) = RunDockerCommand("logs pragmabackend");
@@ -84,8 +76,6 @@ public class TestEnvironment
         Console.WriteLine(Output);
         Console.WriteLine("Database log:");
         Console.WriteLine(dblogcmdOutput.Output);
-        Console.WriteLine("Tearing down compose...");
-        RunDockerCommand("compose down -v", slnDir);
     }
 
     [AssemblyCleanup]

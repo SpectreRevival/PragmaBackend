@@ -1,4 +1,5 @@
-﻿using Model;
+﻿using FluentAssertions;
+using Model;
 using System.Collections;
 using System.Reflection;
 
@@ -190,8 +191,8 @@ public class InterchangeableTest()
         MethodInfo? fromPacketMethod = modelClass.GetMethod("FromPacket", BindingFlags.Public | BindingFlags.Static);
         object? packetObj1 = toPacketMethod.Invoke(modelobj1, new object[] { });
         object? recreatedObj1 = fromPacketMethod.Invoke(null, new object[] { packetObj1 });
-        Assert.AreEqual(modelobj1, recreatedObj1);
-        Assert.AreNotEqual(modelobj2, recreatedObj1);
+        modelobj1.Should().BeEquivalentTo(recreatedObj1);
+        modelobj2.Should().NotBeEquivalentTo(recreatedObj1);
     }
 
     [TestMethod]
@@ -218,8 +219,8 @@ public class InterchangeableTest()
         object? key = getKeyMethod.Invoke(modelobj1, new object[] { });
         object? packetObj1 = toPacketMethod.Invoke(modelobj1, new object[] { });
         object? recreatedObj1 = fromPacketMethod.Invoke(null, new object[] { packetObj1, key });
-        Assert.AreEqual(modelobj1, recreatedObj1);
-        Assert.AreNotEqual(modelobj2, recreatedObj1);
+        modelobj1.Should().BeEquivalentTo(recreatedObj1);
+        modelobj2.Should().NotBeEquivalentTo(recreatedObj1);
     }
 
     public async Task TestInterchangeableKeyedItemClass(Type modelClass)
@@ -237,7 +238,7 @@ public class InterchangeableTest()
         object? pid = pidProp.GetValue(modelobj1);
         object? packetObj1 = toPacketMethod.Invoke(modelobj1, new object[] { });
         object? recreatedObj1 = fromPacketMethod.Invoke(null, new object[] { packetObj1, pid });
-        Assert.AreEqual(modelobj1, recreatedObj1);
-        Assert.AreNotEqual(modelobj2, recreatedObj1);
+        modelobj1.Should().BeEquivalentTo(recreatedObj1);
+        modelobj2.Should().NotBeEquivalentTo(recreatedObj1);
     }
 }

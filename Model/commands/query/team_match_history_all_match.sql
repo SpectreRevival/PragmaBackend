@@ -1,1 +1,1 @@
-SELECT * FROM match_history_team_data WHERE match_id=@match_id;
+SELECT * FROM match_history_team_data WHERE match_id=@match_id ORDER BY team_number ASC;

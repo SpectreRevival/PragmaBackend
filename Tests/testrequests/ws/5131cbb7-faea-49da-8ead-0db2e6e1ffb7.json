@@ -5,20 +5,20 @@
   "responsePayload": {
     "endpoints": [
       {
-        "host": "chicago.ping.hathora.dev",
+        "regionName": "uscentral-1",
         "ipv4": "",
         "ipv6": "",
-        "port": 80,
-        "regionName": "uscentral-1",
-        "type": "hathora"
+        "port": 443,
+        "type": "hathora",
+        "host": "1.1.1.1"
       },
       {
-        "host": "london.ping.hathora.dev",
+        "regionName": "eucentral-1",
         "ipv4": "",
         "ipv6": "",
-        "port": 80,
-        "regionName": "eucentral-1",
-        "type": "hathora"
+        "port": 443,
+        "type": "hathora",
+        "host": "8.8.8.8"
       }
     ]
   },

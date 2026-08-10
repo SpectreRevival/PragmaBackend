@@ -253,7 +253,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
         rotatingNewsViewedMessages: await reader.GetFieldValueAsync<string[]>(reader.GetOrdinal("rotating_news_viewed_messages")),
         inkQuality: await reader.GetFieldValueAsync<double>(reader.GetOrdinal("ink_quality")),
         mouseSensitivityADSScale: await reader.GetFieldValueAsync<double>(reader.GetOrdinal("mouse_sensitivity_ads_scale")),
-        mouseSensitivity: await reader.GetFieldValueAsync<double>(reader.GetOrdinal("mouse_sensitivity_ads_scale")), // Note: SQL lacks an independent mouse_sensitivity column, mapped to scale to match your positional layout safely
+        mouseSensitivity: await reader.GetFieldValueAsync<double>(reader.GetOrdinal("mouse_sensitivity")),
         minimapScale: await reader.GetFieldValueAsync<double>(reader.GetOrdinal("minimap_scale")),
         minimapSize: await reader.GetFieldValueAsync<double>(reader.GetOrdinal("minimap_size")),
         minimapMaskOpacity: await reader.GetFieldValueAsync<double>(reader.GetOrdinal("minimap_mask_opacity")),
@@ -353,6 +353,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
         cmd.Parameters.AddWithValue("manual_matchmaking_region_selections", ManualMatchmakingRegionSelections);
         cmd.Parameters.AddWithValue("rotating_news_viewed_messages", RotatingNewsViewedMessages);
         cmd.Parameters.AddWithValue("ink_quality", InkQuality);
+        cmd.Parameters.AddWithValue("mouse_sensitivity", MouseSensitivity);
         cmd.Parameters.AddWithValue("mouse_sensitivity_ads_scale", MouseSensitivityADSScale);
         cmd.Parameters.AddWithValue("minimap_scale", MinimapScale);
         cmd.Parameters.AddWithValue("minimap_size", MinimapSize);
@@ -447,6 +448,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
             && ManualMatchmakingRegionSelections.SequenceEqual(other.ManualMatchmakingRegionSelections)
             && RotatingNewsViewedMessages.SequenceEqual(other.RotatingNewsViewedMessages)
             && BitConverter.DoubleToInt64Bits(InkQuality) == BitConverter.DoubleToInt64Bits(other.InkQuality)
+            && BitConverter.DoubleToInt64Bits(MouseSensitivity) == BitConverter.DoubleToInt64Bits(other.MouseSensitivity)
             && BitConverter.DoubleToInt64Bits(MouseSensitivityADSScale) == BitConverter.DoubleToInt64Bits(other.MouseSensitivityADSScale)
             && BitConverter.DoubleToInt64Bits(MinimapScale) == BitConverter.DoubleToInt64Bits(other.MinimapScale)
             && BitConverter.DoubleToInt64Bits(MinimapSize) == BitConverter.DoubleToInt64Bits(other.MinimapSize)
@@ -541,6 +543,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
         hash.Add(ManualMatchmakingRegionSelections);
         hash.Add(RotatingNewsViewedMessages);
         hash.Add(InkQuality);
+        hash.Add(MouseSensitivity);
         hash.Add(MouseSensitivityADSScale);
         hash.Add(MinimapScale);
         hash.Add(MinimapSize);
@@ -780,6 +783,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
         cmd.Parameters.AddWithValue("rotating_news_viewed_messages", RotatingNewsViewedMessages);
         cmd.Parameters.AddWithValue("ink_quality", InkQuality);
         cmd.Parameters.AddWithValue("mouse_sensitivity_ads_scale", MouseSensitivityADSScale);
+        cmd.Parameters.AddWithValue("mouse_sensitivity", MouseSensitivity);
         cmd.Parameters.AddWithValue("minimap_scale", MinimapScale);
         cmd.Parameters.AddWithValue("minimap_size", MinimapSize);
         cmd.Parameters.AddWithValue("minimap_mask_opacity", MinimapMaskOpacity);
@@ -875,6 +879,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
         await importer.WriteAsync(RotatingNewsViewedMessages);
         await importer.WriteAsync(InkQuality);
         await importer.WriteAsync(MouseSensitivityADSScale);
+        await importer.WriteAsync(MouseSensitivity);
         await importer.WriteAsync(MinimapScale);
         await importer.WriteAsync(MinimapSize);
         await importer.WriteAsync(MinimapMaskOpacity);

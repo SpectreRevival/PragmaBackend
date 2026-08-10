@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS match_history_player_data (
-	match_id UUID NOT NULL REFERENCES match_history(match_id),
-	team_number INT NOT NULL REFERENCES match_history_team_data(team_number),
+	match_id UUID NOT NULL,
+	team_number INT NOT NULL,
 	player_id UUID NOT NULL,
 	native_platform_id TEXT NOT NULL,
 	saved_player_name TEXT NOT NULL,
@@ -19,9 +19,11 @@ CREATE TABLE IF NOT EXISTS match_history_player_data (
 	current_ranked_rating INT NOT NULL,
 	previous_ranked_rating INT NOT NULL,
 	ranked_rating_delta INT NOT NULL,
+	crew_score INT NOT NULL,
 	crew_id UUID NOT NULL,
 	division_id UUID NOT NULL,
 	division_type INT NOT NULL,
 	match_placement_data TEXT[] NOT NULL,
-	num_ranked_matches INT NOT NULL
+	num_ranked_matches INT NOT NULL,
+	PRIMARY KEY (match_id, team_number, player_id)
 );

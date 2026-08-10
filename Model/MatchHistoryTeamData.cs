@@ -97,11 +97,11 @@ public record class MatchHistoryTeamData
     public List<NpgsqlBatchCommand> GetBatchCommands()
     {
         var commands = new List<NpgsqlBatchCommand>();
-        commands.Add(CreateBatchSync());
         for (int i = 0; i < PlayerData.Length; i++)
         {
             commands.Add(PlayerData[i].CreateSyncCommand());
         }
+        commands.Add(CreateBatchSync());
         return commands;
     }
 
@@ -177,12 +177,12 @@ public record class MatchHistoryTeamData
                CurrentRankedRating == data.CurrentRankedRating &&
                PreviousRankedRating == data.PreviousRankedRating &&
                RankedRatingDelta == data.RankedRatingDelta &&
-               EqualityComparer<string[]>.Default.Equals(MatchPlacementData, data.MatchPlacementData) &&
+               MatchPlacementData.SequenceEqual(data.MatchPlacementData) &&
                NumRankedMatches == data.NumRankedMatches &&
                FansPerRound == data.FansPerRound &&
                FansPerRoundWon == data.FansPerRoundWon &&
                FansGained == data.FansGained &&
-               EqualityComparer<MatchHistoryPlayerData[]>.Default.Equals(PlayerData, data.PlayerData) &&
+               PlayerData.SequenceEqual(data.PlayerData) &&
                UsedTeamRank == data.UsedTeamRank &&
                IsFullTeamInParty == data.IsFullTeamInParty;
     }
