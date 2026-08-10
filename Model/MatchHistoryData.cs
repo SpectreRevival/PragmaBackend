@@ -1,11 +1,18 @@
 ﻿using Model.Persistence;
 using Npgsql;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Model;
 
 public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>, IInterchangeable<MatchHistoryData, Packets.MatchData>
 {
+    private static readonly JsonSerializerOptions jsonSquaredRenderer = new JsonSerializerOptions()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     [SetsRequiredMembers]
     public MatchHistoryData(Guid matchId, DateTimeOffset matchDate, string queueName, string queueGameMode, string queueGameMap, bool overtimeEnabled, string region, bool isRanked, bool isAbandonedMatch, Guid[] abandonedPlayerIds, int surrenderedTeam, MatchHistoryTeamData[] teamData)
     {
@@ -38,7 +45,14 @@ public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>
     public required MatchHistoryTeamData[] TeamData { get; set; }
     public static MatchHistoryData FromPacket(Packets.MatchData inst)
     {
-        throw new NotImplementedException();
+        var jobj = JsonObject.Parse(inst.MatchData_);
+        jobj["teamData"].AsArray().ForEach(teamData => teamData["playerData"].AsArray().ForEach(playerData =>
+        {
+            var sponsorGameId = playerData["selectedSponsor"]["tagName"].GetValue<string>();
+            playerData["selectedSponsor"] = null;
+            playerData["sponsorGameId"] = sponsorGameId;
+        }));
+        return JsonSerializer.Deserialize<MatchHistoryData>(jobj.ToJsonString(), jsonSquaredRenderer) ?? throw new InvalidOperationException("Failed to deserialize MatchHistoryData from packet.");
     }
     internal static MatchHistoryData GetFromReader(NpgsqlDataReader reader)
     {
@@ -107,7 +121,19 @@ public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>
 
     public Packets.MatchData ToPacket()
     {
-        throw new NotImplementedException();
+        var jstr = JsonSerializer.Serialize(this, jsonSquaredRenderer);
+        var jobj = JsonObject.Parse(jstr);
+        jobj["teamData"].AsArray().ForEach(item => item["playerData"].AsArray().ForEach(playerData =>
+        {
+            var sponsorGameId = playerData["sponsorGameId"].GetValue<string>();
+            playerData["sponsorGameId"] = null;
+            playerData["selectedSponsor"] = JsonNode.Parse("{\"tagName\":\"" + sponsorGameId + "\"}");
+        }));
+        var packet = new Packets.MatchData();
+        packet.MatchId = MatchId.ToString();
+        packet.MatchDate = MatchDate.ToUnixTimeMilliseconds().ToString();
+        packet.MatchData_ = jobj.ToJsonString();
+        return packet;
     }
 
     public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
