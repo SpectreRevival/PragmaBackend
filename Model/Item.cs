@@ -93,14 +93,14 @@ public record class StackableItem : Item, IDatabaseSyncable<StackableItem, Guid>
         };
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/stackable_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
         cmd.Parameters.AddWithValue("catalog_id", CatalogId);
         cmd.Parameters.AddWithValue("amount", Amount);
         cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
@@ -235,7 +235,7 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/customized_instanced_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
@@ -243,7 +243,7 @@ public record class CustomizedInstancedItem : InstancedItem, IDatabaseSyncable<C
         cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
         cmd.Parameters.AddWithValue("alteration_channels", AlterationChannels);
         cmd.Parameters.AddWithValue("viewed", Viewed);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
@@ -421,7 +421,7 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/progression_tracking_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
@@ -437,7 +437,7 @@ public record class ProgressionTrackingItem : InstancedItem, IDatabaseSyncable<P
         cmd.Parameters.AddWithValue("last_contribution", (object?)LastContribution ?? DBNull.Value);
         cmd.Parameters.AddWithValue("is_bundle_purchased", IsBundlePurchased);
         cmd.Parameters.AddWithValue("num_levels_purchased", NumLevelsPurchased);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
@@ -565,7 +565,7 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/sponsor_unlock_tracker_item.sql");
         cmd.Parameters.AddWithValue("instance_id", InstanceId);
@@ -573,7 +573,7 @@ public record class SponsorUnlockTrackerItem : InstancedItem, IDatabaseSyncable<
         cmd.Parameters.AddWithValue("owning_player_id", OwningPlayerId);
         cmd.Parameters.AddWithValue("viewed", Viewed);
         cmd.Parameters.AddWithValue("sponsor_name", SponsorName);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

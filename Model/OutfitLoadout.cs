@@ -146,7 +146,7 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
         };
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/outfit_loadout.sql");
         cmd.Parameters.AddWithValue("loadout_id", LoadoutId);
@@ -156,7 +156,7 @@ public record class OutfitLoadout : IDatabaseSyncableDefault<OutfitLoadout, Guid
         cmd.Parameters.AddWithValue("face_style", FaceStyle);
         cmd.Parameters.AddWithValue("face_accessory", FaceAccessory);
         cmd.Parameters.AddWithValue("outfit", Outfit);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

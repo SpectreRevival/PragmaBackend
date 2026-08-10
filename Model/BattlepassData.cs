@@ -72,7 +72,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
         hash.Add(BattlepassLevel);
         hash.Add(ActiveBattlePasses);
         hash.Add(BattlepassQuests);
-        hash.Add(ActiveBattlePasses);
+        hash.Add(ActiveBattlepassQuests);
         return hash.ToHashCode();
     }
 
@@ -92,7 +92,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/battlepass_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
@@ -100,7 +100,7 @@ public record class BattlepassData : IDatabaseSyncableDefault<BattlepassData, Gu
         cmd.Parameters.AddWithValue("battlepass_quests", BattlepassQuests);
         cmd.Parameters.AddWithValue("active_battlepass_quests", ActiveBattlepassQuests);
         cmd.Parameters.AddWithValue("battlepass_level", BattlepassLevel);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

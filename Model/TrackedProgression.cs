@@ -133,7 +133,7 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/team_progression.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
@@ -142,7 +142,7 @@ public record class TeamTrackedProgression : TrackedProgression, IDatabaseSyncab
         cmd.Parameters.AddWithValue("active_weekly_quests", ActiveWeeklyQuests);
         cmd.Parameters.AddWithValue("active_event_quests", ActiveEventQuests);
         cmd.Parameters.AddWithValue("last_rollover", LastRolloverTimestamp);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)
@@ -269,7 +269,7 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/individual_progression.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
@@ -278,7 +278,7 @@ public record class IndividualTrackedProgression : TrackedProgression, IDatabase
         cmd.Parameters.AddWithValue("active_event_quests", ActiveEventQuests);
         cmd.Parameters.AddWithValue("active_endorsement", ActiveEndorsement);
         cmd.Parameters.AddWithValue("last_rollover", LastRolloverTimestamp);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

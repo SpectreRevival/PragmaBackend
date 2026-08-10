@@ -89,7 +89,7 @@ public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Gu
         return defaultData with { PlayerId = playerId };
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/player_presence.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
@@ -97,7 +97,7 @@ public record class PlayerPresence : IDatabaseSyncableDefault<PlayerPresence, Gu
         cmd.Parameters.AddWithValue("last_updated_time", LastUpdatedTime);
         cmd.Parameters.AddWithValue("advanced_presence_type", AdvancedPresenceType);
         cmd.Parameters.AddWithValue("advanced_presence_context", AdvancedPresenceContext);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

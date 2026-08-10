@@ -270,7 +270,7 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/gamepad_config.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
@@ -300,7 +300,7 @@ public record class GamepadConfig : VersionedData, IDatabaseSyncableDefault<Game
         cmd.Parameters.AddWithValue("custom_dead_zone_look_amount", CustomDeadZoneLookAmount);
         cmd.Parameters.AddWithValue("walk_run_deflection_threshold", WalkRunDeflectionThreshold);
         cmd.Parameters.AddWithValue("version", Version);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

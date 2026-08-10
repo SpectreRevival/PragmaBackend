@@ -175,7 +175,7 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
         return hash.ToHashCode();
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/party.sql");
         cmd.Parameters.AddWithValue("party_id", PartyId);
@@ -195,7 +195,7 @@ public record class Party : VersionedData, IDatabaseSyncable<Party, Guid>, IEqua
         cmd.Parameters.Add(new NpgsqlParameter("standard", NpgsqlTypes.NpgsqlDbType.Hstore) { Value = Standard });
         cmd.Parameters.AddWithValue("custom_json", CustomJson);
         cmd.Parameters.AddWithValue("crossplay_platform", CrossplayPlatform);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

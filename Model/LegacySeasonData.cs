@@ -87,13 +87,13 @@ public record class LegacySeasonData : IDatabaseSyncableDefault<LegacySeasonData
         };
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/legacy_season_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
         cmd.Parameters.AddWithValue("solo_ranked_points", SoloRankedPoints);
         cmd.Parameters.AddWithValue("current_solo_rank", CurrentSoloRank);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

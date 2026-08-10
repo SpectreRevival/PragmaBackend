@@ -732,7 +732,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
         return packet;
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/player_config.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
@@ -824,7 +824,7 @@ public record class PlayerConfig : VersionedData, IDatabaseSyncableDefault<Playe
         cmd.Parameters.AddWithValue("muted_chat_contexts", MutedChatContexts);
         cmd.Parameters.AddWithValue("input_bindings_version", InputBindingsVersion);
         cmd.Parameters.AddWithValue("player_config_version", Version);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

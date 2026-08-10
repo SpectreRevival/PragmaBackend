@@ -207,7 +207,7 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
         return defaultData with { PlayerId = playerId };
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
     {
         NpgsqlBatchCommand cmd = PostgresDatabase.LoadBatchCommandFromFile("save/profile_data.sql");
         cmd.Parameters.AddWithValue("player_id", PlayerId);
@@ -235,7 +235,7 @@ public record class ProfileData : IDatabaseSyncableDefault<ProfileData, Guid>, I
         cmd.Parameters.AddWithValue("provider_account_id", ProviderAccountId);
         cmd.Parameters.AddWithValue("crossplay_platform_kind", CrossplayPlatformKind);
         cmd.Parameters.AddWithValue("games_remaining_until_crew_join", GamesRemainingUntilCrewJoin);
-        return cmd;
+        return new[] { cmd };
     }
 
     public async Task WriteToBulkWriter(NpgsqlBinaryImporter importer)

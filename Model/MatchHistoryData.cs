@@ -46,11 +46,6 @@ public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>
         throw new NotImplementedException();
     }
 
-    public NpgsqlBatchCommand CreateBatchSyncCommand()
-    {
-        throw new NotImplementedException();
-    }
-
     public Guid GetKey()
     {
         return MatchId;
@@ -124,5 +119,12 @@ public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>
         hash.Add(SurrenderedTeam);
         hash.Add(TeamData);
         return hash.ToHashCode();
+    }
+
+    public IEnumerable<NpgsqlBatchCommand> CreateBatchSyncCommand()
+    {
+        var commands = new List<NpgsqlBatchCommand>() { CreateBatchSyncBasicCommand() };
+        TeamData.Select((team, i) => team.GetBatchCommands(MatchId, i)).ForEach(cmdarr => commands.AddRange(cmdarr));
+        return commands;
     }
 }

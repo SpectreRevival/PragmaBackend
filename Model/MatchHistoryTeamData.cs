@@ -84,11 +84,21 @@ public class MatchHistoryTeamData : IEquatable<MatchHistoryTeamData?>
 
     public void AddSyncToBatch(NpgsqlBatch batch, Guid matchId, int teamNumber)
     {
-        batch.BatchCommands.Add(CreateBatchSync(matchId, teamNumber));
+        foreach(var cmd in GetBatchCommands(matchId, teamNumber))
+        {
+            batch.BatchCommands.Add(cmd);
+        }
+    }
+
+    public List<NpgsqlBatchCommand> GetBatchCommands(Guid matchId, int teamNumber)
+    {
+        var commands = new List<NpgsqlBatchCommand>();
+        commands.Add(CreateBatchSync(matchId, teamNumber));
         for (int i = 0; i < PlayerData.Length; i++)
         {
-            batch.BatchCommands.Add(PlayerData[i].CreateSyncCommand(teamNumber, matchId));
+            commands.Add(PlayerData[i].CreateSyncCommand(teamNumber, matchId));
         }
+        return commands;
     }
 
     public override bool Equals(object? obj)
@@ -153,10 +163,5 @@ public class MatchHistoryTeamData : IEquatable<MatchHistoryTeamData?>
     public static bool operator !=(MatchHistoryTeamData? left, MatchHistoryTeamData? right)
     {
         return !(left == right);
-    }
-
-    private string GetDebuggerDisplay()
-    {
-        return ToString();
     }
 }
