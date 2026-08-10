@@ -10,10 +10,17 @@
 public class GameEvents
 {
     public static event EventHandler<EndGameEvent>? GameEnd;
+    public static event EventHandler<MatchHistoryData>? MatchHistoryRecorded;
 
     public static void SendGameEndEvent(EndGameEvent evtData)
     {
         ArgumentNullException.ThrowIfNull(evtData);
         GameEnd?.Invoke(null, evtData);
+    }
+
+    public static void SendMatchHistoryRecordedEvent(MatchHistoryData evtData)
+    {
+        ArgumentNullException.ThrowIfNull(evtData);
+        MatchHistoryRecorded?.Invoke(null, evtData);
     }
 }
