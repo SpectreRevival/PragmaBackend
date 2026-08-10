@@ -167,6 +167,12 @@ public class DatabaseSyncTest()
         object obj1 = CreateFromConstructor(syncableClass);
         object obj2 = CreateFromConstructor(syncableClass);
         object obj3 = CreateFromConstructor(syncableClass);
+        if (syncableClass == typeof(MatchHistoryData))
+        {
+            FixupMatchHistoryObject((MatchHistoryData)obj1);
+            FixupMatchHistoryObject((MatchHistoryData)obj2);
+            FixupMatchHistoryObject((MatchHistoryData)obj3);
+        }
         MethodInfo? syncMethod = obj1.GetType().GetMethod("SyncToDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         Task? syncTask = (Task)syncMethod.Invoke(obj1, new object[] { });
         Task? syncTask2 = (Task)syncMethod.Invoke(obj2, new object[] { });
@@ -185,6 +191,13 @@ public class DatabaseSyncTest()
         Assert.AreNotEqual(fetched, obj3);
     }
 
+    void FixupMatchHistoryObject(MatchHistoryData historyData)
+    {
+        historyData.TeamData.ForEach(teamData => teamData.MatchId = historyData.MatchId);
+        historyData.TeamData.ForEach(teamData => teamData.PlayerData.ForEach(playerData => playerData.MatchId = historyData.MatchId));
+        historyData.TeamData.ForEach(teamData => teamData.PlayerData.ForEach(playerData => playerData.TeamNumber = historyData.TeamData[0].TeamNumber));
+    }
+
     [TestMethod]
     [Retry(3)]
     [DynamicData(nameof(GetClassesToTest), DynamicDataDisplayName = nameof(GetCustomTestName))]
@@ -194,6 +207,12 @@ public class DatabaseSyncTest()
         object obj1 = CreateFromConstructor(syncableClass);
         object obj2 = CreateFromConstructor(syncableClass);
         object obj3 = CreateFromConstructor(syncableClass);
+        if (syncableClass == typeof(MatchHistoryData))
+        {
+            FixupMatchHistoryObject((MatchHistoryData)obj1);
+            FixupMatchHistoryObject((MatchHistoryData)obj2);
+            FixupMatchHistoryObject((MatchHistoryData)obj3);
+        }
         NpgsqlBatch batch = PostgresDatabase.CreateBatch();
         MethodInfo? createBatchCmdMethod = obj1.GetType().GetMethod("CreateBatchSyncCommand", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         ((IEnumerable<NpgsqlBatchCommand>)createBatchCmdMethod.Invoke(obj1, [])).ForEach(command => batch.BatchCommands.Add(command));
