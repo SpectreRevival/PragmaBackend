@@ -27,7 +27,7 @@ public class GetMatchHistoryByTeamId : WebsocketPacketProcessor, IWebsocketPacke
                 .Select(mData => mData.ToPacket()));
         } catch (Exception ex) {
             var req = Packet.GetPayloadAsMessage<MatchHistoryByTeamPlayerIdsRequest>();
-            var cmd = PostgresDatabase.LoadCommandFromFile("match_history_teamid_from_players");
+            var cmd = PostgresDatabase.LoadCommandFromFile("match_history_teamid_from_players.sql");
             cmd.Parameters.AddWithValue("player_ids", req.TeamPlayerIds);
             using var reader = await cmd.ExecuteReaderAsync();
             if(!await reader.ReadAsync())
