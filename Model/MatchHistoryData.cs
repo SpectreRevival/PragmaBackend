@@ -1,9 +1,28 @@
-﻿using Npgsql;
+﻿using Model.Persistence;
+using Npgsql;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Model;
 
 public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>, IInterchangeable<MatchHistoryData, Packets.MatchData>
 {
+    [SetsRequiredMembers]
+    public MatchHistoryData(Guid matchId, DateTimeOffset matchDate, string queueName, string queueGameMode, string queueGameMap, bool overtimeEnabled, string region, bool isRanked, bool isAbandonedMatch, Guid[] abandonedPlayerIds, int surrenderedTeam, MatchHistoryTeamData[] teamData)
+    {
+        MatchId = matchId;
+        MatchDate = matchDate;
+        QueueName = queueName ?? throw new ArgumentNullException(nameof(queueName));
+        QueueGameMode = queueGameMode ?? throw new ArgumentNullException(nameof(queueGameMode));
+        QueueGameMap = queueGameMap ?? throw new ArgumentNullException(nameof(queueGameMap));
+        OvertimeEnabled = overtimeEnabled;
+        Region = region ?? throw new ArgumentNullException(nameof(region));
+        IsRanked = isRanked;
+        IsAbandonedMatch = isAbandonedMatch;
+        AbandonedPlayerIds = abandonedPlayerIds ?? throw new ArgumentNullException(nameof(abandonedPlayerIds));
+        SurrenderedTeam = surrenderedTeam;
+        TeamData = teamData ?? throw new ArgumentNullException(nameof(teamData));
+    }
+
     public required Guid MatchId { get; set; }
     public required DateTimeOffset MatchDate { get; set; }
     public required string QueueName { get; set; }
@@ -34,16 +53,76 @@ public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>
 
     public Guid GetKey()
     {
-        throw new NotImplementedException();
+        return MatchId;
     }
 
-    public Task SyncToDatabase()
+    private NpgsqlBatchCommand CreateBatchSyncBasicCommand()
     {
-        throw new NotImplementedException();
+        var cmd = PostgresDatabase.LoadBatchCommandFromFile("save/match_history.sql");
+        cmd.Parameters.AddWithValue("match_id", MatchId);
+        cmd.Parameters.AddWithValue("match_date", MatchDate);
+        cmd.Parameters.AddWithValue("queue_name", QueueName);
+        cmd.Parameters.AddWithValue("queue_game_mode", QueueGameMode);
+        cmd.Parameters.AddWithValue("queue_game_map", QueueGameMap);
+        cmd.Parameters.AddWithValue("overtime_enabled", OvertimeEnabled);
+        cmd.Parameters.AddWithValue("region", Region);
+        cmd.Parameters.AddWithValue("is_ranked", IsRanked);
+        cmd.Parameters.AddWithValue("is_abandoned_match", IsAbandonedMatch);
+        cmd.Parameters.AddWithValue("abandoned_player_ids", AbandonedPlayerIds);
+        cmd.Parameters.AddWithValue("surrendered_team", SurrenderedTeam);
+        return cmd;
+    }
+
+    public async Task SyncToDatabase()
+    {
+        var batch = PostgresDatabase.CreateBatch();
+        for(int i = 0; i < TeamData.Length; i++)
+        {
+            TeamData[i].AddSyncToBatch(batch, MatchId, i);
+        }
+        batch.BatchCommands.Add(CreateBatchSyncBasicCommand());
+        await batch.ExecuteNonQueryAsync();
     }
 
     public Packets.MatchData ToPacket()
     {
         throw new NotImplementedException();
+    }
+
+    public virtual bool Equals(MatchHistoryData? data)
+    {
+        return data is not null &&
+               EqualityComparer<Type>.Default.Equals(EqualityContract, data.EqualityContract) &&
+               MatchId.Equals(data.MatchId) &&
+               MatchDate.Equals(data.MatchDate) &&
+               QueueName == data.QueueName &&
+               QueueGameMode == data.QueueGameMode &&
+               QueueGameMap == data.QueueGameMap &&
+               OvertimeEnabled == data.OvertimeEnabled &&
+               Region == data.Region &&
+               IsRanked == data.IsRanked &&
+               IsAbandonedMatch == data.IsAbandonedMatch &&
+               EqualityComparer<Guid[]>.Default.Equals(AbandonedPlayerIds, data.AbandonedPlayerIds) &&
+               SurrenderedTeam == data.SurrenderedTeam &&
+               EqualityComparer<MatchHistoryTeamData[]>.Default.Equals(TeamData, data.TeamData);
+    }
+
+    public override int GetHashCode()
+    {
+        HashCode hash = new HashCode();
+        hash.Add(EqualityContract);
+        hash.Add(MatchId);
+        hash.Add(MatchDate);
+        hash.Add(QueueName);
+        hash.Add(QueueGameMode);
+        hash.Add(QueueGameMap);
+        hash.Add(OvertimeEnabled);
+        hash.Add(Region);
+        hash.Add(IsRanked);
+        hash.Add(IsAbandonedMatch);
+        hash.Add(AbandonedPlayerIds);
+        hash.Add(SurrenderedTeam);
+        hash.Add(TeamData);
+        return hash.ToHashCode();
     }
 }

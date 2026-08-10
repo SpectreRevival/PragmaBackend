@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS match_history_team_data (
+	match_id UUID NOT NULL,
+	team_number INT NOT NULL,
+	rounds_played INT NOT NULL,
+	rounds_won INT NOT NULL,
+	xp_per_round INT NOT NULL,
+	xp_per_round_won INT NOT NULL,
+	team_id UUID NOT NULL,
+	current_rank_id INT NOT NULL,
+	previous_rank_id INT NOT NULL,
+	current_ranked_rating INT NOT NULL,
+	previous_ranked_rating INT NOT NULL,
+	ranked_rating_delta INT NOT NULL,
+	match_placement_data TEXT[] NOT NULL,
+	num_ranked_matches INT NOT NULL,
+	fans_per_round INT NOT NULL,
+	fans_per_round_won INT NOT NULL,
+	used_team_rank BOOL NOT NULL,
+	is_full_team_in_party BOOL NOT NULL
+);
