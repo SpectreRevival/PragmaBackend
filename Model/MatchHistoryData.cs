@@ -1,5 +1,6 @@
 ﻿using Model.Persistence;
 using Npgsql;
+using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -84,6 +85,40 @@ public record class MatchHistoryData : IDatabaseSyncable<MatchHistoryData, Guid>
         var ret = GetFromReader(reader);
         ret.TeamData = await MatchHistoryTeamData.RetrieveFromDatabase(matchId);
         return ret;
+    }
+
+    public static async Task<MatchHistoryData[]> GetMatchesForPlayer(Guid playerId, int limit, DateTimeOffset begin, DateTimeOffset end)
+    {
+        var cmd = PostgresDatabase.LoadCommandFromFile("recent_match_ids_for_player.sql");
+        cmd.Parameters.AddWithValue("player_id", playerId);
+        cmd.Parameters.AddWithValue("limit", limit);
+        cmd.Parameters.AddWithValue("start_date", begin);
+        cmd.Parameters.AddWithValue("end_date", end);
+        using var reader = await cmd.ExecuteReaderAsync();
+        var results = new List<MatchHistoryData>();
+        while(await reader.ReadAsync())
+        {
+            var matchId = reader.GetGuid(0);
+            results.Add(await RetrieveFromDatabase(matchId));
+        }
+        return results.ToArray();
+    }
+
+    public static async Task<MatchHistoryData[]> GetMatchesForTeam(Guid teamId, int limit, DateTimeOffset begin, DateTimeOffset end)
+    {
+        var cmd = PostgresDatabase.LoadCommandFromFile("recent_match_ids_for_team.sql");
+        cmd.Parameters.AddWithValue("team_id", teamId);
+        cmd.Parameters.AddWithValue("limit", limit);
+        cmd.Parameters.AddWithValue("start_date", begin);
+        cmd.Parameters.AddWithValue("end_date", end);
+        using var reader = await cmd.ExecuteReaderAsync();
+        var results = new List<MatchHistoryData>();
+        while (await reader.ReadAsync())
+        {
+            var matchId = reader.GetGuid(0);
+            results.Add(await RetrieveFromDatabase(matchId));
+        }
+        return results.ToArray();
     }
 
     public Guid GetKey()
